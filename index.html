@@ -245,7 +245,7 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
-        let pollingInterval = null;  // ← вернули переменную для опроса
+        let pollingInterval = null;
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -669,26 +669,27 @@
                 }).subscribe();
         }
 
-        // Фоновый опрос для гарантированной доставки новых сообщений на другие устройства
+        // Фоновый опрос с "мягкой перезагрузкой"
         function startPollingFallback() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
                 if (!currentUser) return;
-                const { data, error } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true })
-                    .limit(50);
-                if (error) return;
-                if (!data || data.length === 0) return;
-                const latestFromPoll = data[data.length - 1];
-                if (!lastMessageId || latestFromPoll.id !== lastMessageId) {
-                    // Появились новые сообщения, рисуем те, которых ещё нет в DOM
-                    data.forEach(msg => {
-                        if (!document.getElementById('msg-' + msg.id)) {
-                            renderMessage(msg);
-                        }
-                    });
-                    lastMessageId = latestFromPoll.id;
+                try {
+                    const { data, error } = await _sgClient.from('messages')
+                        .select('id, user_id, user_name, text, created_at')
+                        .order('created_at', { ascending: true })
+                        .limit(50);
+
+                    if (error || !data || data.length === 0) return;
+
+                    const latestFromPoll = data[data.length - 1];
+                    if (!lastMessageId || latestFromPoll.id !== lastMessageId) {
+                        // Обнаружено новое сообщение – делаем бесшумную перезагрузку
+                        loadMessages();
+                        // lastMessageId обновится внутри loadMessages
+                    }
+                } catch (err) {
+                    console.error('Polling error:', err);
                 }
             }, 2000);
         }
@@ -766,7 +767,7 @@
                 await checkAdminStatus();
                 await loadMessages();
                 subscribeMessages();
-                startPollingFallback();   // ← запускаем опрос
+                startPollingFallback();
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
