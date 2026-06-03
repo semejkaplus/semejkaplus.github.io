@@ -169,12 +169,26 @@
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
 
+        /* Адаптация для телефонов */
         @media (max-width: 480px) {
             .emoji-panel {
                 max-width: calc(100vw - 30px);
                 left: 50% !important;
                 right: auto !important;
                 transform: translateX(-50%) !important;
+            }
+        }
+
+        /* Адаптация для ноутбуков и ПК (ширина > 768px) */
+        @media (min-width: 768px) {
+            .msg {
+                max-width: 60%;
+            }
+            .input-area {
+                max-width: 700px;
+                margin-left: auto;
+                margin-right: auto;
+                width: calc(100% - 20px);
             }
         }
     </style>
@@ -683,7 +697,6 @@
 
                     const latestFromPoll = data[data.length - 1];
                     if (!lastMessageId || latestFromPoll.id !== lastMessageId) {
-                        // Обнаружено новое сообщение – делаем бесшумную перезагрузку
                         loadMessages();
                     }
                 } catch (err) {
@@ -707,7 +720,6 @@
 
                 if (error) throw error;
 
-                // Мгновенно показываем своё сообщение
                 if (data) {
                     renderMessage(data);
                 }
@@ -770,7 +782,7 @@
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
 
-        // При автовходе тоже запускаем опрос
+        // Автовход + опрос
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
