@@ -9,8 +9,8 @@
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
-            height: 100dvh;   /* динамическая высота, чтобы не мешала адресная строка */
-            height: 100vh;    /* fallback */
+            height: 100dvh;   /* динамическая высота */
+            height: 100vh;
             overflow: hidden;
         }
         .screen { display: none; height: 100%; }
@@ -39,11 +39,8 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
         #chatScreen.active { display: flex; }
 
-        /* Шапка — теперь не сжимается */
-        .header {
-            background: white; padding: 18px 22px; display: flex; align-items: center; gap: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0;
-        }
+        /* Шапка */
+        .header { background: white; padding: 18px 22px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
         .header .logo { width: 50px; height: 50px; font-size: 26px; border-radius: 20px; margin: 0; background: #6C63FF; box-shadow: none; }
         .header h2 { font-size: 24px; font-weight: 700; }
         .header small { font-size: 13px; color: #888; }
@@ -110,6 +107,7 @@
         .emoji-option { font-size: 22px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
         .emoji-option:hover { transform: scale(1.3); }
 
+        /* Поле ввода */
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -171,6 +169,40 @@
         .whitelist-list { list-style: none; padding: 0; margin: 8px 0; }
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
+
+        /* ----- АДАПТАЦИЯ ПОД УСТРОЙСТВА ----- */
+        /* Планшеты и небольшие экраны (до 768px) */
+        @media (max-width: 768px) {
+            .msg { max-width: 85%; }
+            .bubble { font-size: 16px; padding: 12px 16px; }
+            .input-area textarea { font-size: 16px; padding: 14px 18px; }
+            .header h2 { font-size: 20px; }
+            .header .logo { width: 40px; height: 40px; font-size: 22px; }
+        }
+
+        /* Телефоны (до 480px) */
+        @media (max-width: 480px) {
+            .msg { max-width: 90%; }
+            .bubble { font-size: 15px; padding: 10px 14px; border-radius: 18px; }
+            .input-area {
+                margin: 0 6px 6px 6px;
+                padding: 10px 14px;
+            }
+            .input-area textarea { font-size: 15px; padding: 12px 16px; }
+            .input-area button { width: 46px; height: 46px; }
+            .header { padding: 12px 16px; }
+            .header h2 { font-size: 18px; }
+            .header .logo { width: 36px; height: 36px; font-size: 20px; }
+            .messages { padding: 15px 15px 0 15px; }
+
+            /* Фикс панели эмодзи на телефонах – не выезжает за экран */
+            .emoji-panel {
+                max-width: calc(100vw - 30px);
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -314,7 +346,7 @@
                         alert('Админ-режим активирован. Нажмите на кнопку "🔧" рядом с полем ввода.');
                     }
                 }
-                return true; // сообщение не отправляем
+                return true;
             }
             return false;
         }
@@ -326,27 +358,19 @@
 
             const msgEl = document.getElementById('msg-' + messageId);
             if (!msgEl) return;
-
-            // Получаем дату сообщения
             const msgDate = msgEl.dataset.msgDate;
             
-            // Удаляем сообщение из Supabase
             const { error } = await _sgClient.from('messages').delete().eq('id', messageId);
             if (error) { alert('Ошибка удаления'); return; }
 
-            // Удаляем элемент из DOM
             msgEl.remove();
 
-            // Проверяем, остались ли ещё сообщения с такой же датой
             if (msgDate) {
                 const remaining = document.querySelector(`.msg[data-msg-date="${msgDate}"]`);
                 if (!remaining) {
-                    // Удаляем разделитель даты
                     const separators = document.querySelectorAll('.date-separator');
                     separators.forEach(sep => {
-                        if (sep.dataset.date === msgDate) {
-                            sep.remove();
-                        }
+                        if (sep.dataset.date === msgDate) sep.remove();
                     });
                 }
             }
@@ -391,7 +415,6 @@
             else loadWhitelist();
         }
 
-        // Открытие админ-панели
         function openAdminPanel() {
             if (!isAdmin) return;
             loadWhitelist();
@@ -410,7 +433,7 @@
             }
         });
 
-        // --- Реакции (с обновлёнными названиями как в WhatsApp) ---
+        // --- Реакции ---
         const EMOJI_LIST = [
             { emoji: '👍', name: 'Нравится' },
             { emoji: '❤️', name: 'Люблю' },
@@ -616,7 +639,7 @@
             bubble.addEventListener('touchcancel', cancelPress);
         }
 
-        // --- Сообщения (с data-атрибутом даты) ---
+        // --- Сообщения ---
         function renderMessage(msg) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at).toLocaleDateString('sv-SE');
@@ -627,7 +650,7 @@
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
-            div.dataset.msgDate = msgDate; // сохраняем дату
+            div.dataset.msgDate = msgDate;
             let html = '';
             if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name)}</div>`;
             html += `<div class="msg-content"><div class="bubble">${escapeHtml(msg.text)}</div></div>`;
@@ -677,15 +700,27 @@
 
             sendBtn.disabled = true;
             try {
-                const { error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, user_name: currentUser.name, text: text.trim()
-                });
+                const { data, error } = await _sgClient.from('messages').insert({
+                    user_id: currentUser.id,
+                    user_name: currentUser.name,
+                    text: text.trim()
+                }).select('id, user_id, user_name, text, created_at').single();
+
                 if (error) throw error;
+
+                if (data) {
+                    renderMessage(data);
+                }
+
                 msgInput.value = '';
                 msgInput.style.height = 'auto';
                 msgInput.style.overflowY = 'hidden';
-            } catch (err) { alert('Ошибка отправки: ' + err.message); }
-            finally { sendBtn.disabled = false; msgInput.focus(); }
+            } catch (err) {
+                alert('Ошибка отправки: ' + err.message);
+            } finally {
+                sendBtn.disabled = false;
+                msgInput.focus();
+            }
         }
 
         msgInput.addEventListener('keypress', async (e) => {
@@ -705,7 +740,7 @@
             const sep = document.createElement('div');
             sep.className = 'date-separator';
             const svDate = new Date(dateString).toLocaleDateString('sv-SE');
-            sep.dataset.date = svDate; // сохраняем дату для будущего удаления
+            sep.dataset.date = svDate;
             sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`;
             messagesDiv.appendChild(sep);
         }
