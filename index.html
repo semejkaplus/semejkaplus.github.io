@@ -107,7 +107,6 @@
         .emoji-option { font-size: 22px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
         .emoji-option:hover { transform: scale(1.3); }
 
-        /* Поле ввода */
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -170,32 +169,8 @@
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
 
-        /* ----- АДАПТАЦИЯ ПОД УСТРОЙСТВА ----- */
-        /* Планшеты и небольшие экраны (до 768px) */
-        @media (max-width: 768px) {
-            .msg { max-width: 85%; }
-            .bubble { font-size: 16px; padding: 12px 16px; }
-            .input-area textarea { font-size: 16px; padding: 14px 18px; }
-            .header h2 { font-size: 20px; }
-            .header .logo { width: 40px; height: 40px; font-size: 22px; }
-        }
-
-        /* Телефоны (до 480px) */
+        /* Единственная адаптация – панель эмодзи на телефонах */
         @media (max-width: 480px) {
-            .msg { max-width: 90%; }
-            .bubble { font-size: 15px; padding: 10px 14px; border-radius: 18px; }
-            .input-area {
-                margin: 0 6px 6px 6px;
-                padding: 10px 14px;
-            }
-            .input-area textarea { font-size: 15px; padding: 12px 16px; }
-            .input-area button { width: 46px; height: 46px; }
-            .header { padding: 12px 16px; }
-            .header h2 { font-size: 18px; }
-            .header .logo { width: 36px; height: 36px; font-size: 20px; }
-            .messages { padding: 15px 15px 0 15px; }
-
-            /* Фикс панели эмодзи на телефонах – не выезжает за экран */
             .emoji-panel {
                 max-width: calc(100vw - 30px);
                 left: 50% !important;
@@ -270,6 +245,7 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
+        let pollingInterval = null;  // ← вернули переменную для опроса
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -693,6 +669,30 @@
                 }).subscribe();
         }
 
+        // Фоновый опрос для гарантированной доставки новых сообщений на другие устройства
+        function startPollingFallback() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (!currentUser) return;
+                const { data, error } = await _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true })
+                    .limit(50);
+                if (error) return;
+                if (!data || data.length === 0) return;
+                const latestFromPoll = data[data.length - 1];
+                if (!lastMessageId || latestFromPoll.id !== lastMessageId) {
+                    // Появились новые сообщения, рисуем те, которых ещё нет в DOM
+                    data.forEach(msg => {
+                        if (!document.getElementById('msg-' + msg.id)) {
+                            renderMessage(msg);
+                        }
+                    });
+                    lastMessageId = latestFromPoll.id;
+                }
+            }, 2000);
+        }
+
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
             const isCommand = await handleSpecialCommand(text);
@@ -708,6 +708,7 @@
 
                 if (error) throw error;
 
+                // Мгновенно показываем своё сообщение
                 if (data) {
                     renderMessage(data);
                 }
@@ -763,9 +764,33 @@
                 localStorage.setItem('semejka_user', JSON.stringify(user));
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await checkAdminStatus();
-                await loadMessages(); subscribeMessages();
+                await loadMessages();
+                subscribeMessages();
+                startPollingFallback();   // ← запускаем опрос
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
+        });
+
+        // При автовходе тоже запускаем опрос
+        const saved = localStorage.getItem('semejka_user');
+        if (saved) {
+            const user = JSON.parse(saved);
+            _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
+                if (data) {
+                    currentUser = data;
+                    regScreen.classList.remove('active');
+                    chatScreen.classList.add('active');
+                    loadMessages();
+                    subscribeMessages();
+                    startPollingFallback();
+                } else {
+                    localStorage.removeItem('semejka_user');
+                }
+            });
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
         });
 
         function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
