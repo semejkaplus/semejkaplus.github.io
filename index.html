@@ -22,12 +22,12 @@
         }
         .box {
             background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
         }
-        .logo { width: 110px; height: 110px; background: rgba(255,255,255,0.7); border-radius: 32px; margin: 0 auto 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); overflow: hidden; color: #5A5AD0; font-size: 52px; font-weight: bold; }
-        .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .title-logo { display: block; max-width: 400px; width: 95%; margin: 0 auto 30px; }
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
         input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
@@ -39,12 +39,7 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
         #chatScreen.active { display: flex; }
 
-        .header { background: white; padding: 18px 22px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
-        .header .logo { width: 50px; height: 50px; font-size: 26px; border-radius: 20px; margin: 0; background: #6C63FF; box-shadow: none; }
-        .header h2 { font-size: 24px; font-weight: 700; }
-        .header small { font-size: 13px; color: #888; }
-
-        .messages { flex: 1 1 auto; overflow-y: auto; padding: 20px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; }
+        .messages { flex: 1 1 auto; overflow-y: auto; padding: 80px 20px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
@@ -53,7 +48,6 @@
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
 
-        /* Анимация появления новых сообщений (увеличена до 0.5s) */
         .msg.animate-in {
             animation: fadeInUp 0.5s ease-out;
         }
@@ -66,9 +60,17 @@
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
 
-        .bubble { display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: #F0ECF5; color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
+        .bubble {
+            display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            background: rgba(240,236,245,0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
         .sent .bubble { border-bottom-right-radius: 8px; }
-        .received .bubble { border-bottom-left-radius: 8px; border: 1px solid rgba(0,0,0,0.05); }
+        .received .bubble { border-bottom-left-radius: 8px; }
 
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
@@ -94,52 +96,95 @@
         .sent .emoji-panel { left: auto; right: 0; transform: none; }
         .received .emoji-panel { left: 0; right: auto; transform: none; }
         .emoji-panel.open { display: flex; }
-        .search-block { display: flex; justify-content: flex-end; margin-bottom: 2px; }
-        .search-toggle { font-size: 18px; cursor: pointer; background: none; border: none; padding: 2px; opacity: 0.7; transition: opacity 0.2s; line-height: 1; }
-        .search-toggle:hover { opacity: 1; }
-        .search-row { display: none; margin-top: 4px; }
-        .search-row.active { display: flex; flex-direction: column; gap: 6px; }
-        .emoji-search { width: 100%; padding: 6px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 10px; outline: none; background: #f9f9f9; }
-        .emoji-search:focus { border-color: #6C63FF; box-shadow: 0 0 0 2px rgba(108,99,255,0.2); }
-        .quick-emojis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; justify-items: center; }
-        .quick-emojis.hidden { display: none; }
-        .emoji-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; justify-items: center; }
-        .emoji-option { font-size: 22px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
-        .emoji-option:hover { transform: scale(1.3); }
 
-        .input-area { background: rgba(255,255,255,0.8); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 10px 10px 10px; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); flex-shrink: 0; }
-        .input-area textarea { flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95); outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px; scrollbar-width: none; -ms-overflow-style: none; max-width: 100%; word-wrap: break-word; word-break: break-word; }
+        .input-area {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            margin: 0 10px 10px 10px; display: flex; gap: 12px; align-items: flex-end;
+            border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
+            border: 1px solid rgba(108,99,255,0.3);
+        }
+        .input-area textarea {
+            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px;
+            line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95);
+            outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px;
+            scrollbar-width: none; -ms-overflow-style: none; max-width: 100%;
+            word-wrap: break-word; word-break: break-word;
+        }
         .input-area textarea::-webkit-scrollbar { display: none; }
-        .input-area textarea::-webkit-resizer { display: none; }
-        .input-area textarea:focus { border-color: #6C63FF; background: #FFFFFF; box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1); }
-        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0; }
+        .input-area textarea:focus {
+            border-color: #6C63FF; background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .input-area button {
+            width: 52px; height: 52px; border-radius: 50%; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #6C63FF, #8B82FF);
+            box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0;
+        }
         .input-area button:hover { transform: scale(1.05); }
 
         .admin-delete-msg { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; }
         .admin-active .admin-delete-msg { display: flex; }
 
-        .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .admin-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
         .admin-modal.active { display: flex; }
-        .admin-panel { background: white; border-radius: 24px; padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .admin-panel {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; padding: 24px; max-width: 400px;
+            width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            color: #3A3A4A;
+        }
         .admin-panel h2 { margin-bottom: 16px; }
         .admin-btn { display: block; width: 100%; margin-bottom: 12px; padding: 12px; background: #6C63FF; color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; transition: 0.2s; }
         .admin-btn:hover { background: #5A52E0; }
         .admin-btn.danger { background: #E53935; }
         .admin-btn.danger:hover { background: #C62828; }
-        .whitelist-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 8px; }
+        .whitelist-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.7); }
         .whitelist-list { list-style: none; padding: 0; margin: 8px 0; }
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
 
-        /* Ссылки в сообщениях */
-        .bubble a {
-            color: #4A3AFF;
-            text-decoration: underline;
-            word-break: break-all;
+        /* Кнопка участников и дропдаун */
+        .userlist-wrapper { position: absolute; top: 15px; right: 15px; z-index: 100; }
+        .icon-btn {
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            font-size: 22px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #3A3A4A;
         }
-        .bubble a:hover {
-            color: #2A1AD0;
+        .icon-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+        .admin-btn-header { background: #6C63FF; color: white; margin-left: 8px; display: none; }
+        .admin-active .admin-btn-header { display: flex; }
+
+        .user-dropdown {
+            position: absolute; top: 55px; right: 0; width: 220px; max-height: 300px; overflow-y: auto;
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.6); padding: 8px 0;
+            display: flex; flex-direction: column;
+            opacity: 0; transform: scale(0.95) translateX(10px); transform-origin: top right;
+            pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 200;
         }
+        .user-dropdown.open { opacity: 1; transform: scale(1) translateX(0); pointer-events: auto; }
+        .user-dropdown .user-item { padding: 10px 16px; font-size: 15px; color: #3A3A4A; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+        .user-dropdown .user-item:last-child { border-bottom: none; }
+        .user-dropdown .user-name { font-weight: 600; }
+
+        .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
+        .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
             .emoji-panel { max-width: calc(100vw - 30px); left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
@@ -157,6 +202,11 @@
     </div>
 
     <div id="chatScreen" class="screen">
+        <div class="userlist-wrapper">
+            <button class="icon-btn" id="userlistBtn" title="Участники">👥</button>
+            <button class="icon-btn admin-btn-header" id="adminToggleBtn" title="Админ">🔧</button>
+            <div class="user-dropdown" id="userDropdown"></div>
+        </div>
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
@@ -168,7 +218,6 @@
             <button id="sendBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/></svg>
             </button>
-            <button id="adminToggleBtn" style="width:52px; height:52px; border-radius:50%; background:#6C63FF; color:white; border:none; cursor:pointer; font-size:20px; box-shadow:0 4px 10px rgba(108,99,255,0.4); margin-left:8px; display:none;">🔧</button>
         </div>
     </div>
 
@@ -193,6 +242,7 @@
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
         );
 
+        // DOM-элементы
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const nameInput = document.getElementById('nameInput');
@@ -209,12 +259,15 @@
         const whitelistList = document.getElementById('whitelistList');
         const adminCloseModal = document.getElementById('adminCloseModal');
         const loadingSpinner = document.getElementById('loadingSpinner');
+        const userlistBtn = document.getElementById('userlistBtn');
+        const userDropdown = document.getElementById('userDropdown');
 
         let currentUser = null, lastMessageId = null;
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
+        let pollingInterval = null;
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -287,7 +340,7 @@
                 if (password) {
                     const success = await activateAdmin(password);
                     if (success) {
-                        alert('Админ-режим активирован. Нажмите на кнопку "🔧" рядом с полем ввода.');
+                        alert('Админ-режим активирован. Нажмите на кнопку "🔧" рядом с кнопкой участников.');
                     }
                 }
                 return true;
@@ -606,6 +659,29 @@
                 }).subscribe();
         }
 
+        // --- Фоновый опрос (polling) ---
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (!currentUser || !lastMessageId) return;
+                try {
+                    const { data } = await _sgClient.from('messages')
+                        .select('id, user_id, user_name, text, created_at')
+                        .gt('id', lastMessageId)
+                        .order('created_at', { ascending: true });
+                    if (data && data.length > 0) {
+                        data.forEach(msg => renderMessage(msg, true));
+                        lastMessageId = data[data.length - 1].id;
+                        loadReactions(data.map(m => m.id));
+                    }
+                } catch (e) {
+                    console.warn('Ошибка polling:', e);
+                }
+            }, 10000);
+        }
+
+        function stopPolling() { if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; } }
+
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
             const isCommand = await handleSpecialCommand(text);
@@ -631,6 +707,47 @@
         });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); resetTextarea(); });
 
+        // --- Список участников ---
+        async function loadUserList() {
+            userDropdown.innerHTML = '';
+            try {
+                const { data, error } = await _sgClient.from('users').select('name, last_seen').order('last_seen', { ascending: false });
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    data.forEach(user => {
+                        const div = document.createElement('div');
+                        div.className = 'user-item';
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'user-name';
+                        nameSpan.textContent = user.name;
+                        div.appendChild(nameSpan);
+                        userDropdown.appendChild(div);
+                    });
+                } else {
+                    userDropdown.innerHTML = '<div class="user-item">Нет участников</div>';
+                }
+            } catch (err) {
+                userDropdown.innerHTML = '<div class="user-item">Ошибка загрузки</div>';
+            }
+        }
+
+        userlistBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (userDropdown.classList.contains('open')) {
+                userDropdown.classList.remove('open');
+            } else {
+                await loadUserList();
+                userDropdown.classList.add('open');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userlistBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.classList.remove('open');
+            }
+        });
+
+        // --- Вход и автовход ---
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
@@ -666,7 +783,9 @@
                 localStorage.setItem('semejka_user', JSON.stringify(user));
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await checkAdminStatus();
-                await loadMessages(); subscribeMessages();
+                await loadMessages();
+                subscribeMessages();
+                startPolling();
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
@@ -678,7 +797,7 @@
                 if (data) {
                     currentUser = data;
                     regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages(); subscribeMessages();
+                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
                 } else { localStorage.removeItem('semejka_user'); }
             });
         }
