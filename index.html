@@ -53,6 +53,15 @@
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
 
+        /* Анимация появления новых сообщений (увеличена до 0.5s) */
+        .msg.animate-in {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .msg-content { display: flex; align-items: flex-end; gap: 6px; }
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
@@ -522,18 +531,15 @@
 
         // --- Преобразование ссылок в кликабельные ---
         function linkify(text) {
-            // Регулярное выражение для поиска URL, начинающихся с http:// или https://
             const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-            // Разбиваем текст на части, заменяя URL на безопасные ссылки
             return text.replace(urlRegex, (url) => {
-                // Экранируем кавычки и другие спецсимволы в href для безопасности
                 const safeUrl = url.replace(/"/g, '&quot;');
                 return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
             });
         }
 
         // --- Сообщения ---
-        function renderMessage(msg) {
+        function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at).toLocaleDateString('sv-SE');
             if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at); lastDisplayedDate = msgDate; }
@@ -546,9 +552,7 @@
             let html = '';
             if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name)}</div>`;
 
-            // Основное сообщение с автоматическими ссылками
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text))}</div></div>`;
-
             html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at)}</div></div>`;
             html += `<button class="admin-delete-msg" data-id="${msg.id}">×</button>`;
 
@@ -556,6 +560,13 @@
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             lastMessageId = msg.id;
+
+            if (animate) {
+                div.classList.add('animate-in');
+                div.addEventListener('animationend', () => {
+                    div.classList.remove('animate-in');
+                }, { once: true });
+            }
 
             addLongPressListeners(div, msg.id);
             div.querySelector('.admin-delete-msg')?.addEventListener('click', (e) => { e.stopPropagation(); deleteMessage(msg.id); });
@@ -573,7 +584,7 @@
                     if (child !== loadingSpinner) child.remove();
                 });
                 lastDisplayedDate = null;
-                data.forEach(msg => renderMessage(msg));
+                data.forEach(msg => renderMessage(msg, false));
                 if (data.length > 0) lastMessageId = data[data.length - 1].id;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 loadReactions(data.map(m => m.id));
@@ -586,7 +597,7 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new);
+                    if (currentUser) renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -609,7 +620,7 @@
                 }).select('id, user_id, user_name, text, created_at').single();
 
                 if (error) throw error;
-                if (data) renderMessage(data);
+                if (data) renderMessage(data, true);
                 msgInput.value = ''; msgInput.style.height = 'auto'; msgInput.style.overflowY = 'hidden';
             } catch (err) { alert('Ошибка отправки: ' + err.message); }
             finally { sendBtn.disabled = false; msgInput.focus(); }
