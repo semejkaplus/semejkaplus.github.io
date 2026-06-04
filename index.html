@@ -686,7 +686,7 @@
                 }).subscribe();
         }
 
-        // --- Ускоренный фоновый опрос (2 секунды) ---
+        // --- Ускоренный фоновый опрос (1.5 секунды) ---
         async function pollOnce() {
             if (!currentUser || !lastMessageId) return;
             try {
@@ -708,7 +708,7 @@
 
         function scheduleNextPoll() {
             if (pollingTimeout) clearTimeout(pollingTimeout);
-            pollingTimeout = setTimeout(pollOnce, 2000); // каждые 2 секунды
+            pollingTimeout = setTimeout(pollOnce, 1500); // каждые 1.5 секунды
         }
 
         function startPolling() {
