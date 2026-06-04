@@ -686,11 +686,11 @@
                 }).subscribe();
         }
 
-        // --- Лёгкий фоновый опрос (раз в 5 секунд) ---
+        // --- Постоянный фоновый опрос (каждые 3 секунды, всегда) ---
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
-                if (!currentUser || !lastMessageId || document.hidden) return; // не опрашиваем в фоне
+                if (!currentUser || !lastMessageId) return;
                 try {
                     const { data } = await _sgClient.from('messages')
                         .select('id, user_id, user_name, text, created_at')
@@ -702,12 +702,19 @@
                         loadReactions(data.map(m => m.id));
                     }
                 } catch (e) {
-                    console.warn('Ошибка polling:', e);
+                    // молча игнорируем ошибки polling
                 }
-            }, 5000);
+            }, 3000);
         }
 
-        // При возвращении в чат — мгновенная проверка
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        // При возвращении в чат также делаем мгновенный запрос (для надёжности)
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser && lastMessageId) {
                 (async () => {
@@ -725,13 +732,6 @@
                 })();
             }
         });
-
-        function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
-        }
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
@@ -836,7 +836,7 @@
                 await checkAdminStatus();
                 await loadMessages();
                 subscribeMessages();
-                startPolling();
+                startPolling(); // запускаем постоянный опрос
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
