@@ -70,49 +70,18 @@
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* Спиннер загрузки */
-        .loading-spinner {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: 12px;
-            padding: 40px;
-            color: #6C63FF;
-            font-size: 16px;
-        }
-        .loading-spinner.active {
-            display: flex;
-        }
-        .spinner-circle {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(108, 99, 255, 0.2);
-            border-top: 4px solid #6C63FF;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; }
+        .loading-spinner.active { display: flex; }
+        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108, 99, 255, 0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 12px; padding: 2px 6px; font-size: 11px;
-            display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s;
-            border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap;
-        }
+        .reaction-badge { background: rgba(255, 255, 255, 0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
         .reaction-badge:hover { background: rgba(255, 255, 255, 0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108, 99, 255, 0.25); border-color: #6C63FF; }
 
-        .emoji-panel {
-            display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            background: white; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 8px;
-            gap: 8px; z-index: 10; margin-bottom: 8px; max-width: calc(100vw - 40px);
-            flex-direction: column; align-items: stretch;
-        }
+        .emoji-panel { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: white; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 8px; gap: 8px; z-index: 10; margin-bottom: 8px; max-width: calc(100vw - 40px); flex-direction: column; align-items: stretch; }
         .sent .emoji-panel { left: auto; right: 0; transform: none; }
         .received .emoji-panel { left: 0; right: auto; transform: none; }
         .emoji-panel.open { display: flex; }
@@ -129,59 +98,22 @@
         .emoji-option { font-size: 22px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
         .emoji-option:hover { transform: scale(1.3); }
 
-        .input-area {
-            background: rgba(255,255,255,0.8);
-            padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-            margin: 0 10px 10px 10px; display: flex; gap: 12px; align-items: flex-end;
-            border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
-            border: 1px solid rgba(108,99,255,0.3); flex-shrink: 0;
-        }
-        .input-area textarea {
-            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px;
-            line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95);
-            outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px;
-            scrollbar-width: none; -ms-overflow-style: none; max-width: 100%;
-            word-wrap: break-word; word-break: break-word;
-        }
+        .input-area { background: rgba(255,255,255,0.8); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 10px 10px 10px; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); flex-shrink: 0; }
+        .input-area textarea { flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95); outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px; scrollbar-width: none; -ms-overflow-style: none; max-width: 100%; word-wrap: break-word; word-break: break-word; }
         .input-area textarea::-webkit-scrollbar { display: none; }
         .input-area textarea::-webkit-resizer { display: none; }
-        .input-area textarea:focus {
-            border-color: #6C63FF; background: #FFFFFF;
-            box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .input-area button {
-            width: 52px; height: 52px; border-radius: 50%; padding: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #6C63FF, #8B82FF);
-            box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0;
-        }
+        .input-area textarea:focus { border-color: #6C63FF; background: #FFFFFF; box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1); }
+        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0; }
         .input-area button:hover { transform: scale(1.05); }
 
-        .admin-delete-msg {
-            position: absolute; top: 2px; right: 2px;
-            background: rgba(255,0,0,0.7); color: white; border: none;
-            border-radius: 50%; width: 20px; height: 20px; font-size: 14px;
-            line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center;
-        }
+        .admin-delete-msg { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; }
         .admin-active .admin-delete-msg { display: flex; }
 
-        .admin-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000;
-            align-items: center; justify-content: center;
-        }
+        .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .admin-modal.active { display: flex; }
-        .admin-panel {
-            background: white; border-radius: 24px; padding: 24px; max-width: 400px;
-            width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
+        .admin-panel { background: white; border-radius: 24px; padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .admin-panel h2 { margin-bottom: 16px; }
-        .admin-btn {
-            display: block; width: 100%; margin-bottom: 12px; padding: 12px;
-            background: #6C63FF; color: white; border: none; border-radius: 12px;
-            font-size: 16px; cursor: pointer; transition: 0.2s;
-        }
+        .admin-btn { display: block; width: 100%; margin-bottom: 12px; padding: 12px; background: #6C63FF; color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; transition: 0.2s; }
         .admin-btn:hover { background: #5A52E0; }
         .admin-btn.danger { background: #E53935; }
         .admin-btn.danger:hover { background: #C62828; }
@@ -190,13 +122,18 @@
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
 
+        /* Ссылки в сообщениях */
+        .bubble a {
+            color: #4A3AFF;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+        .bubble a:hover {
+            color: #2A1AD0;
+        }
+
         @media (max-width: 480px) {
-            .emoji-panel {
-                max-width: calc(100vw - 30px);
-                left: 50% !important;
-                right: auto !important;
-                transform: translateX(-50%) !important;
-            }
+            .emoji-panel { max-width: calc(100vw - 30px); left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
         }
     </style>
 </head>
@@ -212,7 +149,6 @@
 
     <div id="chatScreen" class="screen">
         <div class="messages" id="messages">
-            <!-- Спиннер загрузки внутри messages, чтобы показывать при загрузке истории -->
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
                 <span>Загрузка сообщений...</span>
@@ -227,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Админ-модальное окно -->
     <div class="admin-modal" id="adminModal">
         <div class="admin-panel">
             <h2>Админ-меню</h2>
@@ -249,7 +184,6 @@
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
         );
 
-        // DOM-элементы
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const nameInput = document.getElementById('nameInput');
@@ -586,24 +520,43 @@
             bubble.addEventListener('touchcancel', cancelPress);
         }
 
+        // --- Преобразование ссылок в кликабельные ---
+        function linkify(text) {
+            // Регулярное выражение для поиска URL, начинающихся с http:// или https://
+            const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+            // Разбиваем текст на части, заменяя URL на безопасные ссылки
+            return text.replace(urlRegex, (url) => {
+                // Экранируем кавычки и другие спецсимволы в href для безопасности
+                const safeUrl = url.replace(/"/g, '&quot;');
+                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+        }
+
         // --- Сообщения ---
         function renderMessage(msg) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at).toLocaleDateString('sv-SE');
             if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at); lastDisplayedDate = msgDate; }
+
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
             div.dataset.msgDate = msgDate;
+
             let html = '';
             if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name)}</div>`;
-            html += `<div class="msg-content"><div class="bubble">${escapeHtml(msg.text)}</div></div>`;
+
+            // Основное сообщение с автоматическими ссылками
+            html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text))}</div></div>`;
+
             html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at)}</div></div>`;
             html += `<button class="admin-delete-msg" data-id="${msg.id}">×</button>`;
+
             div.innerHTML = html;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             lastMessageId = msg.id;
+
             addLongPressListeners(div, msg.id);
             div.querySelector('.admin-delete-msg')?.addEventListener('click', (e) => { e.stopPropagation(); deleteMessage(msg.id); });
         }
@@ -615,7 +568,6 @@
                     .select('id, user_id, user_name, text, created_at')
                     .order('created_at', { ascending: true }).limit(50);
                 if (error) { console.error(error); return; }
-                // Очищаем всё, кроме спиннера (спиннер внутри messages, но мы его не трогаем)
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => {
                     if (child !== loadingSpinner) child.remove();
@@ -647,11 +599,15 @@
             if (!currentUser || !text.trim()) return;
             const isCommand = await handleSpecialCommand(text);
             if (isCommand) { msgInput.value = ''; return; }
+
             sendBtn.disabled = true;
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, user_name: currentUser.name, text: text.trim()
+                    user_id: currentUser.id,
+                    user_name: currentUser.name,
+                    text: text.trim()
                 }).select('id, user_id, user_name, text, created_at').single();
+
                 if (error) throw error;
                 if (data) renderMessage(data);
                 msgInput.value = ''; msgInput.style.height = 'auto'; msgInput.style.overflowY = 'hidden';
