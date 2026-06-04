@@ -286,7 +286,7 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
-        let pollingInterval = null;
+        let pollingTimeout = null;
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -686,50 +686,47 @@
                 }).subscribe();
         }
 
-        // --- Постоянный фоновый опрос (каждые 3 секунды, всегда) ---
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(async () => {
-                if (!currentUser || !lastMessageId) return;
-                try {
-                    const { data } = await _sgClient.from('messages')
-                        .select('id, user_id, user_name, text, created_at')
-                        .gt('id', lastMessageId)
-                        .order('created_at', { ascending: true });
-                    if (data && data.length > 0) {
-                        data.forEach(msg => renderMessage(msg, true));
-                        lastMessageId = data[data.length - 1].id;
-                        loadReactions(data.map(m => m.id));
-                    }
-                } catch (e) {
-                    // молча игнорируем ошибки polling
+        // --- Мгновенный опрос каждую секунду (агрессивный) ---
+        async function pollOnce() {
+            if (!currentUser || !lastMessageId) return;
+            try {
+                const { data } = await _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .gt('id', lastMessageId)
+                    .order('created_at', { ascending: true })
+                    .limit(5);
+                if (data && data.length > 0) {
+                    data.forEach(msg => renderMessage(msg, true));
+                    lastMessageId = data[data.length - 1].id;
+                    loadReactions(data.map(m => m.id));
                 }
-            }, 3000);
+            } catch (e) {
+                // тишина
+            }
+            scheduleNextPoll();
+        }
+
+        function scheduleNextPoll() {
+            if (pollingTimeout) clearTimeout(pollingTimeout);
+            pollingTimeout = setTimeout(pollOnce, 1000); // каждую секунду
+        }
+
+        function startPolling() {
+            if (pollingTimeout) clearTimeout(pollingTimeout);
+            pollOnce();
         }
 
         function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
+            if (pollingTimeout) {
+                clearTimeout(pollingTimeout);
+                pollingTimeout = null;
             }
         }
 
-        // При возвращении в чат также делаем мгновенный запрос (для надёжности)
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser && lastMessageId) {
-                (async () => {
-                    try {
-                        const { data } = await _sgClient.from('messages')
-                            .select('id, user_id, user_name, text, created_at')
-                            .gt('id', lastMessageId)
-                            .order('created_at', { ascending: true });
-                        if (data && data.length > 0) {
-                            data.forEach(msg => renderMessage(msg, true));
-                            lastMessageId = data[data.length - 1].id;
-                            loadReactions(data.map(m => m.id));
-                        }
-                    } catch (e) {}
-                })();
+                if (pollingTimeout) clearTimeout(pollingTimeout);
+                pollOnce();
             }
         });
 
@@ -836,7 +833,7 @@
                 await checkAdminStatus();
                 await loadMessages();
                 subscribeMessages();
-                startPolling(); // запускаем постоянный опрос
+                startPolling(); // запускаем агрессивный опрос
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
