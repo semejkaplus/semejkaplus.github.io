@@ -173,7 +173,7 @@
         .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
         .whitelist-list button { background: none; border: none; color: red; cursor: pointer; font-size: 14px; }
 
-        /* Кнопка участников */
+        /* Кнопка участников и дропдаун */
         .userlist-wrapper { position: absolute; top: 15px; right: 15px; z-index: 100; }
         .icon-btn {
             width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.7);
@@ -286,7 +286,7 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
-        let pollingTimeout = null;
+        let pollingInterval = null;
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -686,50 +686,52 @@
                 }).subscribe();
         }
 
-        // --- Ускоренный фоновый опрос (1.5 секунды) ---
-        async function pollOnce() {
-            if (!currentUser || !lastMessageId) return;
-            try {
-                const { data } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true });
-                if (data && data.length > 0) {
-                    console.log('Polling: найдены новые сообщения', data);
-                    data.forEach(msg => renderMessage(msg, true));
-                    lastMessageId = data[data.length - 1].id;
-                    loadReactions(data.map(m => m.id));
-                }
-            } catch (e) {
-                console.warn('Ошибка polling:', e);
-            }
-            scheduleNextPoll();
-        }
-
-        function scheduleNextPoll() {
-            if (pollingTimeout) clearTimeout(pollingTimeout);
-            pollingTimeout = setTimeout(pollOnce, 1500); // каждые 1.5 секунды
-        }
-
+        // --- Лёгкий фоновый опрос (раз в 5 секунд) ---
         function startPolling() {
-            if (pollingTimeout) clearTimeout(pollingTimeout);
-            pollOnce(); // немедленный запрос
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (!currentUser || !lastMessageId || document.hidden) return; // не опрашиваем в фоне
+                try {
+                    const { data } = await _sgClient.from('messages')
+                        .select('id, user_id, user_name, text, created_at')
+                        .gt('id', lastMessageId)
+                        .order('created_at', { ascending: true });
+                    if (data && data.length > 0) {
+                        data.forEach(msg => renderMessage(msg, true));
+                        lastMessageId = data[data.length - 1].id;
+                        loadReactions(data.map(m => m.id));
+                    }
+                } catch (e) {
+                    console.warn('Ошибка polling:', e);
+                }
+            }, 5000);
         }
 
-        function stopPolling() {
-            if (pollingTimeout) {
-                clearTimeout(pollingTimeout);
-                pollingTimeout = null;
-            }
-        }
-
+        // При возвращении в чат — мгновенная проверка
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) {
-                console.log('Вкладка активна, запускаем проверку сообщений');
-                if (pollingTimeout) clearTimeout(pollingTimeout);
-                pollOnce();
+            if (!document.hidden && currentUser && lastMessageId) {
+                (async () => {
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true });
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                })();
             }
         });
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
