@@ -631,7 +631,7 @@
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (!currentUser) return;
-                    // Если сообщение от другого пользователя и мы на мобильном — перезагружаем страницу
+                    // На мобильных перезагрузка при получении чужого сообщения (только если не своё)
                     if (payload.new.user_id !== currentUser.id && isMobile()) {
                         const now = Date.now();
                         if (now - lastReloadTime > RELOAD_COOLDOWN) {
@@ -640,7 +640,7 @@
                         }
                         return;
                     }
-                    // На ПК или своё сообщение — просто рендерим
+                    // На ПК или своё сообщение — рендерим
                     renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
@@ -650,7 +650,7 @@
                 }).subscribe();
         }
 
-        // --- Фоновый опрос только на ПК (на мобильных он не нужен, т.к. есть перезагрузка) ---
+        // --- Фоновый опрос только на ПК (на мобильных не нужен благодаря перезагрузкам) ---
         function startPolling() {
             if (!isMobile()) {
                 if (pollingInterval) clearInterval(pollingInterval);
@@ -710,7 +710,7 @@
                     renderMessage(data, true);
                     // Обновляем метку активности
                     updateLastActive();
-                    // На мобильных устройствах перезагружаем страницу после отправки (чтобы подтянуть и свои, и чужие сообщения)
+                    // На мобильных устройствах перезагружаем страницу после отправки
                     if (isMobile()) {
                         setTimeout(() => {
                             location.reload();
