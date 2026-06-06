@@ -48,7 +48,13 @@
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
 
-        /* Анимация убрана полностью */
+        .msg.animate-in {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .msg-content { display: flex; align-items: flex-end; gap: 6px; }
         .sent .msg-content { flex-direction: row-reverse; }
@@ -280,7 +286,12 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
-        let pollingTimeout = null;
+        let pollingInterval = null;
+        let lastReloadTime = 0;
+        const RELOAD_COOLDOWN = 2000; // минимум 2 секунды между перезагрузками
+
+        // Таймаут сессии в секундах (5 минут)
+        const SESSION_TIMEOUT = 300;
 
         // --- Авто-высота textarea ---
         function autoResize() {
@@ -301,6 +312,24 @@
             msgInput.value = '';
             msgInput.style.height = 'auto';
             msgInput.style.overflowY = 'hidden';
+        }
+
+        // --- Работа с активностью ---
+        function updateLastActive() {
+            localStorage.setItem('semejka_last_active', Date.now().toString());
+        }
+
+        function isSessionValid() {
+            const lastActive = localStorage.getItem('semejka_last_active');
+            if (!lastActive) return false;
+            const elapsed = (Date.now() - parseInt(lastActive)) / 1000;
+            return elapsed < SESSION_TIMEOUT;
+        }
+
+        // --- Определение мобильного устройства ---
+        function isMobile() {
+            return /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) 
+                || (navigator.maxTouchPoints > 1 && window.innerWidth < 768);
         }
 
         // --- Админские функции ---
@@ -547,8 +576,8 @@
             });
         }
 
-        // --- Сообщения (без анимации) ---
-        function renderMessage(msg) {
+        // --- Сообщения с анимацией ---
+        function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at).toLocaleDateString('sv-SE');
             if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at); lastDisplayedDate = msgDate; }
@@ -569,6 +598,11 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             lastMessageId = msg.id;
 
+            if (animate) {
+                div.classList.add('animate-in');
+                div.addEventListener('animationend', () => div.classList.remove('animate-in'), { once: true });
+            }
+
             addLongPressListeners(div, msg.id);
             div.querySelector('.admin-delete-msg')?.addEventListener('click', (e) => { e.stopPropagation(); deleteMessage(msg.id); });
         }
@@ -583,7 +617,7 @@
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
                 lastDisplayedDate = null;
-                data.forEach(msg => renderMessage(msg));
+                data.forEach(msg => renderMessage(msg, false));
                 if (data.length > 0) lastMessageId = data[data.length - 1].id;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 loadReactions(data.map(m => m.id));
@@ -596,7 +630,18 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new);
+                    if (!currentUser) return;
+                    // Если сообщение от другого пользователя и мы на мобильном — перезагружаем страницу
+                    if (payload.new.user_id !== currentUser.id && isMobile()) {
+                        const now = Date.now();
+                        if (now - lastReloadTime > RELOAD_COOLDOWN) {
+                            lastReloadTime = now;
+                            location.reload();
+                        }
+                        return;
+                    }
+                    // На ПК или своё сообщение — просто рендерим
+                    renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -605,40 +650,49 @@
                 }).subscribe();
         }
 
-        // --- Опрос каждые 2 секунды + мгновенная проверка при активации ---
-        async function pollOnce() {
-            if (!currentUser || !lastMessageId) return;
-            try {
-                const { data } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true })
-                    .limit(10);
-                if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg));
-                    lastMessageId = data[data.length - 1].id;
-                    loadReactions(data.map(m => m.id));
-                }
-            } catch (e) {}
-            scheduleNextPoll();
-        }
-        function scheduleNextPoll() {
-            if (pollingTimeout) clearTimeout(pollingTimeout);
-            pollingTimeout = setTimeout(pollOnce, 2000);
-        }
+        // --- Фоновый опрос только на ПК (на мобильных он не нужен, т.к. есть перезагрузка) ---
         function startPolling() {
-            if (pollingTimeout) clearTimeout(pollingTimeout);
-            pollOnce();
-        }
-        function stopPolling() {
-            if (pollingTimeout) { clearTimeout(pollingTimeout); pollingTimeout = null; }
+            if (!isMobile()) {
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(async () => {
+                    if (!currentUser || !lastMessageId || document.hidden) return;
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                }, 5000);
+            }
         }
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser && lastMessageId) {
-                if (pollingTimeout) clearTimeout(pollingTimeout);
-                pollOnce();
+            if (!document.hidden && currentUser && lastMessageId && !isMobile()) {
+                (async () => {
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                })();
             }
         });
+
+        function stopPolling() {
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+        }
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
@@ -652,10 +706,25 @@
                 }).select('id, user_id, user_name, text, created_at').single();
 
                 if (error) throw error;
-                if (data) renderMessage(data);
-                msgInput.value = ''; msgInput.style.height = 'auto'; msgInput.style.overflowY = 'hidden';
+                if (data) {
+                    renderMessage(data, true);
+                    // Обновляем метку активности
+                    updateLastActive();
+                    // На мобильных устройствах перезагружаем страницу после отправки (чтобы подтянуть и свои, и чужие сообщения)
+                    if (isMobile()) {
+                        setTimeout(() => {
+                            location.reload();
+                        }, 300);
+                    }
+                }
+                msgInput.value = ''; 
+                msgInput.style.height = 'auto'; 
+                msgInput.style.overflowY = 'hidden';
             } catch (err) { alert('Ошибка отправки: ' + err.message); }
-            finally { sendBtn.disabled = false; msgInput.focus(); }
+            finally { 
+                sendBtn.disabled = false; 
+                if (!isMobile()) msgInput.focus(); 
+            }
         }
 
         msgInput.addEventListener('keypress', async (e) => {
@@ -691,7 +760,7 @@
             }
         });
 
-        // --- Вход и автовход ---
+        // --- Вход и автовход с проверкой таймаута ---
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
@@ -723,6 +792,7 @@
                 }
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
+                updateLastActive();
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await checkAdminStatus();
                 await loadMessages();
@@ -735,13 +805,19 @@
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
-            _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
-                if (data) {
-                    currentUser = data;
-                    regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
-                } else { localStorage.removeItem('semejka_user'); }
-            });
+            // Если сессия валидна (не прошло 5 минут), автоматически входим без показа формы
+            if (isSessionValid()) {
+                _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
+                    if (data) {
+                        currentUser = data;
+                        regScreen.classList.remove('active'); chatScreen.classList.add('active');
+                        loadMessages().then(() => { subscribeMessages(); startPolling(); });
+                    } else { localStorage.removeItem('semejka_user'); }
+                });
+            } else {
+                // Сессия истекла, но имя остаётся заполненным, показываем экран входа
+                nameInput.value = user.name || '';
+            }
         }
 
         function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
