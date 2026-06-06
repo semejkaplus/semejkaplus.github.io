@@ -288,12 +288,10 @@
         let isAdmin = false;
         let pollingInterval = null;
         let lastReloadTime = 0;
-        const RELOAD_COOLDOWN = 2000; // минимум 2 секунды между перезагрузками
+        const RELOAD_COOLDOWN = 2000;
 
-        // Таймаут сессии в секундах (5 минут)
         const SESSION_TIMEOUT = 300;
 
-        // --- Авто-высота textarea ---
         function autoResize() {
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
@@ -314,7 +312,6 @@
             msgInput.style.overflowY = 'hidden';
         }
 
-        // --- Работа с активностью ---
         function updateLastActive() {
             localStorage.setItem('semejka_last_active', Date.now().toString());
         }
@@ -326,13 +323,11 @@
             return elapsed < SESSION_TIMEOUT;
         }
 
-        // --- Определение мобильного устройства ---
         function isMobile() {
             return /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) 
                 || (navigator.maxTouchPoints > 1 && window.innerWidth < 768);
         }
 
-        // --- Админские функции ---
         async function checkAdminStatus() {
             if (!currentUser || currentUser.name !== 'Макар') { isAdmin = false; updateAdminUI(); return; }
             const { data, error } = await _sgClient.from('admin_config').select('admin_activated').single();
@@ -419,7 +414,6 @@
             if (name) { addToWhitelist(name); whitelistNameInput.value = ''; }
         });
 
-        // --- Реакции ---
         const EMOJI_LIST = [
             { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
             { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
@@ -631,7 +625,6 @@
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (!currentUser) return;
-                    // На мобильных перезагрузка при получении чужого сообщения (только если не своё)
                     if (payload.new.user_id !== currentUser.id && isMobile()) {
                         const now = Date.now();
                         if (now - lastReloadTime > RELOAD_COOLDOWN) {
@@ -640,7 +633,6 @@
                         }
                         return;
                     }
-                    // На ПК или своё сообщение — рендерим
                     renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
@@ -650,7 +642,6 @@
                 }).subscribe();
         }
 
-        // --- Фоновый опрос только на ПК (на мобильных не нужен благодаря перезагрузкам) ---
         function startPolling() {
             if (!isMobile()) {
                 if (pollingInterval) clearInterval(pollingInterval);
@@ -708,22 +699,19 @@
                 if (error) throw error;
                 if (data) {
                     renderMessage(data, true);
-                    // Обновляем метку активности
                     updateLastActive();
-                    // На мобильных устройствах перезагружаем страницу после отправки
                     if (isMobile()) {
-                        setTimeout(() => {
-                            location.reload();
-                        }, 300);
+                        // Без задержки, мгновенная перезагрузка
+                        location.reload();
                     }
                 }
-                msgInput.value = ''; 
-                msgInput.style.height = 'auto'; 
+                msgInput.value = '';
+                msgInput.style.height = 'auto';
                 msgInput.style.overflowY = 'hidden';
             } catch (err) { alert('Ошибка отправки: ' + err.message); }
-            finally { 
-                sendBtn.disabled = false; 
-                if (!isMobile()) msgInput.focus(); 
+            finally {
+                sendBtn.disabled = false;
+                if (!isMobile()) msgInput.focus();
             }
         }
 
@@ -732,7 +720,6 @@
         });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); resetTextarea(); });
 
-        // --- Список участников ---
         async function loadUserList() {
             userDropdown.innerHTML = '';
             try {
@@ -760,7 +747,6 @@
             }
         });
 
-        // --- Вход и автовход с проверкой таймаута ---
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
@@ -794,7 +780,8 @@
                 localStorage.setItem('semejka_user', JSON.stringify(user));
                 updateLastActive();
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                await checkAdminStatus();
+                // Проверку админа запускаем параллельно, не ждём её
+                checkAdminStatus();
                 await loadMessages();
                 subscribeMessages();
                 startPolling();
@@ -805,17 +792,16 @@
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
-            // Если сессия валидна (не прошло 5 минут), автоматически входим без показа формы
             if (isSessionValid()) {
                 _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
                     if (data) {
                         currentUser = data;
                         regScreen.classList.remove('active'); chatScreen.classList.add('active');
+                        checkAdminStatus();
                         loadMessages().then(() => { subscribeMessages(); startPolling(); });
                     } else { localStorage.removeItem('semejka_user'); }
                 });
             } else {
-                // Сессия истекла, но имя остаётся заполненным, показываем экран входа
                 nameInput.value = user.name || '';
             }
         }
