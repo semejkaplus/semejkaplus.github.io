@@ -286,7 +286,6 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let isAdmin = false;
-        let pollingInterval = null;
         let lastReloadTime = 0;
         const RELOAD_COOLDOWN = 2000;
 
@@ -321,11 +320,6 @@
             if (!lastActive) return false;
             const elapsed = (Date.now() - parseInt(lastActive)) / 1000;
             return elapsed < SESSION_TIMEOUT;
-        }
-
-        function isMobile() {
-            return /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) 
-                || (navigator.maxTouchPoints > 1 && window.innerWidth < 768);
         }
 
         async function checkAdminStatus() {
@@ -625,7 +619,7 @@
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (!currentUser) return;
-                    // Перезагрузка при любом чужом сообщении (на всех устройствах)
+                    // Перезагрузка при ЛЮБОМ чужом сообщении на ВСЕХ устройствах
                     if (payload.new.user_id !== currentUser.id) {
                         const now = Date.now();
                         if (now - lastReloadTime > RELOAD_COOLDOWN) {
@@ -634,7 +628,7 @@
                         }
                         return;
                     }
-                    // Своё сообщение просто рендерим (перезагрузка будет в sendMessage для мобильных)
+                    // Своё сообщение просто показываем (на ПК), на мобильных перезагрузка в sendMessage
                     renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
@@ -644,10 +638,8 @@
                 }).subscribe();
         }
 
-        // Фоновый опрос больше не нужен, так как перезагрузка происходит при каждом новом сообщении
-        function startPolling() {
-            // Оставляем пустую функцию для совместимости, polling не используется
-        }
+        // Polling больше не нужен, оставляем пустые заглушки для совместимости
+        function startPolling() { }
         function stopPolling() { }
 
         async function sendMessage(text) {
@@ -665,8 +657,8 @@
                 if (data) {
                     renderMessage(data, true);
                     updateLastActive();
+                    // На мобильных сразу перезагружаемся, чтобы гарантированно обновиться
                     if (isMobile()) {
-                        // На мобильных сразу перезагружаемся после отправки
                         location.reload();
                     }
                 }
