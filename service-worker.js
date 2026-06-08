@@ -42,7 +42,6 @@ self.addEventListener('push', event => {
   event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
-// Клик по уведомлению — фокусируем или открываем чат
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
