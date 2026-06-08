@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SEMEJKA PLUS</title>
+
+    <!-- PWA: манифест -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6C63FF">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -256,6 +261,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Регистрация Service Worker для PWA (не влияет на логику чата)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker зарегистрирован'))
+                    .catch(err => console.error('Ошибка Service Worker:', err));
+            });
+        }
+
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
