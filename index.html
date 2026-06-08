@@ -185,12 +185,28 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ==================== PWA + Push + Обновление ====================
+        // ==================== PWA + Push (доработано) ====================
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             window.addEventListener('load', async () => {
                 try {
                     const registration = await navigator.serviceWorker.register('/service-worker.js');
                     console.log('SW registered');
+
+                    // Слушаем сообщения от SW (новые сообщения из уведомлений)
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data && event.data.user_name) {
+                            const fakeMsg = {
+                                id: 'push-' + Date.now(),
+                                user_id: 'unknown',
+                                user_name: event.data.user_name,
+                                text: event.data.body,
+                                created_at: new Date().toISOString()
+                            };
+                            if (currentUser && chatScreen.classList.contains('active')) {
+                                renderMessage(fakeMsg, true);
+                            }
+                        }
+                    });
 
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
@@ -257,7 +273,6 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
-        let pollingInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -438,7 +453,7 @@
             });
         }
 
-        // ==================== Оптимистичная отправка и Realtime + Polling ====================
+        // ==================== Сообщения (Realtime + Push, без опроса) ====================
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
@@ -457,7 +472,9 @@
             div.innerHTML = html;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            if (msg.id && !msg.id.toString().startsWith('optimistic')) lastMessageId = msg.id;
+            if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('push-')) {
+                lastMessageId = msg.id;
+            }
 
             if (animate) {
                 div.classList.add('animate-in');
@@ -500,43 +517,6 @@
                     if (ids.length) loadReactions(ids);
                 }).subscribe();
         }
-
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(async () => {
-                if (!currentUser || !lastMessageId) return;
-                try {
-                    const { data } = await _sgClient.from('messages')
-                        .select('id, user_id, user_name, text, created_at')
-                        .gt('id', lastMessageId)
-                        .order('created_at', { ascending: true })
-                        .limit(10);
-                    if (data && data.length > 0) {
-                        data.forEach(msg => renderMessage(msg, true));
-                        lastMessageId = data[data.length - 1].id;
-                        loadReactions(data.map(m => m.id));
-                    }
-                } catch (e) {}
-            }, 1500);
-        }
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser && lastMessageId) {
-                (async () => {
-                    try {
-                        const { data } = await _sgClient.from('messages')
-                            .select('id, user_id, user_name, text, created_at')
-                            .gt('id', lastMessageId)
-                            .order('created_at', { ascending: true })
-                            .limit(10);
-                        if (data && data.length > 0) {
-                            data.forEach(msg => renderMessage(msg, true));
-                            lastMessageId = data[data.length - 1].id;
-                            loadReactions(data.map(m => m.id));
-                        }
-                    } catch (e) {}
-                })();
-            }
-        });
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
@@ -619,7 +599,7 @@
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await loadMessages();
                 subscribeMessages();
-                startPolling();
+                // НИКАКОГО ОПРОСА – только Realtime и Push
                 if (window._pushSubscription) await saveSubscription(window._pushSubscription);
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
@@ -632,7 +612,7 @@
                 if (data) {
                     currentUser = data;
                     regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
+                    loadMessages().then(() => { subscribeMessages(); });
                 } else { localStorage.removeItem('semejka_user'); }
             });
         }
