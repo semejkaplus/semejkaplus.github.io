@@ -192,7 +192,7 @@
                     if (permission === 'granted') {
                         const subscription = await registration.pushManager.subscribe({
                             userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array('YOUR_PUBLIC_VAPID_KEY')
+                            applicationServerKey: urlBase64ToUint8Array("BPOJS8FN1hoVsNOyaUMKk1HdExG2fFgMDmg3mV_C2QBdOTWT6h5RKWfMLy-wedJlJoT2jXnBnfArU8ixOPvE554")
                         });
                         window._pushSubscription = subscription;
                         if (currentUser) await saveSubscription(subscription);
