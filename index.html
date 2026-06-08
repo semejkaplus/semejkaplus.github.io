@@ -42,22 +42,14 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
         #chatScreen.active { display: flex; }
 
-        /* Кнопка обновления в правом верхнем углу */
         .refresh-btn {
-            position: absolute;
-            top: 15px; right: 15px;
-            z-index: 10;
+            position: absolute; top: 15px; right: 15px; z-index: 10;
             width: 44px; height: 44px; border-radius: 50%;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.6);
-            font-size: 22px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            color: #3A3A4A;
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6); font-size: 22px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #3A3A4A;
         }
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
-        .refresh-btn:active { transform: scale(0.95); }
 
         .messages { flex: 1 1 auto; overflow-y: auto; padding: 70px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; }
 
@@ -67,7 +59,6 @@
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-
         .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -174,9 +165,7 @@
     </div>
 
     <div id="chatScreen" class="screen">
-        <!-- Кнопка обновления в правом верхнем углу -->
         <button class="refresh-btn" id="refreshBtn" title="Обновить чат">🔄</button>
-
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
@@ -282,6 +271,30 @@
             msgInput.style.overflowY = 'hidden';
         }
 
+        // ==================== Полная очистка состояния ====================
+        function cleanupState() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            _sgClient.removeAllChannels();
+            currentUser = null;
+            lastMessageId = null;
+            lastDisplayedDate = null;
+            reactionsCache = {};
+        }
+
+        function logout() {
+            localStorage.removeItem('semejka_user');
+            cleanupState();
+            regScreen.classList.add('active');
+            chatScreen.classList.remove('active');
+            nameInput.value = '';
+            resetTextarea();
+            console.log('Выход выполнен – все соединения закрыты');
+        }
+
+        // ==================== Реакции, эмодзи, рендер ====================
         const EMOJI_LIST = [
             { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
             { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
@@ -535,18 +548,7 @@
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
-
-            if (text.trim() === '@exit') {
-                localStorage.removeItem('semejka_user');
-                currentUser = null;
-                lastMessageId = null;
-                if (pollingInterval) clearInterval(pollingInterval);
-                nameInput.value = '';
-                regScreen.classList.add('active');
-                chatScreen.classList.remove('active');
-                resetTextarea();
-                return;
-            }
+            if (text.trim() === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
             const tempId = 'optimistic-' + Date.now();
@@ -611,6 +613,10 @@
             const name = nameInput.value.trim();
             if (!name) return;
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
+
+            // Перед входом принудительно очищаем все старые соединения
+            cleanupState();
+
             try {
                 const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
@@ -629,12 +635,14 @@
                 startPolling();
                 if (window._pushSubscription) await saveSubscription(window._pushSubscription);
                 msgInput.focus(); resetTextarea();
-            } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
+            } catch (err) { alert('Ошибка входа: ' + err.message); }
+            finally { joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
 
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
+            cleanupState();
             _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
                 if (data) {
                     currentUser = data;
