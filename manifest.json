@@ -1,0 +1,20 @@
+{
+  "name": "SEMEJKA PLUS",
+  "short_name": "Семейка+",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FEE0B7",
+  "theme_color": "#6C63FF",
+  "icons": [
+    {
+      "src": "https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
