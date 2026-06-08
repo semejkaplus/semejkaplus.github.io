@@ -51,7 +51,7 @@
         .msg.received { align-self: flex-start; align-items: flex-start; }
 
         .msg.animate-in {
-            animation: fadeInUp 0.5s ease-out;
+            animation: fadeInUp 0.3s ease-out;
         }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
@@ -192,10 +192,9 @@
                     if (permission === 'granted') {
                         const subscription = await registration.pushManager.subscribe({
                             userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array("BPOJS8FN1hoVsNOyaUMKk1HdExG2fFgMDmg3mV_C2QBdOTWT6h5RKWfMLy-wedJlJoT2jXnBnfArU8ixOPvE554")
+                            applicationServerKey: urlBase64ToUint8Array('BPOJS8FN1hoVsNOyaUMKk1HdExG2fFgMDmg3mV_C2QBdOTWT6h5RKWfMLy-wedJlJoT2jXnBnfArU8ixOPvE554')
                         });
                         window._pushSubscription = subscription;
-                        if (currentUser) await saveSubscription(subscription);
                     }
                 } catch (err) {
                     console.error('Push setup error:', err);
@@ -243,7 +242,6 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
-        let pollingInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -424,25 +422,26 @@
             });
         }
 
+        // ==================== Оптимистичная отправка и Realtime ====================
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
-            const msgDate = new Date(msg.created_at).toLocaleDateString('sv-SE');
-            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at); lastDisplayedDate = msgDate; }
+            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
+            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
-            div.dataset.msgDate = msgDate;
+            if (msg.created_at) div.dataset.msgDate = msgDate;
 
             let html = '';
             if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name)}</div>`;
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text))}</div></div>`;
-            html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at)}</div></div>`;
+            html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
 
             div.innerHTML = html;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            lastMessageId = msg.id;
+            if (msg.id && msg.id !== 'optimistic') lastMessageId = msg.id;
 
             if (animate) {
                 div.classList.add('animate-in');
@@ -475,7 +474,16 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new, true);
+                    if (currentUser) {
+                        // Проверяем, не является ли это сообщение нашим оптимистичным (временный ID)
+                        const existing = document.getElementById('msg-optimistic-' + payload.new.text + payload.new.user_id);
+                        if (existing) {
+                            existing.id = 'msg-' + payload.new.id;
+                            lastMessageId = payload.new.id;
+                            return;
+                        }
+                        renderMessage(payload.new, true);
+                    }
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -484,58 +492,48 @@
                 }).subscribe();
         }
 
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(async () => {
-                if (!currentUser || !lastMessageId || document.hidden) return;
-                try {
-                    const { data } = await _sgClient.from('messages')
-                        .select('id, user_id, user_name, text, created_at')
-                        .gt('id', lastMessageId)
-                        .order('created_at', { ascending: true })
-                        .limit(10);
-                    if (data && data.length > 0) {
-                        data.forEach(msg => renderMessage(msg, true));
-                        lastMessageId = data[data.length - 1].id;
-                        loadReactions(data.map(m => m.id));
-                    }
-                } catch (e) {}
-            }, 5000);
-        }
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser && lastMessageId) {
-                (async () => {
-                    try {
-                        const { data } = await _sgClient.from('messages')
-                            .select('id, user_id, user_name, text, created_at')
-                            .gt('id', lastMessageId)
-                            .order('created_at', { ascending: true })
-                            .limit(10);
-                        if (data && data.length > 0) {
-                            data.forEach(msg => renderMessage(msg, true));
-                            lastMessageId = data[data.length - 1].id;
-                            loadReactions(data.map(m => m.id));
-                        }
-                    } catch (e) {}
-                })();
-            }
-        });
-
-        function stopPolling() { if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; } }
-
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
             sendBtn.disabled = true;
+
+            // Оптимистичное отображение
+            const tempId = 'optimistic-' + Date.now();
+            const optimisticMsg = {
+                id: tempId,
+                user_id: currentUser.id,
+                user_name: currentUser.name,
+                text: text.trim(),
+                created_at: new Date().toISOString()
+            };
+            renderMessage(optimisticMsg, true);
+
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
                     user_id: currentUser.id, user_name: currentUser.name, text: text.trim()
                 }).select('id, user_id, user_name, text, created_at').single();
 
                 if (error) throw error;
-                if (data) renderMessage(data, true);
-                msgInput.value = ''; msgInput.style.height = 'auto'; msgInput.style.overflowY = 'hidden';
-            } catch (err) { alert('Ошибка отправки: ' + err.message); }
-            finally { sendBtn.disabled = false; msgInput.focus(); }
+                if (data) {
+                    // Заменяем временный ID на постоянный
+                    const tempElement = document.getElementById('msg-' + tempId);
+                    if (tempElement) {
+                        tempElement.id = 'msg-' + data.id;
+                        lastMessageId = data.id;
+                        const timeElement = tempElement.querySelector('.time');
+                        if (timeElement) timeElement.textContent = formatTime(data.created_at);
+                    }
+                }
+            } catch (err) {
+                alert('Ошибка отправки: ' + err.message);
+                const tempElement = document.getElementById('msg-' + tempId);
+                if (tempElement) tempElement.remove();
+            } finally {
+                sendBtn.disabled = false;
+                msgInput.value = '';
+                msgInput.style.height = 'auto';
+                msgInput.style.overflowY = 'hidden';
+                msgInput.focus();
+            }
         }
 
         msgInput.addEventListener('keypress', async (e) => {
@@ -577,10 +575,8 @@
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await loadMessages();
                 subscribeMessages();
-                startPolling();
-                msgInput.focus(); resetTextarea();
-                // Сохраняем push-подписку после входа
                 if (window._pushSubscription) await saveSubscription(window._pushSubscription);
+                msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
         });
 
@@ -591,7 +587,7 @@
                 if (data) {
                     currentUser = data;
                     regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
+                    loadMessages().then(() => { subscribeMessages(); });
                 } else { localStorage.removeItem('semejka_user'); }
             });
         }
