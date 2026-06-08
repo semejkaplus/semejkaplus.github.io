@@ -1,18 +1,16 @@
-const CACHE_NAME = 'semejka-v2'; // увеличиваем версию при каждом изменении
+const CACHE_NAME = 'semejka-v3';
 const ASSETS = [
   '.',
   'index.html',
   'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png'
 ];
 
-// Установка: кешируем ресурсы
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
 });
 
-// Активация: удаляем старые кеши
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -23,7 +21,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Стратегия «сеть сначала, потом кеш»
 self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
@@ -40,12 +37,25 @@ self.addEventListener('push', event => {
     badge: 'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png',
     vibrate: [200, 100, 200],
     tag: 'semejka-msg',
-    data: { url: '.' }
+    data: { url: '.', message: payload }
   };
   event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
+// Клик по уведомлению — фокусируем или открываем чат
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(clients.openWindow('.'));
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.postMessage(event.notification.data.message);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('.');
+      }
+    })
+  );
 });
