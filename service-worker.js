@@ -1,16 +1,18 @@
-const CACHE_NAME = 'semejka-v3';
+const CACHE_NAME = 'semejka-v4';
 const ASSETS = [
   '.',
   'index.html',
   'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png'
 ];
 
+// Установка — кешируем только статические ресурсы
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
 });
 
+// Активация — удаляем старые кеши
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -21,13 +23,18 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Перехват запросов: сеть сначала, для статики fallback в кеш
 self.addEventListener('fetch', event => {
+  // Пропускаем запросы к Supabase и другим API
+  if (event.request.url.includes('supabase.co') || event.request.url.includes('cdn.jsdelivr.net')) {
+    return; // не обрабатываем — идут напрямую в сеть
+  }
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 
-// Push-уведомления
+// Push-уведомления (без изменений)
 self.addEventListener('push', event => {
   if (!event.data) return;
   const payload = event.data.json();
