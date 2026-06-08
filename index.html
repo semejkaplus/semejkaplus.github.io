@@ -625,8 +625,8 @@
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (!currentUser) return;
-                    // Перезагрузка при любом чужом сообщении (на всех устройствах)
-                    if (payload.new.user_id !== currentUser.id) {
+                    // На мобильных перезагрузка при получении чужого сообщения
+                    if (payload.new.user_id !== currentUser.id && isMobile()) {
                         const now = Date.now();
                         if (now - lastReloadTime > RELOAD_COOLDOWN) {
                             lastReloadTime = now;
@@ -634,7 +634,7 @@
                         }
                         return;
                     }
-                    // Своё сообщение просто рендерим (перезагрузка будет в sendMessage для мобильных)
+                    // На ПК или своё сообщение — просто рендерим
                     renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
@@ -644,10 +644,49 @@
                 }).subscribe();
         }
 
+        // Фоновый опрос только на ПК (на мобильных он не нужен благодаря перезагрузкам)
         function startPolling() {
-            // Фоновый опрос не используется, так как перезагрузка при каждом новом сообщении
+            if (!isMobile()) {
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(async () => {
+                    if (!currentUser || !lastMessageId || document.hidden) return;
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                }, 5000);
+            }
         }
-        function stopPolling() { }
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser && lastMessageId && !isMobile()) {
+                (async () => {
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                })();
+            }
+        });
+
+        function stopPolling() {
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+        }
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
@@ -665,7 +704,7 @@
                     renderMessage(data, true);
                     updateLastActive();
                     if (isMobile()) {
-                        // На мобильных сразу перезагружаемся после отправки
+                        // На мобильных перезагружаемся после отправки
                         location.reload();
                     }
                 }
