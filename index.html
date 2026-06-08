@@ -6,7 +6,6 @@
     <title>SEMEJKA PLUS</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
-    <!-- Для iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Семейка+">
@@ -193,12 +192,10 @@
                     const registration = await navigator.serviceWorker.register('/service-worker.js');
                     console.log('SW registered');
 
-                    // Проверяем обновления Service Worker
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Новая версия готова – предлагаем обновиться
                                 if (confirm('Доступна новая версия приложения. Обновить сейчас?')) {
                                     window.location.reload();
                                 }
@@ -260,6 +257,7 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
+        let pollingInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -440,7 +438,7 @@
             });
         }
 
-        // ==================== Оптимистичная отправка и Realtime ====================
+        // ==================== Оптимистичная отправка и Realtime + Polling ====================
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
@@ -459,7 +457,7 @@
             div.innerHTML = html;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            if (msg.id && msg.id !== 'optimistic') lastMessageId = msg.id;
+            if (msg.id && !msg.id.toString().startsWith('optimistic')) lastMessageId = msg.id;
 
             if (animate) {
                 div.classList.add('animate-in');
@@ -493,12 +491,6 @@
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (currentUser) {
-                        const existing = document.getElementById('msg-optimistic-' + payload.new.text + payload.new.user_id);
-                        if (existing) {
-                            existing.id = 'msg-' + payload.new.id;
-                            lastMessageId = payload.new.id;
-                            return;
-                        }
                         renderMessage(payload.new, true);
                     }
                 }).subscribe();
@@ -508,6 +500,43 @@
                     if (ids.length) loadReactions(ids);
                 }).subscribe();
         }
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (!currentUser || !lastMessageId) return;
+                try {
+                    const { data } = await _sgClient.from('messages')
+                        .select('id, user_id, user_name, text, created_at')
+                        .gt('id', lastMessageId)
+                        .order('created_at', { ascending: true })
+                        .limit(10);
+                    if (data && data.length > 0) {
+                        data.forEach(msg => renderMessage(msg, true));
+                        lastMessageId = data[data.length - 1].id;
+                        loadReactions(data.map(m => m.id));
+                    }
+                } catch (e) {}
+            }, 1500);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser && lastMessageId) {
+                (async () => {
+                    try {
+                        const { data } = await _sgClient.from('messages')
+                            .select('id, user_id, user_name, text, created_at')
+                            .gt('id', lastMessageId)
+                            .order('created_at', { ascending: true })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            data.forEach(msg => renderMessage(msg, true));
+                            lastMessageId = data[data.length - 1].id;
+                            loadReactions(data.map(m => m.id));
+                        }
+                    } catch (e) {}
+                })();
+            }
+        });
 
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
@@ -533,7 +562,7 @@
                     const tempElement = document.getElementById('msg-' + tempId);
                     if (tempElement) {
                         tempElement.id = 'msg-' + data.id;
-                        lastMessageId = data.id;
+                        if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
                     }
@@ -590,6 +619,7 @@
                 regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 await loadMessages();
                 subscribeMessages();
+                startPolling();
                 if (window._pushSubscription) await saveSubscription(window._pushSubscription);
                 msgInput.focus(); resetTextarea();
             } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
@@ -602,7 +632,7 @@
                 if (data) {
                     currentUser = data;
                     regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); });
+                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
                 } else { localStorage.removeItem('semejka_user'); }
             });
         }
