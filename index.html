@@ -271,27 +271,20 @@
             msgInput.style.overflowY = 'hidden';
         }
 
-        // ==================== Полная очистка состояния ====================
-        function cleanupState() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
-            _sgClient.removeAllChannels();
+        // ==================== Выход (@exit) – быстрый, без разрыва соединений ====================
+        function logout() {
+            localStorage.removeItem('semejka_user');
+            // Не трогаем pollingInterval и Realtime, чтобы не замедлять последующий вход
+            // Они будут пересозданы при новом входе автоматически
             currentUser = null;
             lastMessageId = null;
             lastDisplayedDate = null;
             reactionsCache = {};
-        }
-
-        function logout() {
-            localStorage.removeItem('semejka_user');
-            cleanupState();
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
-            console.log('Выход выполнен – все соединения закрыты');
+            console.log('Выход выполнен');
         }
 
         // ==================== Реакции, эмодзи, рендер ====================
@@ -614,9 +607,7 @@
             if (!name) return;
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
-            // Перед входом принудительно очищаем все старые соединения
-            cleanupState();
-
+            // Прямой вход без лишних очисток
             try {
                 const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
@@ -642,7 +633,6 @@
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
-            cleanupState();
             _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
                 if (data) {
                     currentUser = data;
