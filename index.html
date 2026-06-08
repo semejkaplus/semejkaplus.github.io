@@ -271,11 +271,15 @@
             msgInput.style.overflowY = 'hidden';
         }
 
-        // ==================== Выход (@exit) – быстрый, без разрыва соединений ====================
+        // ==================== Выход (@exit) – быстрый ====================
         function logout() {
             localStorage.removeItem('semejka_user');
-            // Не трогаем pollingInterval и Realtime, чтобы не замедлять последующий вход
-            // Они будут пересозданы при новом входе автоматически
+            // Останавливаем опрос, но не трогаем Realtime (он пересоздастся при входе)
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            _sgClient.removeAllChannels();
             currentUser = null;
             lastMessageId = null;
             lastDisplayedDate = null;
@@ -607,7 +611,6 @@
             if (!name) return;
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
-            // Прямой вход без лишних очисток
             try {
                 const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
@@ -620,25 +623,55 @@
                 }
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
-                regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                await loadMessages();
-                subscribeMessages();
-                startPolling();
-                if (window._pushSubscription) await saveSubscription(window._pushSubscription);
-                msgInput.focus(); resetTextarea();
-            } catch (err) { alert('Ошибка входа: ' + err.message); }
-            finally { joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
+
+                // МГНОВЕННОЕ ПЕРЕКЛЮЧЕНИЕ ЭКРАНА
+                regScreen.classList.remove('active');
+                chatScreen.classList.add('active');
+                // Показываем спиннер
+                loadingSpinner.classList.add('active');
+                // Очищаем старые сообщения, если были
+                const children = Array.from(messagesDiv.children);
+                children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
+
+                // Фоновая инициализация
+                loadMessages().then(() => {
+                    subscribeMessages();
+                    startPolling();
+                    if (window._pushSubscription) saveSubscription(window._pushSubscription);
+                });
+
+                msgInput.focus();
+                resetTextarea();
+            } catch (err) {
+                alert('Ошибка входа: ' + err.message);
+                // В случае ошибки возвращаем экран регистрации
+                regScreen.classList.add('active');
+                chatScreen.classList.remove('active');
+            } finally {
+                joinBtn.disabled = false;
+                joinBtn.textContent = 'Войти';
+            }
         });
 
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
+            // При автовходе также сразу показываем чат
+            regScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+            loadingSpinner.classList.add('active');
             _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
                 if (data) {
                     currentUser = data;
-                    regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); startPolling(); });
-                } else { localStorage.removeItem('semejka_user'); }
+                    loadMessages().then(() => {
+                        subscribeMessages();
+                        startPolling();
+                    });
+                } else {
+                    localStorage.removeItem('semejka_user');
+                    regScreen.classList.add('active');
+                    chatScreen.classList.remove('active');
+                }
             });
         }
 
