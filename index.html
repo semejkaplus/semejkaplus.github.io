@@ -55,8 +55,6 @@
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
-        
-        /* ИСПРАВЛЕНО ЗДЕСЬ: отменяем центрирование родительского класса .active и растягиваем на весь экран */
         #chatScreen.active { display: flex; align-items: stretch; justify-content: flex-start; }
 
         .refresh-btn {
@@ -528,13 +526,17 @@
         }
 
         async function fetchMissedMessages() {
-            if (!currentUser || !lastMessageId) return;
+            if (!currentUser) return;
             try {
-                const { data } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true })
-                    .limit(20);
+                let query = _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at');
+                
+                if (lastMessageId) {
+                    query = query.gt('id', lastMessageId);
+                }
+                
+                const { data } = await query.order('created_at', { ascending: true }).limit(20);
+                
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
                     lastMessageId = data[data.length - 1].id;
@@ -548,13 +550,15 @@
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
-                if (!currentUser || !lastMessageId) return;
                 fetchMissedMessages();
             }, 3000);
         }
 
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) fetchMissedMessages();
+            if (!document.hidden && currentUser) {
+                fetchMissedMessages();
+                subscribeMessages(); // Переподключаем веб-сокет, если вкладка «уснула»
+            }
         });
 
         async function sendMessage(text) {
