@@ -66,44 +66,72 @@
         }
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
 
+        /* --- Обновленная лента сообщений --- */
         .messages {
             flex: 1; min-height: 0; overflow-y: auto;
-            padding: 10px 20px 10px 20px;
-            display: flex; flex-direction: column; gap: 14px;
+            padding: 15px 20px;
+            display: flex; flex-direction: column; gap: 12px;
             margin-top: 60px;
         }
 
-        .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
-        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
+        .date-separator { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
+        .date-separator span { background: rgba(255,255,255,0.4); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #4A4A5A; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; font-weight: 500; }
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-        .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.animate-in { animation: fadeInUp 0.25s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .msg-content { display: flex; align-items: flex-end; gap: 6px; }
+        .msg-content { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
 
+        /* Красивые баблы в стиле современных мессенджеров */
         .bubble {
-            display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-            background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
-            border: 1px solid rgba(255,255,255,0.6);
+            display: inline-block; padding: 12px 18px; font-size: 16px; line-height: 1.45; word-wrap: break-word;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
+            white-space: pre-wrap; /* Сохраняет переносы строк и абзацы */
+            cursor: pointer;
         }
-        .sent .bubble { border-bottom-right-radius: 8px; }
-        .received .bubble { border-bottom-left-radius: 8px; }
+        
+        /* Мои сообщения (Справа - Уютный Фиолетовый Liquid Glass) */
+        .sent .bubble { 
+            background: rgba(108, 99, 255, 0.85); 
+            color: #ffffff;
+            border-radius: 20px 20px 4px 20px; 
+            border: 1px solid rgba(255,255,255,0.25);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        }
+        
+        /* Чужие сообщения (Слева - Светлый Полупрозрачный Liquid Glass) */
+        .received .bubble { 
+            background: rgba(255, 255, 255, 0.75); 
+            color: #2C2C3E;
+            border-radius: 20px 20px 20px 4px; 
+            border: 1px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        }
 
-        .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
+        /* Кастомизация ссылок под разный фон */
+        .sent .bubble a { color: #FFD54F; text-decoration: underline; font-weight: 500; }
+        .sent .bubble a:hover { color: #FFE082; }
+        .received .bubble a { color: #534bae; text-decoration: underline; font-weight: 500; }
+        .received .bubble a:hover { color: #6C63FF; }
+
+        /* Имя пользователя над чужими сообщениями */
+        .name { font-size: 13px; font-weight: 700; margin-bottom: 4px; padding-left: 6px; color: #5244FF; }
         .sent .name { display: none; }
 
-        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        /* Подвал под сообщением */
+        .msg-footer { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        /* Аккуратное минималистичное время */
+        .time { font-size: 11px; color: #5A5A6A; padding: 0 4px; opacity: 0.8; white-space: nowrap; }
+        .sent .time { color: rgba(255, 255, 255, 0.85); }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; }
         .loading-spinner.active { display: flex; }
@@ -112,7 +140,7 @@
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; color: #333; }
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
@@ -166,13 +194,11 @@
         }
         .input-area button:hover { transform: scale(1.05); }
 
-        .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
-        .bubble a:hover { color: #4A42D0; }
-
         @media (max-width: 480px) {
+            .msg { max-width: 85%; } /* Больше места для текста на телефонах */
             .emoji-panel { max-width: calc(100vw - 30px); left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
-            .messages { padding: 5px 10px 5px 10px; gap: 10px; margin-top: 50px; }
-            .bubble { font-size: 15px; padding: 10px 14px; }
+            .messages { padding: 5px 12px; gap: 10px; margin-top: 50px; }
+            .bubble { font-size: 15px; padding: 10px 15px; }
         }
     </style>
 </head>
