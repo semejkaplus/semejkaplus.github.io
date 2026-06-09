@@ -55,7 +55,7 @@
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
-        #chatScreen.active { display: flex; align-items: stretch; justify-content: flex-start; }
+        #chatScreen.active { display: flex; }
 
         .refresh-btn {
             position: absolute; top: 15px; right: 15px; z-index: 10;
@@ -516,7 +516,10 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new, true);
+                    if (currentUser) {
+                        renderMessage(payload.new, true);
+                        loadReactions([payload.new.id]);
+                    }
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -525,15 +528,13 @@
                 }).subscribe();
         }
 
-        // ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ: Загружает данные из базы и проверяет на наличие новых сообщений
-        async function fetchMissedMessages(updateReactions = false) {
+        async function fetchMissedMessages() {
             if (!currentUser) return;
             try {
                 const { data } = await _sgClient.from('messages')
                     .select('id, user_id, user_name, text, created_at')
                     .order('created_at', { ascending: true })
                     .limit(50);
-                
                 if (data && data.length > 0) {
                     let hasNew = false;
                     data.forEach(msg => {
@@ -545,32 +546,22 @@
                     if (hasNew) {
                         messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     }
-                    // Обновляем реакции только при явном запросе (чтобы не спамить базу каждые 5 сек)
-                    if (updateReactions || hasNew) {
-                        loadReactions(data.map(m => m.id));
-                    }
+                    loadReactions(data.map(m => m.id));
                 }
-            } catch (e) { console.warn('Ошибка получения сообщений:', e); }
+            } catch (e) { console.warn('Ошибка подгрузки:', e); }
         }
 
-        // Ручной клик по кнопке 🔄 принудительно обновит и сообщения, и реакции
-        refreshBtn.addEventListener('click', () => {
-            fetchMissedMessages(true);
-        });
+        refreshBtn.addEventListener('click', fetchMissedMessages);
 
-        // НАДЁЖНЫЙ ФОНОВЫЙ ТАЙМЕР: Каждые 5 секунд вызывает напрямую функцию проверки данных
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
-                fetchMissedMessages(false);
+                fetchMissedMessages();
             }, 5000);
         }
 
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) {
-                fetchMissedMessages(true);
-                subscribeMessages(); 
-            }
+            if (!document.hidden && currentUser) fetchMissedMessages();
         });
 
         async function sendMessage(text) {
@@ -598,6 +589,9 @@
                         if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
+                        
+                        // Перепривязываем лонг-пресс обработчики на новый корректный ID сообщения
+                        addLongPressListeners(tempElement, data.id);
                     }
                 }
             } catch (err) {
@@ -621,6 +615,7 @@
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
+        // Поправлен баг, ломавший верстку при входе
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
             const d = new Date(dateStr);
