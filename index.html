@@ -55,7 +55,8 @@
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
-        #chatScreen.active { display: flex; }
+        /* Исправлено здесь: отменяем центрирование родительского класса .active */
+        #chatScreen.active { display: flex; align-items: stretch; justify-content: flex-start; }
 
         .refresh-btn {
             position: absolute; top: 15px; right: 15px; z-index: 10;
@@ -66,72 +67,44 @@
         }
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
 
-        /* --- Обновленная лента сообщений --- */
         .messages {
-            flex: 1; min-height: 0; overflow-y: auto;
-            padding: 15px 20px;
-            display: flex; flex-direction: column; gap: 12px;
+            flex: 1 1 auto; overflow-y: auto;
+            padding: 10px 20px 10px 20px;
+            display: flex; flex-direction: column; gap: 14px;
             margin-top: 60px;
         }
 
-        .date-separator { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
-        .date-separator span { background: rgba(255,255,255,0.4); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #4A4A5A; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; font-weight: 500; }
+        .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-        .msg.animate-in { animation: fadeInUp 0.25s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .msg-content { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
+        .msg-content { display: flex; align-items: flex-end; gap: 6px; }
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
 
-        /* Красивые баблы в стиле современных мессенджеров */
         .bubble {
-            display: inline-block; padding: 12px 18px; font-size: 16px; line-height: 1.45; word-wrap: break-word;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-            user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
-            white-space: pre-wrap; /* Сохраняет переносы строк и абзацы */
-            cursor: pointer;
+            display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
+            border: 1px solid rgba(255,255,255,0.6);
         }
-        
-        /* Мои сообщения (Справа - Уютный Фиолетовый Liquid Glass) */
-        .sent .bubble { 
-            background: rgba(108, 99, 255, 0.85); 
-            color: #ffffff;
-            border-radius: 20px 20px 4px 20px; 
-            border: 1px solid rgba(255,255,255,0.25);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        }
-        
-        /* Чужие сообщения (Слева - Светлый Полупрозрачный Liquid Glass) */
-        .received .bubble { 
-            background: rgba(255, 255, 255, 0.75); 
-            color: #2C2C3E;
-            border-radius: 20px 20px 20px 4px; 
-            border: 1px solid rgba(255,255,255,0.5);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        }
+        .sent .bubble { border-bottom-right-radius: 8px; }
+        .received .bubble { border-bottom-left-radius: 8px; }
 
-        /* Кастомизация ссылок под разный фон */
-        .sent .bubble a { color: #FFD54F; text-decoration: underline; font-weight: 500; }
-        .sent .bubble a:hover { color: #FFE082; }
-        .received .bubble a { color: #534bae; text-decoration: underline; font-weight: 500; }
-        .received .bubble a:hover { color: #6C63FF; }
-
-        /* Имя пользователя над чужими сообщениями */
-        .name { font-size: 13px; font-weight: 700; margin-bottom: 4px; padding-left: 6px; color: #5244FF; }
+        .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
 
-        /* Подвал под сообщением */
-        .msg-footer { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        /* Аккуратное минималистичное время */
-        .time { font-size: 11px; color: #5A5A6A; padding: 0 4px; opacity: 0.8; white-space: nowrap; }
-        .sent .time { color: rgba(255, 255, 255, 0.85); }
+        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; }
         .loading-spinner.active { display: flex; }
@@ -140,7 +113,7 @@
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; color: #333; }
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
@@ -194,11 +167,13 @@
         }
         .input-area button:hover { transform: scale(1.05); }
 
+        .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
+        .bubble a:hover { color: #4A42D0; }
+
         @media (max-width: 480px) {
-            .msg { max-width: 85%; } /* Больше места для текста на телефонах */
             .emoji-panel { max-width: calc(100vw - 30px); left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
-            .messages { padding: 5px 12px; gap: 10px; margin-top: 50px; }
-            .bubble { font-size: 15px; padding: 10px 15px; }
+            .messages { padding: 5px 10px 5px 10px; gap: 10px; margin-top: 50px; }
+            .bubble { font-size: 15px; padding: 10px 14px; }
         }
     </style>
 </head>
@@ -280,7 +255,6 @@
         }
 
         // ==================== Supabase ====================
-        // ⚠️ ВНИМАНИЕ: Если чат выдает ошибку, замени 'sb_publishable_...' ниже на твой реальный длинный anon key!
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
@@ -472,20 +446,16 @@
             if (!bubble) return;
             const startPress = (e) => {
                 if (e.target.closest('a')) return;
-                longPressTimer = setTimeout(() => showEmojiPanel(messageId), 400);
+                e.preventDefault();
+                longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300);
             };
             const cancelPress = () => { clearTimeout(longPressTimer); };
             bubble.addEventListener('mousedown', startPress);
             bubble.addEventListener('mouseup', cancelPress);
             bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: true });
+            bubble.addEventListener('touchstart', startPress, { passive: false });
             bubble.addEventListener('touchend', cancelPress);
-            bubble.addEventListener('touchmove', cancelPress);
             bubble.addEventListener('touchcancel', cancelPress);
-            bubble.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                showEmojiPanel(messageId);
-            });
         }
 
         function linkify(text) {
@@ -547,25 +517,7 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) {
-                        if (payload.new.user_id === currentUser.id) {
-                            const optimisticElems = document.querySelectorAll('[id^="msg-optimistic-"]');
-                            let matched = false;
-                            for (let el of optimisticElems) {
-                                const bubble = el.querySelector('.bubble');
-                                if (bubble && bubble.textContent === payload.new.text) {
-                                    el.id = 'msg-' + payload.new.id;
-                                    if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
-                                    const timeElement = el.querySelector('.time');
-                                    if (timeElement) timeElement.textContent = formatTime(payload.new.created_at);
-                                    matched = true;
-                                    break;
-                                }
-                            }
-                            if (matched) return;
-                        }
-                        renderMessage(payload.new, true);
-                    }
+                    if (currentUser) renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -670,9 +622,7 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                const { data: users, error: selectError } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
-                if (selectError) throw selectError;
-
+                const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
                 if (user) {
                     await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
