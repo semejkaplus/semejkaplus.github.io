@@ -2,7 +2,7 @@ const CACHE_NAME = 'semejka-v10';
 const ASSETS = [
   '.',
   'index.html',
-  'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png'
+  'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
 ];
 
 self.addEventListener('install', event => {
@@ -33,8 +33,8 @@ self.addEventListener('push', event => {
   const payload = event.data.json();
   const options = {
     body: payload.body,
-    icon: 'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png',
-    badge: 'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png',
+    icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
+    badge: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
     vibrate: [200, 100, 200],
     tag: 'semejka-msg',
     data: { url: '.', message: payload }
