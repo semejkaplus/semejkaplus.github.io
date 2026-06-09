@@ -525,39 +525,51 @@
                 }).subscribe();
         }
 
-        async function fetchMissedMessages() {
+        // ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ: Загружает данные из базы и проверяет на наличие новых сообщений
+        async function fetchMissedMessages(updateReactions = false) {
             if (!currentUser) return;
             try {
-                let query = _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at');
-                
-                if (lastMessageId) {
-                    query = query.gt('id', lastMessageId);
-                }
-                
-                const { data } = await query.order('created_at', { ascending: true }).limit(20);
+                const { data } = await _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true })
+                    .limit(50);
                 
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg, true));
-                    lastMessageId = data[data.length - 1].id;
-                    loadReactions(data.map(m => m.id));
+                    let hasNew = false;
+                    data.forEach(msg => {
+                        if (!document.getElementById('msg-' + msg.id)) {
+                            renderMessage(msg, true);
+                            hasNew = true;
+                        }
+                    });
+                    if (hasNew) {
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+                    // Обновляем реакции только при явном запросе (чтобы не спамить базу каждые 5 сек)
+                    if (updateReactions || hasNew) {
+                        loadReactions(data.map(m => m.id));
+                    }
                 }
-            } catch (e) { console.warn('Ошибка подгрузки:', e); }
+            } catch (e) { console.warn('Ошибка получения сообщений:', e); }
         }
 
-        refreshBtn.addEventListener('click', fetchMissedMessages);
+        // Ручной клик по кнопке 🔄 принудительно обновит и сообщения, и реакции
+        refreshBtn.addEventListener('click', () => {
+            fetchMissedMessages(true);
+        });
 
+        // НАДЁЖНЫЙ ФОНОВЫЙ ТАЙМЕР: Каждые 5 секунд вызывает напрямую функцию проверки данных
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
-                fetchMissedMessages();
-            }, 3000);
+                fetchMissedMessages(false);
+            }, 5000);
         }
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser) {
-                fetchMissedMessages();
-                subscribeMessages(); // Переподключаем веб-сокет, если вкладка «уснула»
+                fetchMissedMessages(true);
+                subscribeMessages(); 
             }
         });
 
