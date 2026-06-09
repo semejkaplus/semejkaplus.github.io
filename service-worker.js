@@ -1,8 +1,8 @@
-const CACHE_NAME = 'semejka-v9';
+const CACHE_NAME = 'semejka-v10';
 const ASSETS = [
   '.',
   'index.html',
-  'https://ltdfoto.ru/images/2025/06/09/xfUmOs.png'
+  'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png'
 ];
 
 self.addEventListener('install', event => {
@@ -33,8 +33,8 @@ self.addEventListener('push', event => {
   const payload = event.data.json();
   const options = {
     body: payload.body,
-    icon: 'https://ltdfoto.ru/images/2025/06/09/xfUmOs.png',
-    badge: 'https://ltdfoto.ru/images/2025/06/09/xfUmOs.png',
+    icon: 'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png',
+    badge: 'https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png',
     vibrate: [200, 100, 200],
     tag: 'semejka-msg',
     data: { url: '.', message: payload }
