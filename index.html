@@ -4,21 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SEMEJKA PLUS</title>
-
-    <!-- Новый логотип вкладки браузера -->
     <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
-
-    <!-- PWA манифест -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
-
-    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Семейка+">
-    <!-- Новый логотип для iOS -->
     <link rel="apple-touch-icon" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,7 +20,6 @@
         }
         .screen { display: none; height: 100%; }
         .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
         #regScreen {
             background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%);
             padding: 20px;
@@ -40,36 +31,22 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
         }
-
-        /* Старый логотип с эффектом Liquid Glass */
         .title-logo {
-            display: block;
-            max-width: 400px;
-            width: 95%;
-            margin: 0 auto 30px;
-            border-radius: 32px;
-            background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            display: block; max-width: 400px; width: 95%; margin: 0 auto 30px;
+            border-radius: 32px; background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.6);
             padding: 10px;
         }
-        .title-logo img {
-            width: 100%;
-            height: auto;
-            border-radius: 24px;
-        }
-
+        .title-logo img { width: 100%; height: auto; border-radius: 24px; }
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
         input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
-
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
         #chatScreen.active { display: flex; }
-
         .refresh-btn {
             position: absolute; top: 15px; right: 15px; z-index: 10;
             width: 44px; height: 44px; border-radius: 50%;
@@ -78,22 +55,17 @@
             cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #3A3A4A;
         }
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
-
         .messages { flex: 1 1 auto; overflow-y: auto; padding: 70px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; }
-
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
-
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
         .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         .msg-content { display: flex; align-items: flex-end; gap: 6px; }
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
-
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
@@ -103,27 +75,21 @@
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
-
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
-
         .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
-
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
-
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; }
         .loading-spinner.active { display: flex; }
-        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108, 99, 255, 0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255, 255, 255, 0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
-        .reaction-badge:hover { background: rgba(255, 255, 255, 0.95); transform: scale(1.05); }
-        .reaction-badge.active { background: rgba(108, 99, 255, 0.25); border-color: #6C63FF; }
-
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
+        .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
         .emoji-panel {
             display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
             background: white; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 8px;
@@ -145,7 +111,6 @@
         .emoji-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; justify-items: center; }
         .emoji-option { font-size: 22px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
         .emoji-option:hover { transform: scale(1.3); }
-
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -173,10 +138,8 @@
             box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0;
         }
         .input-area button:hover { transform: scale(1.05); }
-
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
         .bubble a:hover { color: #4A42D0; }
-
         @media (max-width: 480px) {
             .emoji-panel { max-width: calc(100vw - 30px); left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
         }
@@ -185,7 +148,6 @@
 <body>
     <div id="regScreen" class="screen active">
         <div class="box">
-            <!-- Старый логотип на экране регистрации -->
             <div class="title-logo">
                 <img src="https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png" alt="SEMEJKA PLUS" onerror="this.style.display='none'">
             </div>
@@ -302,7 +264,6 @@
             msgInput.style.overflowY = 'hidden';
         }
 
-        // ==================== Выход (@exit) ====================
         function logout() {
             localStorage.removeItem('semejka_user');
             if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
@@ -314,7 +275,6 @@
             resetTextarea();
         }
 
-        // ==================== Реакции (полный код) ====================
         const EMOJI_LIST = [
             { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
             { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
@@ -474,7 +434,6 @@
             });
         }
 
-        // ==================== Сообщения (полный код) ====================
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
@@ -643,7 +602,6 @@
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
 
-                // Мгновенно показываем чат и загружаем историю в фоне
                 regScreen.classList.remove('active');
                 chatScreen.classList.add('active');
                 loadingSpinner.classList.add('active');
