@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v8';
+const CACHE_NAME = 'semejka-v9';
 const ASSETS = [
   '.',
   'index.html',
