@@ -6,14 +6,17 @@
     <title>SEMEJKA PLUS</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Семейка+">
+    <link rel="apple-touch-icon" href="https://ltdfoto.ru/image/xfUmOs">
+    <link rel="icon" type="image/png" href="https://ltdfoto.ru/image/xfUmOs">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
-            height: 100dvh;
-            height: 100vh;
-            overflow: hidden;
+            height: 100dvh; height: 100vh; overflow: hidden;
         }
         .screen { display: none; height: 100%; }
         .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -24,8 +27,7 @@
         }
         .box {
             background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
@@ -41,7 +43,16 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; }
         #chatScreen.active { display: flex; }
 
-        .messages { flex: 1 1 auto; overflow-y: auto; padding: 20px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; }
+        .refresh-btn {
+            position: absolute; top: 15px; right: 15px; z-index: 10;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6); font-size: 22px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #3A3A4A;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+
+        .messages { flex: 1 1 auto; overflow-y: auto; padding: 70px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
@@ -49,14 +60,8 @@
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-
-        .msg.animate-in {
-            animation: fadeInUp 0.3s ease-out;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         .msg-content { display: flex; align-items: flex-end; gap: 6px; }
         .sent .msg-content { flex-direction: row-reverse; }
@@ -65,9 +70,7 @@
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-            background: rgba(240,236,245,0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
             border: 1px solid rgba(255,255,255,0.6);
         }
@@ -117,9 +120,7 @@
         .emoji-option:hover { transform: scale(1.3); }
 
         .input-area {
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
             margin: 0 10px 10px 10px; display: flex; gap: 12px; align-items: flex-end;
             border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
@@ -165,6 +166,7 @@
     </div>
 
     <div id="chatScreen" class="screen">
+        <button class="refresh-btn" id="refreshBtn" title="Обновить чат">🔄</button>
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
@@ -186,8 +188,16 @@
             window.addEventListener('load', async () => {
                 try {
                     const registration = await navigator.serviceWorker.register('/service-worker.js');
-                    console.log('SW registered');
-
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                if (confirm('Доступна новая версия приложения. Обновить сейчас?')) {
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
                         const subscription = await registration.pushManager.subscribe({
@@ -196,9 +206,7 @@
                         });
                         window._pushSubscription = subscription;
                     }
-                } catch (err) {
-                    console.error('Push setup error:', err);
-                }
+                } catch (err) { console.error('Push setup error:', err); }
             });
         }
 
@@ -228,7 +236,6 @@
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
         );
 
-        // DOM-элементы
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const nameInput = document.getElementById('nameInput');
@@ -236,12 +243,14 @@
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
         let currentUser = null, lastMessageId = null;
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
+        let pollingInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -263,6 +272,26 @@
             msgInput.style.overflowY = 'hidden';
         }
 
+        // ==================== Выход (@exit) ====================
+        function logout() {
+            localStorage.removeItem('semejka_user');
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            _sgClient.removeAllChannels();
+            currentUser = null;
+            lastMessageId = null;
+            lastDisplayedDate = null;
+            reactionsCache = {};
+            regScreen.classList.add('active');
+            chatScreen.classList.remove('active');
+            nameInput.value = '';
+            resetTextarea();
+            console.log('Выход выполнен');
+        }
+
+        // ==================== Реакции, эмодзи, рендер ====================
         const EMOJI_LIST = [
             { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
             { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
@@ -422,7 +451,6 @@
             });
         }
 
-        // ==================== Оптимистичная отправка и Realtime ====================
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
@@ -458,6 +486,7 @@
                     .select('id, user_id, user_name, text, created_at')
                     .order('created_at', { ascending: true }).limit(50);
                 if (error) { console.error(error); return; }
+                // Очищаем только сообщения, оставляя спиннер
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
                 lastDisplayedDate = null;
@@ -474,9 +503,7 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) {
-                        renderMessage(payload.new, true);
-                    }
+                    if (currentUser) renderMessage(payload.new, true);
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -485,11 +512,47 @@
                 }).subscribe();
         }
 
+        async function fetchMissedMessages() {
+            if (!currentUser || !lastMessageId) return;
+            try {
+                const { data } = await _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .gt('id', lastMessageId)
+                    .order('created_at', { ascending: true })
+                    .limit(20);
+                if (data && data.length > 0) {
+                    data.forEach(msg => renderMessage(msg, true));
+                    lastMessageId = data[data.length - 1].id;
+                    loadReactions(data.map(m => m.id));
+                }
+            } catch (e) { console.warn('Ошибка подгрузки:', e); }
+        }
+
+        refreshBtn.addEventListener('click', () => {
+            if (!currentUser) return;
+            // Принудительная перезагрузка истории, если chatScreen активен
+            loadMessages();
+        });
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(() => {
+                if (!currentUser || !lastMessageId) return;
+                fetchMissedMessages();
+            }, 3000);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser) {
+                fetchMissedMessages();
+            }
+        });
+
         async function sendMessage(text) {
             if (!currentUser || !text.trim()) return;
-            sendBtn.disabled = true;
+            if (text.trim() === '@exit') { logout(); return; }
 
-            // Оптимистичное отображение
+            sendBtn.disabled = true;
             const tempId = 'optimistic-' + Date.now();
             const optimisticMsg = {
                 id: tempId,
@@ -510,7 +573,7 @@
                     const tempElement = document.getElementById('msg-' + tempId);
                     if (tempElement) {
                         tempElement.id = 'msg-' + data.id;
-                        lastMessageId = data.id;
+                        if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
                     }
@@ -552,6 +615,7 @@
             const name = nameInput.value.trim();
             if (!name) return;
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
+
             try {
                 const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
@@ -564,12 +628,24 @@
                 }
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
-                regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                await loadMessages();
-                subscribeMessages();
-                if (window._pushSubscription) await saveSubscription(window._pushSubscription);
-                msgInput.focus(); resetTextarea();
-            } catch (err) { alert('Ошибка входа: ' + err.message); joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
+                // Мгновенно показываем чат и запускаем загрузку
+                regScreen.classList.remove('active');
+                chatScreen.classList.add('active');
+                loadMessages().then(() => {
+                    subscribeMessages();
+                    startPolling();
+                    if (window._pushSubscription) saveSubscription(window._pushSubscription);
+                });
+                msgInput.focus();
+                resetTextarea();
+            } catch (err) {
+                alert('Ошибка входа: ' + err.message);
+                regScreen.classList.add('active');
+                chatScreen.classList.remove('active');
+            } finally {
+                joinBtn.disabled = false;
+                joinBtn.textContent = 'Войти';
+            }
         });
 
         const saved = localStorage.getItem('semejka_user');
@@ -578,9 +654,15 @@
             _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
                 if (data) {
                     currentUser = data;
-                    regScreen.classList.remove('active'); chatScreen.classList.add('active');
-                    loadMessages().then(() => { subscribeMessages(); });
-                } else { localStorage.removeItem('semejka_user'); }
+                    regScreen.classList.remove('active');
+                    chatScreen.classList.add('active');
+                    loadMessages().then(() => {
+                        subscribeMessages();
+                        startPolling();
+                    });
+                } else {
+                    localStorage.removeItem('semejka_user');
+                }
             });
         }
 
