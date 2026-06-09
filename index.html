@@ -5,18 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SEMEJKA PLUS</title>
 
-    <!-- Новый логотип вкладки браузера -->
     <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
 
-    <!-- PWA манифест -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
 
-    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Семейка+">
-    <!-- Новый логотип для iOS -->
     <link rel="apple-touch-icon" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
 
     <style>
@@ -71,7 +67,7 @@
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
 
         .messages {
-            flex: 1 1 auto; overflow-y: auto;
+            flex: 1; min-height: 0; overflow-y: auto;
             padding: 10px 20px 10px 20px;
             display: flex; flex-direction: column; gap: 14px;
             margin-top: 60px;
@@ -258,6 +254,7 @@
         }
 
         // ==================== Supabase ====================
+        // ⚠️ ВНИМАНИЕ: Если чат выдает ошибку, замени 'sb_publishable_...' ниже на твой реальный длинный anon key!
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
@@ -449,16 +446,20 @@
             if (!bubble) return;
             const startPress = (e) => {
                 if (e.target.closest('a')) return;
-                e.preventDefault();
-                longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300);
+                longPressTimer = setTimeout(() => showEmojiPanel(messageId), 400);
             };
             const cancelPress = () => { clearTimeout(longPressTimer); };
             bubble.addEventListener('mousedown', startPress);
             bubble.addEventListener('mouseup', cancelPress);
             bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: false });
+            bubble.addEventListener('touchstart', startPress, { passive: true });
             bubble.addEventListener('touchend', cancelPress);
+            bubble.addEventListener('touchmove', cancelPress);
             bubble.addEventListener('touchcancel', cancelPress);
+            bubble.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showEmojiPanel(messageId);
+            });
         }
 
         function linkify(text) {
@@ -520,7 +521,25 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new, true);
+                    if (currentUser) {
+                        if (payload.new.user_id === currentUser.id) {
+                            const optimisticElems = document.querySelectorAll('[id^="msg-optimistic-"]');
+                            let matched = false;
+                            for (let el of optimisticElems) {
+                                const bubble = el.querySelector('.bubble');
+                                if (bubble && bubble.textContent === payload.new.text) {
+                                    el.id = 'msg-' + payload.new.id;
+                                    if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
+                                    const timeElement = el.querySelector('.time');
+                                    if (timeElement) timeElement.textContent = formatTime(payload.new.created_at);
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                            if (matched) return;
+                        }
+                        renderMessage(payload.new, true);
+                    }
                 }).subscribe();
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
@@ -625,7 +644,9 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
+                const { data: users, error: selectError } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
+                if (selectError) throw selectError;
+
                 let user = users?.[0];
                 if (user) {
                     await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
