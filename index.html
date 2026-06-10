@@ -37,7 +37,7 @@
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
         }
 
-        /* Старый логотип с эффектом Liquid Glass */
+        /* Логотип с эффектом Liquid Glass */
         .title-logo {
             display: block; max-width: 400px; width: 95%; margin: 0 auto 30px;
             border-radius: 32px; background: rgba(255, 255, 255, 0.3);
@@ -175,33 +175,42 @@
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
         .bubble a:hover { color: #4A42D0; }
 
-        /* СТИЛИ ДЛЯ ХОДОВОГО ОКНА (LIQUID GLASS CONFIRM MODAL) */
+        /* ==================== LIQUID GLASS CONFIRM MODAL ==================== */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.25); z-index: 10000;
+            background: rgba(0, 0, 0, 0.0); z-index: 10000;
             display: none; align-items: center; justify-content: center; padding: 20px;
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            opacity: 0; transition: opacity 0.3s ease;
+            backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
+            transition: background-color 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
         }
-        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-overlay.open {
+            display: flex; background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
         
         .glass-modal {
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(25px) saturate(160%); -webkit-backdrop-filter: blur(25px) saturate(160%);
-            border-radius: 30px; padding: 30px 25px; max-width: 340px; width: 100%;
-            box-shadow: 0 20px 45px rgba(0,0,0,0.15), inset 0 0 25px rgba(255,255,255,0.6);
+            border-radius: 30px; padding: 32px 25px; max-width: 340px; width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.18), inset 0 0 25px rgba(255,255,255,0.6);
             border: 1px solid rgba(255, 255, 255, 0.7); text-align: center;
-            transform: scale(0.85); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.7) translateY(30px); opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.34, 1.65, 0.64, 1), opacity 0.3s ease;
         }
-        .modal-overlay.open .glass-modal { transform: scale(1); }
+        .modal-overlay.open .glass-modal { transform: scale(1) translateY(0); opacity: 1; }
 
-        .glass-modal h3 { font-size: 20px; color: #2A2A3A; margin-bottom: 12px; font-weight: 700; }
-        .glass-modal p { font-size: 15px; color: #4A4A5A; margin-bottom: 24px; line-height: 1.4; }
+        /* Анимация исчезновения при закрытии */
+        .modal-overlay.closing { background: rgba(0, 0, 0, 0.0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+        .modal-overlay.closing .glass-modal { transform: scale(0.85) translateY(-10px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+
+        .glass-modal h3 { font-size: 21px; color: #2A2A3A; margin-bottom: 12px; font-weight: 700; letter-spacing: -0.3px; }
+        .glass-modal p { font-size: 15px; color: #5A5A6A; margin-bottom: 26px; line-height: 1.45; }
         
         .modal-buttons { display: flex; gap: 12px; }
         .modal-btn {
-            flex: 1; padding: 12px 20px; font-size: 16px; font-weight: 600;
-            border-radius: 18px; border: none; cursor: pointer; transition: 0.2s;
+            position: relative; flex: 1; padding: 14px 20px; font-size: 16px; font-weight: 600;
+            border-radius: 18px; border: none; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden;
         }
         .modal-btn.cancel {
             background: rgba(255,255,255,0.5); color: #4A4A5A;
@@ -209,11 +218,32 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .modal-btn.cancel:hover { background: rgba(255,255,255,0.8); transform: translateY(-1px); }
+        .modal-btn.cancel:active { transform: translateY(1px); }
+
         .modal-btn.confirm {
             background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white;
             box-shadow: 0 6px 15px rgba(108,99,255,0.3);
         }
         .modal-btn.confirm:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(108,99,255,0.4); }
+        .modal-btn.confirm:active { transform: translateY(1px); }
+
+        /* Интерактивная микро-анимация обновления внутри кнопки */
+        .modal-btn.confirm.loading {
+            pointer-events: none; animation: pulseGlow 1.2s infinite ease-in-out;
+            background: linear-gradient(135deg, #5349eb, #7469ff);
+        }
+        .btn-spinner {
+            display: none; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+        }
+        .modal-btn.confirm.loading .btn-spinner { display: inline-block; }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 6px 15px rgba(108,99,255,0.3); transform: scale(1); }
+            50% { box-shadow: 0 6px 25px rgba(108,99,255,0.6); transform: scale(0.98); }
+            100% { box-shadow: 0 6px 15px rgba(108,99,255,0.3); transform: scale(1); }
+        }
 
         @media (max-width: 480px) {
             .emoji-panel { max-width: calc(100vw - 30px); }
@@ -259,7 +289,10 @@
             <p>Вы действительно хотите проверить наличие новых сообщений?</p>
             <div class="modal-buttons">
                 <button class="modal-btn cancel" id="modalCancel">Отмена</button>
-                <button class="modal-btn confirm" id="modalConfirm">Да, обновить</button>
+                <button class="modal-btn confirm" id="modalConfirm">
+                    <div class="btn-spinner"></div>
+                    <span id="confirmBtnText">Да, обновить</span>
+                </button>
             </div>
         </div>
     </div>
@@ -333,6 +366,7 @@
         const confirmModal = document.getElementById('confirmModal');
         const modalCancel = document.getElementById('modalCancel');
         const modalConfirm = document.getElementById('modalConfirm');
+        const confirmBtnText = document.getElementById('confirmBtnText');
 
         let currentUser = null, lastMessageId = null;
         let lastDisplayedDate = null;
@@ -606,26 +640,65 @@
             } catch (e) { console.warn('Ошибка подгрузки:', e); }
         }
 
-        // ОТКРЫТИЕ КАСТОМНОГО ОКНА ПОДТВЕРЖДЕНИЯ
-        refreshBtn.addEventListener('click', () => {
-            confirmModal.classList.add('open');
-        });
+        // --- ЛОГИКА МОДАЛЬНОГО ОКНА С УЛУЧШЕННЫМИ АНИМАЦИЯМИ ---
+        
+        function openModal() {
+            confirmModal.style.display = 'flex';
+            // Небольшой хак для запуска анимации после смены display
+            setTimeout(() => {
+                confirmModal.classList.add('open');
+            }, 10);
+        }
 
-        // КНОПКА «ОТМЕНА» В МОДАЛЬНОМ ОКНЕ
-        modalCancel.addEventListener('click', () => {
+        function closeModal() {
+            confirmModal.classList.add('closing');
             confirmModal.classList.remove('open');
-        });
+            
+            // Ждем завершения анимации исчезновения перед скрытием элемента
+            setTimeout(() => {
+                confirmModal.style.display = 'none';
+                confirmModal.classList.remove('closing');
+                // Сбрасываем состояние кнопки на стандартное
+                modalConfirm.classList.remove('loading');
+                confirmBtnText.textContent = 'Да, обновить';
+                modalCancel.disabled = false;
+            }, 300);
+        }
 
-        // КНОПКА «ДА, ОБНОВИТЬ» В МОДАЛЬНОМ ОКНЕ
+        // Открытие по кнопке "Обновить"
+        refreshBtn.addEventListener('click', openModal);
+
+        // Кнопка «Отмена»
+        modalCancel.addEventListener('click', closeModal);
+
+        // Кнопка «Да, обновить» с анимацией загрузки
         modalConfirm.addEventListener('click', async () => {
-            confirmModal.classList.remove('open');
+            // Включаем режим загрузки на кнопке
+            modalConfirm.classList.add('loading');
+            confirmBtnText.textContent = 'Обновление...';
+            modalCancel.disabled = true; // Блокируем отмену во время процесса
+
+            const startTime = Date.now();
+
+            // Выполняем подгрузку пропущенных сообщений
             await fetchMissedMessages();
+
+            // Рассчитываем, сколько времени прошло. 
+            // Искусственно держим анимацию минимум 800 мс, чтобы пользователь уловил визуальный фидбек
+            const elapsedTime = Date.now() - startTime;
+            const minDuration = 800; 
+
+            if (elapsedTime < minDuration) {
+                setTimeout(closeModal, minDuration - elapsedTime);
+            } else {
+                closeModal();
+            }
         });
 
-        // Закрытие модального окна при клике на оверлей вокруг него
+        // Закрытие при клике по фону вокруг окна
         confirmModal.addEventListener('click', (e) => {
-            if (e.target === confirmModal) {
-                confirmModal.classList.remove('open');
+            if (e.target === confirmModal && !modalConfirm.classList.contains('loading')) {
+                closeModal();
             }
         });
 
