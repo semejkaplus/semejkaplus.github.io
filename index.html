@@ -328,7 +328,7 @@
         async function loadReactions(messageIds) {
             if (!messageIds.length) return;
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})&_cb=${Date.now()}`;
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})`;
                 const res = await fetch(url, {
                     headers: {
                         'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
@@ -390,7 +390,7 @@
                     if (data) {
                         reactionsCache[messageId] = reactions.filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
                         if (!reactionsCache[messageId]) reactionsCache[messageId] = [];
-                        if (!reactionsCache[messageId].some(r => r.id === data.id)) reactionsCache[messageId].push(data);
+                        if (!reactionsCache[messageId].some(r => r.id === data.id)) reactionsCache[r.message_id].push(data);
                     }
                 }
                 reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => !r.id.toString().startsWith('temp-'));
@@ -523,17 +523,15 @@
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
-                let query = _sgClient
-                    .from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true });
-                
-                if (lastMessageId) {
-                    query = query.gt('id', lastMessageId);
-                }
-
-                const { data, error } = await query.headers({ 'cache-control': 'no-cache' });
-                if (error) throw error;
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc${lastMessageId ? '&id=gt.' + lastMessageId : ''}`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
+                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
+                    }
+                });
+                if (!res.ok) throw new Error('API Sync Fail');
+                const data = await res.json();
                 
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
@@ -544,16 +542,20 @@
             }
         }
 
-        // Первичная холодная выкачка чата с нуля при входе через стандартный клиент
+        // БРОНЕБОЙНАЯ ЗАГРУЗКА ИСТОРИИ ЧЕРЕЗ СВЕРХБЫСТРЫЙ REST API
         async function loadMessages() {
             try {
-                const { data, error } = await _sgClient
-                    .from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true })
-                    .limit(50);
-
-                if (error) throw error;
+                // Прямой скоростной запрос последних 50 сообщений в обход тяжелых SDK-функций
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc&limit=50`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
+                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
+                    }
+                });
+                
+                if (!res.ok) throw new Error('Не удалось связаться с сервером истории');
+                const data = await res.json();
 
                 if (data) {
                     const children = Array.from(messagesDiv.children);
@@ -570,7 +572,7 @@
                 }
             } catch (e) {
                 console.error('Ошибка холодной загрузки истории:', e.message);
-                alert('Не удалось загрузить историю. Проверь подключение.');
+                alert('Ошибка сети при загрузке истории. Попробуйте обновить страницу.');
             }
         }
 
@@ -580,28 +582,24 @@
                 _sgClient.removeChannel(realtimeChannel);
             }
 
-            // Создаем канал с активированным вещанием в памяти и гарантированным ACK
             realtimeChannel = _sgClient.channel('chat-room', {
                 config: {
                     broadcast: { self: false, ack: true }
                 }
             });
 
-            // Ловим живые сообщения от других членов семьи мгновенно
             realtimeChannel.on('broadcast', { event: 'shout' }, payload => {
                 if (currentUser) {
                     renderMessage(payload.payload, true);
                 }
             });
 
-            // Слушаем изменения реакций в базе
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                     const ids = Object.keys(reactionsCache);
                     if (ids.length) loadReactions(ids);
                 }).subscribe();
 
-            // Запускаем трубу вещания
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
                     console.log('Эфир Broadcast успешно подключен!');
@@ -630,12 +628,10 @@
                 created_at: new Date().toISOString()
             };
 
-            // Шаг А: Мгновенно рендерим у себя на экране без ожидания ответов
             renderMessage(msgPayload, true);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             resetTextarea();
 
-            // Шаг Б: Вещаем по воздуху остальным участникам
             if (realtimeChannel && realtimeChannel.state === 'joined') {
                 realtimeChannel.send({
                     type: 'broadcast',
@@ -646,14 +642,12 @@
                 });
             }
 
-            // Шаг В: Беззвучно пишем в базу для сохранения в истории
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
                     user_id: currentUser.id, user_name: currentUser.name, text: cleanText
                 }).select('id, created_at').single();
 
                 if (!error && data) {
-                    // Подменяем временный ID на постоянный из базы для работы долгих реакций
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
                     if (tempEl) {
                         tempEl.id = 'msg-' + data.id;
@@ -677,7 +671,6 @@
             backupSyncInterval = setInterval(syncNewMessagesOnly, 4000);
         }
 
-        // Кнопка ручного обновления (работает как невидимая докачка)
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.style.transform = 'rotate(360deg)';
             refreshBtn.style.transition = 'transform 0.5s ease';
@@ -687,7 +680,6 @@
             setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
         });
 
-        // Бронебойное пробуждение скрипта смартфона при разблокировке или открытии вкладок
         ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
             window.addEventListener(evt, () => {
                 if (currentUser) {
