@@ -47,13 +47,13 @@
         .title-logo img { width: 100%; height: auto; border-radius: 24px; }
 
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
-        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; t[...]
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
-        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
+        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer;[...]
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
-        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
+        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: col[...]
         #chatScreen.active { display: flex; }
 
         .refresh-btn {
@@ -75,7 +75,7 @@
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
-        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2p[...]
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
@@ -104,7 +104,7 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0[...]
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
@@ -113,7 +113,7 @@
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; b[...]
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
@@ -281,7 +281,8 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
-        let pollingInterval = null;
+        let realtimeChannel = null;
+        let backupSyncInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -305,7 +306,7 @@
 
         function logout() {
             localStorage.removeItem('semejka_user');
-            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+            if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
             regScreen.classList.add('active');
@@ -526,9 +527,43 @@
             }
         }
 
+        // 1. УМНЫЙ ДЕЛЬТА-ДОБОР (Скачивает ТОЛЬКО новые сообщения, не трогая старые)
+        async function syncNewMessagesOnly() {
+            if (!currentUser) return;
+            try {
+                let query = _sgClient
+                    .from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true });
+                
+                // Если у нас уже есть сообщения, просим у базы только то, что новее самого последнего ID
+                if (lastMessageId) {
+                    query = query.gt('id', lastMessageId);
+                }
+
+                // Кэш-бастер, чтобы мобильный браузер не отдавал старые данные из памяти
+                const { data, error } = await query.headers({ 'cache-control': 'no-cache' });
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    data.forEach(msg => renderMessage(msg, true));
+                    // Автоматически подгружаем реакции для свежих сообщений
+                    loadReactions(data.map(m => m.id));
+                }
+            } catch (e) {
+                console.warn('Промах дельта-синхронизации (сеть мигнула):', e.message);
+            }
+        }
+
+        // 2. ЖЕЛЕЗОБЕТОННАЯ ПОДПИСКА С КОНТРОЛЕМ ОШИБОК
         function subscribeMessages() {
-            _sgClient.removeAllChannels();
-            _sgClient.channel('realtime:messages')
+            // Если старый канал забагался — уничтожаем его перед перезапуском
+            if (realtimeChannel) {
+                _sgClient.removeChannel(realtimeChannel);
+            }
+
+            realtimeChannel = _sgClient.channel('public:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     if (currentUser) {
                         const optimisticId = 'optimistic-' + payload.new.text.trim();
@@ -539,65 +574,58 @@
                             const timeEl = optimisticEl.querySelector('.time');
                             if (timeEl) timeEl.textContent = formatTime(payload.new.created_at);
                             addLongPressListeners(optimisticEl, payload.new.id);
-                            if (!lastMessageId || Number(payload.new.id) > Number(lastMessageId)) lastMessageId = Number(payload.new.id);
+                            if (!lastMessageId || Number(payload.new.id) > Number(lastMessageId)) {
+                                lastMessageId = Number(payload.new.id);
+                            }
                         } else {
                             renderMessage(payload.new, true);
                         }
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     }
-                }).subscribe();
-                
-            _sgClient.channel('realtime:reactions')
+                })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                     const ids = Object.keys(reactionsCache);
                     if (ids.length) loadReactions(ids);
-                }).subscribe();
-        }
+                });
 
-        // БЕСШОВНАЯ МГНОВЕННАЯ ПЕРЕЗАГРУЗКА КОМПОНЕНТА ЧАТА С СЕРВЕРА С НУЛЯ (ИГНОРИРУЯ ОШИБКИ ИНДЕКСАЦИИ ID)
-        async function forceFullRefresh() {
-            if (!currentUser) return;
-            try {
-                const { data, error } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true }).limit(50);
+            // Следим за статусом WebSocket-соединения в реальном времени
+            realtimeChannel.subscribe((status) => {
+                console.log("Статус сети мессенджера:", status);
                 
-                if (error) throw error;
-
-                if (data) {
-                    // Очищаем DOM чата, имитируя перезагрузку страницы для сообщений
-                    const children = Array.from(messagesDiv.children);
-                    children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
+                if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+                    console.log("Соединение потеряно! Мгновенный добор упущенного через HTTP...");
+                    syncNewMessagesOnly();
                     
-                    lastDisplayedDate = null;
-                    lastMessageId = null;
-
-                    // Отрисовываем чистый, актуальный массив данных
-                    data.forEach(msg => renderMessage(msg, false));
-                    if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
-                    
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(data.map(m => m.id));
+                    // Пробуем восстановить WebSocket-канал через 2 секунды
+                    setTimeout(subscribeMessages, 2000);
                 }
-            } catch (e) { 
-                console.error('Ошибка бесшовной жесткой перезагрузки данных:', e.message); 
-            }
+            });
         }
 
-        // Кнопка теперь принудительно пересобирает чат с нуля
-        refreshBtn.addEventListener('click', forceFullRefresh);
-
+        // 3. ФОНОВЫЙ СТРАХОВОЧНЫЙ ТАЙМЕР (тикает незаметно, пока юзер сидит в чате)
         function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            // Виртуальный жесткий рефреш каждые 3 секунды без моргания экрана
-            pollingInterval = setInterval(forceFullRefresh, 3000); 
+            if (backupSyncInterval) clearInterval(backupSyncInterval);
+            // Каждые 3.5 секунды проверяем, не пропустил ли WebSocket что-нибудь из-за микро-лагов
+            backupSyncInterval = setInterval(syncNewMessagesOnly, 3500);
         }
 
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) {
-                forceFullRefresh();
-                startPolling(); 
-            }
+        // Функция ручного обновления по кнопке-стрелочке (тоже делаем дельту, чтобы не моргал экран)
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.style.transform = 'rotate(360deg)';
+            refreshBtn.style.transition = 'transform 0.5s ease';
+            await syncNewMessagesOnly();
+            const ids = Object.keys(reactionsCache);
+            if (ids.length) await loadReactions(ids);
+            setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
+        });
+
+        // Агрессивное пробуждение при переключении вкладок или разблокировке
+        ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (currentUser) {
+                    syncNewMessagesOnly();
+                    subscribeMessages();
+                }
+            });
         });
 
         async function sendMessage(text) {
