@@ -104,7 +104,7 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
@@ -325,7 +325,6 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
-        // КЭШ-БЛАСТЕР НА ТЕХНИЧЕСКИЙ RAW FETCH РЕАКЦИЙ
         async function loadReactions(messageIds) {
             if (!messageIds.length) return;
             try {
@@ -518,7 +517,7 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // ==================== НОВАЯ СИСТЕМА ДОСТАВКИ (BROADCAST + ДЕЛЬТА) ====================
+        // ==================== СИСТЕМА ДОСТАВКИ (BROADCAST + ДЕЛЬТА) ====================
 
         // 1. УМНЫЙ ДОБОР ИЗ БАЗЫ (Не моргает экраном, дописывает только новинки)
         async function syncNewMessagesOnly() {
@@ -545,18 +544,16 @@
             }
         }
 
-        // Первичная холодная выкачка чата с нуля при входе
+        // Первичная холодная выкачка чата с нуля при входе через стандартный клиент
         async function loadMessages() {
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc&limit=50&_cb=${Date.now()}`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
-                if (!res.ok) throw new Error('HTTP Error');
-                const data = await res.json();
+                const { data, error } = await _sgClient
+                    .from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true })
+                    .limit(50);
+
+                if (error) throw error;
 
                 if (data) {
                     const children = Array.from(messagesDiv.children);
@@ -573,6 +570,7 @@
                 }
             } catch (e) {
                 console.error('Ошибка холодной загрузки истории:', e.message);
+                alert('Не удалось загрузить историю. Проверь подключение.');
             }
         }
 
