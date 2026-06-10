@@ -473,11 +473,11 @@
         }
 
         function renderMessage(msg, animate = false) {
-            // КРИТИЧЕСКИЙ ФИКС: Счётчик ID обновляется сразу, даже если это дубликат, 
-            // чтобы фоновый опрос базы не зависал на одном месте.
+            // ФИКС ТИПИЗАЦИИ: Переводим всё в строгое числовое значение, исключая ошибки JS-коэрции строк
             if (msg.id && !msg.id.toString().startsWith('optimistic')) {
-                if (!lastMessageId || msg.id > lastMessageId) {
-                    lastMessageId = msg.id;
+                const currentId = Number(msg.id);
+                if (!lastMessageId || currentId > Number(lastMessageId)) {
+                    lastMessageId = currentId;
                 }
             }
 
@@ -519,7 +519,7 @@
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
                 lastDisplayedDate = null;
                 data.forEach(msg => renderMessage(msg, false));
-                if (data.length > 0) lastMessageId = data[data.length - 1].id;
+                if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 loadReactions(data.map(m => m.id));
             } finally {
@@ -540,7 +540,7 @@
                             const timeEl = optimisticEl.querySelector('.time');
                             if (timeEl) timeEl.textContent = formatTime(payload.new.created_at);
                             addLongPressListeners(optimisticEl, payload.new.id);
-                            if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
+                            if (!lastMessageId || Number(payload.new.id) > Number(lastMessageId)) lastMessageId = Number(payload.new.id);
                         } else {
                             renderMessage(payload.new, true);
                         }
@@ -556,28 +556,39 @@
         }
 
         async function fetchMissedMessages() {
-            if (!currentUser || !lastMessageId) return;
+            if (!currentUser) return;
             try {
-                const { data } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true });
-                if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg, true));
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(data.map(m => m.id));
+                let query = _sgClient.from('messages').select('id, user_id, user_name, text, created_at');
+                
+                // ФИКС КНОПКИ: Если ID пустой, скрипт больше не падает, а делает аварийный перезапрос последних сообщений
+                if (lastMessageId) {
+                    query = query.gt('id', Number(lastMessageId)).order('created_at', { ascending: true });
+                } else {
+                    query = query.order('created_at', { ascending: false }).limit(50);
                 }
-            } catch (e) { console.warn('Fetch missed warning:', e.message); }
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    const messagesToRender = lastMessageId ? data : [...data].reverse();
+                    messagesToRender.forEach(msg => renderMessage(msg, true));
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    loadReactions(messagesToRender.map(m => m.id));
+                }
+            } catch (e) { 
+                console.error('Ошибка автоматического обновления:', e.message); 
+            }
         }
 
         refreshBtn.addEventListener('click', fetchMissedMessages);
 
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(fetchMissedMessages, 4000); 
+            // ФИКС ЗАДЕРЖКИ: Интервал опроса базы уменьшен до 3000мс (3 секунды)
+            pollingInterval = setInterval(fetchMissedMessages, 3000); 
         }
 
-        // При выходе из сна или переключении вкладки принудительно пинаем таймер, чтобы он не засыпал
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser) {
                 fetchMissedMessages();
@@ -612,14 +623,14 @@
                     const tempElement = document.getElementById('msg-' + tempId);
                     if (tempElement) {
                         tempElement.id = 'msg-' + data.id;
-                        if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
+                        if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id);
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
                         addLongPressListeners(tempElement, data.id);
                     }
                 }
             } catch (err) {
-                console.warn('Network send error handled: ', err.message);
+                console.warn('Сбой отправки сообщения перехвачен: ', err.message);
             } finally {
                 sendBtn.disabled = false;
                 msgInput.focus();
