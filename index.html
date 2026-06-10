@@ -473,7 +473,6 @@
         }
 
         function renderMessage(msg, animate = false) {
-            // ФИКС ТИПИЗАЦИИ: Переводим всё в строгое числовое значение, исключая ошибки JS-коэрции строк
             if (msg.id && !msg.id.toString().startsWith('optimistic')) {
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) {
@@ -555,43 +554,48 @@
                 }).subscribe();
         }
 
-        async function fetchMissedMessages() {
+        // БЕСШОВНАЯ МГНОВЕННАЯ ПЕРЕЗАГРУЗКА КОМПОНЕНТА ЧАТА С СЕРВЕРА С НУЛЯ (ИГНОРИРУЯ ОШИБКИ ИНДЕКСАЦИИ ID)
+        async function forceFullRefresh() {
             if (!currentUser) return;
             try {
-                let query = _sgClient.from('messages').select('id, user_id, user_name, text, created_at');
+                const { data, error } = await _sgClient.from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true }).limit(50);
                 
-                // ФИКС КНОПКИ: Если ID пустой, скрипт больше не падает, а делает аварийный перезапрос последних сообщений
-                if (lastMessageId) {
-                    query = query.gt('id', Number(lastMessageId)).order('created_at', { ascending: true });
-                } else {
-                    query = query.order('created_at', { ascending: false }).limit(50);
-                }
-
-                const { data, error } = await query;
                 if (error) throw error;
 
-                if (data && data.length > 0) {
-                    const messagesToRender = lastMessageId ? data : [...data].reverse();
-                    messagesToRender.forEach(msg => renderMessage(msg, true));
+                if (data) {
+                    // Очищаем DOM чата, имитируя перезагрузку страницы для сообщений
+                    const children = Array.from(messagesDiv.children);
+                    children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
+                    
+                    lastDisplayedDate = null;
+                    lastMessageId = null;
+
+                    // Отрисовываем чистый, актуальный массив данных
+                    data.forEach(msg => renderMessage(msg, false));
+                    if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
+                    
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(messagesToRender.map(m => m.id));
+                    loadReactions(data.map(m => m.id));
                 }
             } catch (e) { 
-                console.error('Ошибка автоматического обновления:', e.message); 
+                console.error('Ошибка бесшовной жесткой перезагрузки данных:', e.message); 
             }
         }
 
-        refreshBtn.addEventListener('click', fetchMissedMessages);
+        // Кнопка теперь принудительно пересобирает чат с нуля
+        refreshBtn.addEventListener('click', forceFullRefresh);
 
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
-            // ФИКС ЗАДЕРЖКИ: Интервал опроса базы уменьшен до 3000мс (3 секунды)
-            pollingInterval = setInterval(fetchMissedMessages, 3000); 
+            // Виртуальный жесткий рефреш каждые 3 секунды без моргания экрана
+            pollingInterval = setInterval(forceFullRefresh, 3000); 
         }
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser) {
-                fetchMissedMessages();
+                forceFullRefresh();
                 startPolling(); 
             }
         });
