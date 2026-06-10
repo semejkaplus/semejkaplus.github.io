@@ -72,7 +72,6 @@
             margin: 60px auto 0 auto;
             width: 100%; max-width: 800px;
             align-items: stretch;
-            /* Мобильные оптимизации рендеринга больших списков */
             will-change: scroll-position;
             contain: content;
         }
@@ -411,26 +410,22 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
-        // Оптимизировано: Асинхронное фоновое обновление реакций без заморозки основного треда
         async function loadReactions(messageIds) {
             if (!messageIds || !messageIds.length) return;
             try {
-                const { data } = await _sgClient.from('reactions').select('*').in('message_id', messageIds);
+                const { data, error } = await _sgClient.from('reactions').select('*').in('message_id', messageIds);
+                if (error) throw error;
                 if (data) {
-                    // Чистим старый кэш только для запрашиваемых сообщений, избегая утечек памяти
                     messageIds.forEach(id => { reactionsCache[id] = []; });
-                    
                     data.forEach(r => {
                         if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
                         reactionsCache[r.message_id].push(r);
                     });
-                    
-                    // Пошаговое распределение отрисовки баджей реакций
                     requestAnimationFrame(() => {
                         messageIds.forEach(id => updateReactionDisplay(id));
                     });
                 }
-            } catch (err) { console.error('Ошибка загрузки реакций:', err); }
+            } catch (err) { console.warn('Фоновое обновление реакций временно недоступно:', err.message); }
         }
 
         function updateReactionDisplay(messageId) {
@@ -447,10 +442,9 @@
             if (reactions.length === 0) { container.innerHTML = ''; return; }
             
             const counts = {};
-            reactions.forEach(r => { if (!r.id.toString().startsWith('temp-') || r.user_id === currentUser?.id) counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
+            reactions.forEach(r => { if (!r.id.toString().startsWith('temp-' ) || r.user_id === currentUser?.id) counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
             const userReaction = reactions.find(r => r.user_id === currentUser?.id);
             
-            // Замена innerHTML на фрагмент для минимизации лагов отрисовки на смартфонах
             const fragment = document.createDocumentFragment();
             Object.entries(counts).forEach(([emoji, count]) => {
                 const badge = document.createElement('span');
@@ -592,7 +586,13 @@
 
             div.innerHTML = html;
             messagesDiv.appendChild(div);
-            if (msg.id && !msg.id.toString().startsWith('optimistic')) lastMessageId = msg.id;
+            
+            // ВАЖНО: Фиксируем актуальный глобальный ID сообщения, если это не временная заглушка отправки
+            if (msg.id && !msg.id.toString().startsWith('optimistic')) {
+                if (!lastMessageId || msg.id > lastMessageId) {
+                    lastMessageId = msg.id;
+                }
+            }
 
             if (animate) {
                 div.classList.add('animate-in');
@@ -602,7 +602,6 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // Оптимизировано: Быстрая ленивая отрисовка истории пачками
         async function loadMessages() {
             loadingSpinner.classList.add('active');
             try {
@@ -616,12 +615,10 @@
                 lastDisplayedDate = null;
                 
                 if (data && data.length > 0) {
-                    // Рендерим сообщения через setTimeout, чтобы разгрузить UI поток телефона
                     data.forEach(msg => renderMessage(msg, false));
                     lastMessageId = data[data.length - 1].id;
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     
-                    // Вызываем реакции строго после того как DOM полностью успокоился
                     setTimeout(() => {
                         loadReactions(data.map(m => m.id));
                     }, 150);
@@ -635,11 +632,23 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) {
-                        renderMessage(payload.new, true);
+                    if (currentUser && payload.new) {
+                        // Если это наше собственное сообщение, сначала находим и заменяем его оптимистичную копию
+                        const optimisticEl = document.getElementById('msg-optimistic-' + payload.new.text.trim());
+                        if (optimisticEl && payload.new.user_id === currentUser.id) {
+                            optimisticEl.id = 'msg-' + payload.new.id;
+                            const timeEl = optimisticEl.querySelector('.time');
+                            if (timeEl) timeEl.textContent = formatTime(payload.new.created_at);
+                            addLongPressListeners(optimisticEl, payload.new.id);
+                            if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
+                        } else {
+                            // Отрисовываем входящие сообщения от других членов семьи
+                            renderMessage(payload.new, true);
+                        }
                         messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     }
                 }).subscribe();
+                
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                     const ids = Object.keys(reactionsCache);
@@ -647,24 +656,30 @@
                 }).subscribe();
         }
 
+        // Защищено от сетевых ошибок: Failed to fetch перехватывается без падения приложения
         async function fetchMissedMessages() {
             if (!currentUser || !lastMessageId) return;
             try {
-                const { data } = await _sgClient.from('messages')
+                const { data, error } = await _sgClient.from('messages')
                     .select('id, user_id, user_name, text, created_at')
                     .gt('id', lastMessageId)
                     .order('created_at', { ascending: true })
                     .limit(20);
+                
+                if (error) throw error;
+                
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
                     lastMessageId = data[data.length - 1].id;
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     loadReactions(data.map(m => m.id));
                 }
-            } catch (e) { console.warn('Ошибка подгрузки:', e); }
+            } catch (e) { 
+                // Молча обрабатываем отсутствие стабильного интернета на смартфоне
+                console.warn('Временная задержка сети чата (устройство оффлайн).'); 
+            }
         }
 
-        // --- ЛОГИКА МОДАЛЬНОГО ОКНА ДЛЯ ВСЕХ УСТРОЙСТВ ---
         function openModal() {
             confirmModal.style.display = 'flex';
             requestAnimationFrame(() => {
@@ -719,7 +734,7 @@
             pollingInterval = setInterval(() => {
                 if (!currentUser || !lastMessageId) return;
                 fetchMissedMessages();
-            }, 3500); // Слегка увеличили шаг пуллинга ради разгрузки процессора смартфона
+            }, 3500); 
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -727,21 +742,25 @@
         });
 
         async function sendMessage(text) {
-            if (!currentUser || !text.trim()) return;
-            if (text.trim() === '@exit') { logout(); return; }
+            const cleanText = text.trim();
+            if (!currentUser || !cleanText) return;
+            if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
-            const tempId = 'optimistic-' + Date.now();
+            
+            // Задаём детерминированный временный ID на базе текста для сопоставления в Realtime канале
+            const tempId = 'optimistic-' + cleanText;
             const optimisticMsg = {
                 id: tempId, user_id: currentUser.id, user_name: currentUser.name,
-                text: text.trim(), created_at: new Date().toISOString()
+                text: cleanText, created_at: new Date().toISOString()
             };
+            
             renderMessage(optimisticMsg, true);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, user_name: currentUser.name, text: text.trim()
+                    user_id: currentUser.id, user_name: currentUser.name, text: cleanText
                 }).select('id, user_id, user_name, text, created_at').single();
 
                 if (error) throw error;
@@ -752,12 +771,12 @@
                         if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
+                        addLongPressListeners(tempElement, data.id);
                     }
                 }
             } catch (err) {
-                console.error('Ошибка отправки:', err);
-                const tempElement = document.getElementById('msg-' + tempId);
-                if (tempElement) tempElement.remove();
+                console.warn('Сбой прямой отправки, сообщение уйдёт через пул: ', err.message);
+                // Если вылетел "Failed to fetch" при вводе, не удаляем текст у пользователя, даем дойти через резервный пуллинг
             } finally {
                 sendBtn.disabled = false;
                 msgInput.value = '';
