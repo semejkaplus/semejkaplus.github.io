@@ -31,7 +31,7 @@
         }
         .box {
             background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
@@ -41,7 +41,7 @@
         .title-logo {
             display: block; max-width: 400px; width: 95%; margin: 0 auto 30px;
             border-radius: 32px; background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(15px) saturate(180%); -webkit-backdrop-filter: blur(15px) saturate(180%);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.6);
             padding: 10px;
         }
@@ -73,6 +73,7 @@
             margin: 60px auto 0 auto;
             width: 100%; max-width: 800px;
             align-items: stretch;
+            will-change: transform; /* Оптимизация скролла на iOS/Android */
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -81,8 +82,8 @@
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-        .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.animate-in { animation: fadeInUp 0.25s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
         .msg-content { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
         .sent .msg-content { flex-direction: row-reverse; }
@@ -91,7 +92,7 @@
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-            background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            background: rgba(240,236,245,0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word;
             border: 1px solid rgba(255,255,255,0.6);
         }
@@ -144,7 +145,7 @@
         .emoji-option:hover { transform: scale(1.25); }
 
         .input-area {
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
             margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end;
             border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
@@ -181,27 +182,26 @@
             background: rgba(0, 0, 0, 0.0); z-index: 10000;
             display: none; align-items: center; justify-content: center; padding: 20px;
             backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
-            transition: background-color 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
+            transition: background-color 0.3s ease, backdrop-filter 0.3s ease;
         }
         .modal-overlay.open {
             display: flex; background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
         
         .glass-modal {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(25px) saturate(160%); -webkit-backdrop-filter: blur(25px) saturate(160%);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
             border-radius: 30px; padding: 32px 25px; max-width: 340px; width: 100%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.18), inset 0 0 25px rgba(255,255,255,0.6);
             border: 1px solid rgba(255, 255, 255, 0.7); text-align: center;
-            transform: scale(0.7) translateY(30px); opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.34, 1.65, 0.64, 1), opacity 0.3s ease;
+            transform: scale(0.8) translateY(20px); opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.34, 1.55, 0.64, 1), opacity 0.25s ease;
         }
         .modal-overlay.open .glass-modal { transform: scale(1) translateY(0); opacity: 1; }
 
-        /* Анимация исчезновения при закрытии */
         .modal-overlay.closing { background: rgba(0, 0, 0, 0.0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
-        .modal-overlay.closing .glass-modal { transform: scale(0.85) translateY(-10px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .modal-overlay.closing .glass-modal { transform: scale(0.85) translateY(-10px); opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease; }
 
         .glass-modal h3 { font-size: 21px; color: #2A2A3A; margin-bottom: 12px; font-weight: 700; letter-spacing: -0.3px; }
         .glass-modal p { font-size: 15px; color: #5A5A6A; margin-bottom: 26px; line-height: 1.45; }
@@ -218,16 +218,13 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .modal-btn.cancel:hover { background: rgba(255,255,255,0.8); transform: translateY(-1px); }
-        .modal-btn.cancel:active { transform: translateY(1px); }
 
         .modal-btn.confirm {
             background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white;
             box-shadow: 0 6px 15px rgba(108,99,255,0.3);
         }
         .modal-btn.confirm:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(108,99,255,0.4); }
-        .modal-btn.confirm:active { transform: translateY(1px); }
 
-        /* Интерактивная микро-анимация обновления внутри кнопки */
         .modal-btn.confirm.loading {
             pointer-events: none; animation: pulseGlow 1.2s infinite ease-in-out;
             background: linear-gradient(135deg, #5349eb, #7469ff);
@@ -261,7 +258,7 @@
             <div class="title-logo">
                 <img src="https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png" alt="SEMEJKA PLUS" onerror="this.style.display='none'">
             </div>
-            <p>Семейный чат для самых близких</p>
+            <p>Семейный chat для самых близких</p>
             <input type="text" id="nameInput" placeholder="Ваше имя">
             <button id="joinBtn">Войти</button>
         </div>
@@ -362,7 +359,6 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
         
-        // Элементы модального окна
         const confirmModal = document.getElementById('confirmModal');
         const modalCancel = document.getElementById('modalCancel');
         const modalConfirm = document.getElementById('modalConfirm');
@@ -414,8 +410,9 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
+        // Оптимизировано: загрузка реакций пачкой для предотвращения микро-лагов
         async function loadReactions(messageIds) {
-            if (!messageIds.length) return;
+            if (!messageIds || !messageIds.length) return;
             try {
                 const { data } = await _sgClient.from('reactions').select('*').in('message_id', messageIds);
                 if (data) {
@@ -423,7 +420,10 @@
                         if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
                         if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
                     });
-                    messageIds.forEach(id => updateReactionDisplay(id));
+                    // Рендерим изменения за один проход во фрейме анимации
+                    requestAnimationFrame(() => {
+                        messageIds.forEach(id => updateReactionDisplay(id));
+                    });
                 }
             } catch (err) { console.error('Ошибка загрузки реакций:', err); }
         }
@@ -439,6 +439,8 @@
                 footer.appendChild(container);
             }
             const reactions = reactionsCache[messageId] || [];
+            if (reactions.length === 0) { container.innerHTML = ''; return; }
+            
             const counts = {};
             reactions.forEach(r => counts[r.emoji] = (counts[r.emoji] || 0) + 1);
             const userReaction = reactions.find(r => r.user_id === currentUser?.id);
@@ -544,14 +546,13 @@
             if (!bubble) return;
             const startPress = (e) => {
                 if (e.target.closest('a')) return;
-                e.preventDefault();
                 longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300);
             };
             const cancelPress = () => { clearTimeout(longPressTimer); };
             bubble.addEventListener('mousedown', startPress);
             bubble.addEventListener('mouseup', cancelPress);
             bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: false });
+            bubble.addEventListener('touchstart', startPress, { passive: true });
             bubble.addEventListener('touchend', cancelPress);
             bubble.addEventListener('touchcancel', cancelPress);
         }
@@ -592,6 +593,7 @@
             addLongPressListeners(div, msg.id);
         }
 
+        // Оптимизировано: Быстрый рендеринг истории сообщений без блокировки UI телефона
         async function loadMessages() {
             loadingSpinner.classList.add('active');
             try {
@@ -599,13 +601,20 @@
                     .select('id, user_id, user_name, text, created_at')
                     .order('created_at', { ascending: true }).limit(50);
                 if (error) { console.error(error); return; }
+                
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
                 lastDisplayedDate = null;
+                
+                // Рендерим сообщения мгновенно
                 data.forEach(msg => renderMessage(msg, false));
                 if (data.length > 0) lastMessageId = data[data.length - 1].id;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                loadReactions(data.map(m => m.id));
+                
+                // Откладываем загрузку реакций, чтобы чат открывался без лагов
+                setTimeout(() => {
+                    loadReactions(data.map(m => m.id));
+                }, 100);
             } finally {
                 loadingSpinner.classList.remove('active');
             }
@@ -640,11 +649,9 @@
             } catch (e) { console.warn('Ошибка подгрузки:', e); }
         }
 
-        // --- ЛОГИКА МОДАЛЬНОГО ОКНА С УЛУЧШЕННЫМИ АНИМАЦИЯМИ ---
-        
+        // --- ЛОГИКА МОДАЛЬНОГО ОКНА С АНИМАЦИЯМИ ---
         function openModal() {
             confirmModal.style.display = 'flex';
-            // Небольшой хак для запуска анимации после смены display
             setTimeout(() => {
                 confirmModal.classList.add('open');
             }, 10);
@@ -654,37 +661,26 @@
             confirmModal.classList.add('closing');
             confirmModal.classList.remove('open');
             
-            // Ждем завершения анимации исчезновения перед скрытием элемента
             setTimeout(() => {
                 confirmModal.style.display = 'none';
                 confirmModal.classList.remove('closing');
-                // Сбрасываем состояние кнопки на стандартное
                 modalConfirm.classList.remove('loading');
                 confirmBtnText.textContent = 'Да, обновить';
                 modalCancel.disabled = false;
-            }, 300);
+            }, 250);
         }
 
-        // Открытие по кнопке "Обновить"
         refreshBtn.addEventListener('click', openModal);
-
-        // Кнопка «Отмена»
         modalCancel.addEventListener('click', closeModal);
 
-        // Кнопка «Да, обновить» с анимацией загрузки
         modalConfirm.addEventListener('click', async () => {
-            // Включаем режим загрузки на кнопке
             modalConfirm.classList.add('loading');
             confirmBtnText.textContent = 'Обновление...';
-            modalCancel.disabled = true; // Блокируем отмену во время процесса
+            modalCancel.disabled = true;
 
             const startTime = Date.now();
-
-            // Выполняем подгрузку пропущенных сообщений
             await fetchMissedMessages();
 
-            // Рассчитываем, сколько времени прошло. 
-            // Искусственно держим анимацию минимум 800 мс, чтобы пользователь уловил визуальный фидбек
             const elapsedTime = Date.now() - startTime;
             const minDuration = 800; 
 
@@ -695,7 +691,6 @@
             }
         });
 
-        // Закрытие при клике по фону вокруг окна
         confirmModal.addEventListener('click', (e) => {
             if (e.target === confirmModal && !modalConfirm.classList.contains('loading')) {
                 closeModal();
