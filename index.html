@@ -37,7 +37,6 @@
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
         }
 
-        /* Старый логотип с эффектом Liquid Glass */
         .title-logo {
             display: block; max-width: 400px; width: 95%; margin: 0 auto 30px;
             border-radius: 32px; background: rgba(255, 255, 255, 0.3);
@@ -66,7 +65,6 @@
         }
         .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
 
-        /* ИСПРАВЛЕНО: Задан align-items: stretch и центрирование ленты на больших экранах */
         .messages {
             flex: 1 1 auto; overflow-y: auto;
             padding: 10px 20px;
@@ -119,7 +117,6 @@
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
-        /* ИСПРАВЛЕНО: Меню теперь компактнее и позиционируется без вылета за экран */
         .emoji-panel {
             display: none; position: absolute; bottom: 100%;
             background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 6px;
@@ -138,16 +135,13 @@
         .emoji-search { width: 100%; padding: 6px 10px; font-size: 13px; border: 1px solid #ddd; border-radius: 10px; outline: none; background: #f9f9f9; }
         .emoji-search:focus { border-color: #6C63FF; box-shadow: 0 0 0 2px rgba(108,99,255,0.2); }
         
-        /* ИСПРАВЛЕНО: Сетка стала меньше за счет уменьшения gap и размеров */
         .quick-emojis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
         .quick-emojis.hidden { display: none; }
         .emoji-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
         
-        /* ИСПРАВЛЕНО: Размер эмодзи уменьшен до 18px */
         .emoji-option { font-size: 18px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
         .emoji-option:hover { transform: scale(1.25); }
 
-        /* ИСПРАВЛЕНО: Блок ввода теперь тоже центрируется по сетке сообщений */
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -181,7 +175,6 @@
         .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
-            /* ИСПРАВЛЕНО: На смартфонах панель реакций теперь прижимается к своему сообщению без центрирования по экрану */
             .emoji-panel { max-width: calc(100vw - 30px); }
             .sent .emoji-panel { left: auto !important; right: 0 !important; transform: none !important; }
             .received .emoji-panel { left: 0 !important; right: auto !important; transform: none !important; }
@@ -385,12 +378,12 @@
                     const { data, error } = await _sgClient.from('reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji: emoji }).select().single();
                     if (error) throw error;
                     if (data) {
-                        reactionsCache[messageId] = reactions.filter(r => r.id !== (existing?.id) && !r.id.startsWith('temp-'));
+                        reactionsCache[messageId] = reactions.filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
                         if (!reactionsCache[messageId]) reactionsCache[messageId] = [];
                         if (!reactionsCache[messageId].some(r => r.id === data.id)) reactionsCache[messageId].push(data);
                     }
                 }
-                reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => !r.id.startsWith('temp-'));
+                reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => !r.id.toString().startsWith('temp-'));
             } catch (err) { console.error('Ошибка реакции:', err); }
             finally { updateReactionDisplay(messageId); }
         }
@@ -460,14 +453,13 @@
             if (!bubble) return;
             const startPress = (e) => {
                 if (e.target.closest('a')) return;
-                e.preventDefault();
                 longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300);
             };
             const cancelPress = () => { clearTimeout(longPressTimer); };
             bubble.addEventListener('mousedown', startPress);
             bubble.addEventListener('mouseup', cancelPress);
             bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: false });
+            bubble.addEventListener('touchstart', startPress, { passive: true });
             bubble.addEventListener('touchend', cancelPress);
             bubble.addEventListener('touchcancel', cancelPress);
         }
@@ -531,8 +523,25 @@
             _sgClient.removeAllChannels();
             _sgClient.channel('realtime:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) renderMessage(payload.new, true);
+                    if (currentUser) {
+                        const optimisticId = 'optimistic-' + payload.new.text.trim();
+                        const optimisticEl = document.getElementById('msg-' + optimisticId);
+                        
+                        // Если это наше собственное сообщение, которое мы уже отрендерили оптимистично
+                        if (optimisticEl && payload.new.user_id === currentUser.id) {
+                            optimisticEl.id = 'msg-' + payload.new.id;
+                            const timeEl = optimisticEl.querySelector('.time');
+                            if (timeEl) timeEl.textContent = formatTime(payload.new.created_at);
+                            addLongPressListeners(optimisticEl, payload.new.id);
+                            if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
+                        } else {
+                            // Если это чужое сообщение или новое входящее
+                            renderMessage(payload.new, true);
+                        }
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
                 }).subscribe();
+                
             _sgClient.channel('realtime:reactions')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                     const ids = Object.keys(reactionsCache);
@@ -546,24 +555,21 @@
                 const { data } = await _sgClient.from('messages')
                     .select('id, user_id, user_name, text, created_at')
                     .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true })
-                    .limit(20);
+                    .order('created_at', { ascending: true }).limit(20);
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
                     lastMessageId = data[data.length - 1].id;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     loadReactions(data.map(m => m.id));
                 }
-            } catch (e) { console.warn('Ошибка подгрузки:', e); }
+            } catch (e) { console.warn('Fetch missed warning:', e.message); }
         }
 
         refreshBtn.addEventListener('click', fetchMissedMessages);
 
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(() => {
-                if (!currentUser || !lastMessageId) return;
-                fetchMissedMessages();
-            }, 3000);
+            pollingInterval = setInterval(fetchMissedMessages, 3000);
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -571,20 +577,27 @@
         });
 
         async function sendMessage(text) {
-            if (!currentUser || !text.trim()) return;
-            if (text.trim() === '@exit') { logout(); return; }
+            const cleanText = text.trim();
+            if (!currentUser || !cleanText) return;
+            if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
-            const tempId = 'optimistic-' + Date.now();
+            const tempId = 'optimistic-' + cleanText;
+            
+            // Мгновенный показ сообщения на экране
             const optimisticMsg = {
                 id: tempId, user_id: currentUser.id, user_name: currentUser.name,
-                text: text.trim(), created_at: new Date().toISOString()
+                text: cleanText, created_at: new Date().toISOString()
             };
             renderMessage(optimisticMsg, true);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Сброс поля ввода сразу для непрерывного набора текста
+            resetTextarea();
 
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, user_name: currentUser.name, text: text.trim()
+                    user_id: currentUser.id, user_name: currentUser.name, text: cleanText
                 }).select('id, user_id, user_name, text, created_at').single();
 
                 if (error) throw error;
@@ -595,25 +608,21 @@
                         if (!lastMessageId || data.id > lastMessageId) lastMessageId = data.id;
                         const timeElement = tempElement.querySelector('.time');
                         if (timeElement) timeElement.textContent = formatTime(data.created_at);
+                        addLongPressListeners(tempElement, data.id);
                     }
                 }
             } catch (err) {
-                alert('Ошибка отправки: ' + err.message);
-                const tempElement = document.getElementById('msg-' + tempId);
-                if (tempElement) tempElement.remove();
+                console.warn('Network send error handled: ', err.message);
             } finally {
                 sendBtn.disabled = false;
-                msgInput.value = '';
-                msgInput.style.height = 'auto';
-                msgInput.style.overflowY = 'hidden';
                 msgInput.focus();
             }
         }
 
         msgInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); resetTextarea(); }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); }
         });
-        sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); resetTextarea(); });
+        sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
 
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
