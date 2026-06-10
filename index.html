@@ -47,13 +47,13 @@
         .title-logo img { width: 100%; height: auto; border-radius: 24px; }
 
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
-        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; t[...]
+        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
-        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer;[...]
+        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.3s; }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
-        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: col[...]
+        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; align-items: center; }
         #chatScreen.active { display: flex; }
 
         .refresh-btn {
@@ -75,7 +75,7 @@
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
-        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2p[...]
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
@@ -104,7 +104,7 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0[...]
+        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
@@ -113,7 +113,7 @@
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; b[...]
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.7); }
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
@@ -282,7 +282,7 @@
         let reactionsCache = {};
         let longPressTimer = null;
         let realtimeChannel = null;
-        let backupSyncInterval = null;
+        let pollingInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -306,7 +306,7 @@
 
         function logout() {
             localStorage.removeItem('semejka_user');
-            if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
             regScreen.classList.add('active');
@@ -474,6 +474,7 @@
         }
 
         function renderMessage(msg, animate = false) {
+            // ФИКС ТИПИЗАЦИИ: Переводим всё в строгое числовое значение, исключая ошибки JS-коэрции строк
             if (msg.id && !msg.id.toString().startsWith('optimistic')) {
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) {
@@ -527,105 +528,44 @@
             }
         }
 
-        // 1. УМНЫЙ ДЕЛЬТА-ДОБОР (Скачивает ТОЛЬКО новые сообщения, не трогая старые)
-        async function syncNewMessagesOnly() {
+        async function fetchMissedMessages() {
             if (!currentUser) return;
             try {
-                let query = _sgClient
-                    .from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true });
+                let query = _sgClient.from('messages').select('id, user_id, user_name, text, created_at');
                 
-                // Если у нас уже есть сообщения, просим у базы только то, что новее самого последнего ID
+                // ФИКС КНОПКИ: Если ID пустой, скрипт больше не падает, а делает аварийный перезапрос последних сообщений
                 if (lastMessageId) {
-                    query = query.gt('id', lastMessageId);
+                    query = query.gt('id', Number(lastMessageId)).order('created_at', { ascending: true });
+                } else {
+                    query = query.order('created_at', { ascending: false }).limit(50);
                 }
 
-                // Кэш-бастер, чтобы мобильный браузер не отдавал старые данные из памяти
-                const { data, error } = await query.headers({ 'cache-control': 'no-cache' });
-                
+                const { data, error } = await query;
                 if (error) throw error;
-                
+
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg, true));
-                    // Автоматически подгружаем реакции для свежих сообщений
-                    loadReactions(data.map(m => m.id));
+                    const messagesToRender = lastMessageId ? data : [...data].reverse();
+                    messagesToRender.forEach(msg => renderMessage(msg, true));
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    loadReactions(messagesToRender.map(m => m.id));
                 }
-            } catch (e) {
-                console.warn('Промах дельта-синхронизации (сеть мигнула):', e.message);
+            } catch (e) { 
+                console.error('Ошибка автоматического обновления:', e.message); 
             }
         }
 
-        // 2. ЖЕЛЕЗОБЕТОННАЯ ПОДПИСКА С КОНТРОЛЕМ ОШИБОК
-        function subscribeMessages() {
-            // Если старый канал забагался — уничтожаем его перед перезапуском
-            if (realtimeChannel) {
-                _sgClient.removeChannel(realtimeChannel);
-            }
+        refreshBtn.addEventListener('click', fetchMissedMessages);
 
-            realtimeChannel = _sgClient.channel('public:messages')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    if (currentUser) {
-                        const optimisticId = 'optimistic-' + payload.new.text.trim();
-                        const optimisticEl = document.getElementById('msg-' + optimisticId);
-                        
-                        if (optimisticEl && payload.new.user_id === currentUser.id) {
-                            optimisticEl.id = 'msg-' + payload.new.id;
-                            const timeEl = optimisticEl.querySelector('.time');
-                            if (timeEl) timeEl.textContent = formatTime(payload.new.created_at);
-                            addLongPressListeners(optimisticEl, payload.new.id);
-                            if (!lastMessageId || Number(payload.new.id) > Number(lastMessageId)) {
-                                lastMessageId = Number(payload.new.id);
-                            }
-                        } else {
-                            renderMessage(payload.new, true);
-                        }
-                    }
-                })
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
-                    const ids = Object.keys(reactionsCache);
-                    if (ids.length) loadReactions(ids);
-                });
-
-            // Следим за статусом WebSocket-соединения в реальном времени
-            realtimeChannel.subscribe((status) => {
-                console.log("Статус сети мессенджера:", status);
-                
-                if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-                    console.log("Соединение потеряно! Мгновенный добор упущенного через HTTP...");
-                    syncNewMessagesOnly();
-                    
-                    // Пробуем восстановить WebSocket-канал через 2 секунды
-                    setTimeout(subscribeMessages, 2000);
-                }
-            });
-        }
-
-        // 3. ФОНОВЫЙ СТРАХОВОЧНЫЙ ТАЙМЕР (тикает незаметно, пока юзер сидит в чате)
         function startPolling() {
-            if (backupSyncInterval) clearInterval(backupSyncInterval);
-            // Каждые 3.5 секунды проверяем, не пропустил ли WebSocket что-нибудь из-за микро-лагов
-            backupSyncInterval = setInterval(syncNewMessagesOnly, 3500);
+            if (pollingInterval) clearInterval(pollingInterval);
+            // ФИКС ЗАДЕРЖКИ: Интервал опроса базы уменьшен до 3000мс (3 секунды)
+            pollingInterval = setInterval(fetchMissedMessages, 3000); 
         }
 
-        // Функция ручного обновления по кнопке-стрелочке (тоже делаем дельту, чтобы не моргал экран)
-        refreshBtn.addEventListener('click', async () => {
-            refreshBtn.style.transform = 'rotate(360deg)';
-            refreshBtn.style.transition = 'transform 0.5s ease';
-            await syncNewMessagesOnly();
-            const ids = Object.keys(reactionsCache);
-            if (ids.length) await loadReactions(ids);
-            setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
-        });
-
-        // Агрессивное пробуждение при переключении вкладок или разблокировке
-        ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                if (currentUser) {
-                    syncNewMessagesOnly();
-                    subscribeMessages();
-                }
-            });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser) {
+                fetchMissedMessages();
+            }
         });
 
         async function sendMessage(text) {
@@ -714,7 +654,6 @@
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
 
                 loadMessages().then(() => {
-                    subscribeMessages();
                     startPolling(); 
                     if (window._pushSubscription) saveSubscription(window._pushSubscription);
                 });
@@ -740,7 +679,6 @@
                 if (data) {
                     currentUser = data;
                     loadMessages().then(() => {
-                        subscribeMessages();
                         startPolling(); 
                     });
                 } else {
