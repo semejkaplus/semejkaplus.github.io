@@ -73,7 +73,7 @@
             margin: 60px auto 0 auto;
             width: 100%; max-width: 800px;
             align-items: stretch;
-            will-change: transform; /* Оптимизация скролла на iOS/Android */
+            will-change: transform;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -410,7 +410,6 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
-        // Оптимизировано: загрузка реакций пачкой для предотвращения микро-лагов
         async function loadReactions(messageIds) {
             if (!messageIds || !messageIds.length) return;
             try {
@@ -420,7 +419,6 @@
                         if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
                         if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
                     });
-                    // Рендерим изменения за один проход во фрейме анимации
                     requestAnimationFrame(() => {
                         messageIds.forEach(id => updateReactionDisplay(id));
                     });
@@ -593,7 +591,6 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // Оптимизировано: Быстрый рендеринг истории сообщений без блокировки UI телефона
         async function loadMessages() {
             loadingSpinner.classList.add('active');
             try {
@@ -606,12 +603,10 @@
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
                 lastDisplayedDate = null;
                 
-                // Рендерим сообщения мгновенно
                 data.forEach(msg => renderMessage(msg, false));
                 if (data.length > 0) lastMessageId = data[data.length - 1].id;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 
-                // Откладываем загрузку реакций, чтобы чат открывался без лагов
                 setTimeout(() => {
                     loadReactions(data.map(m => m.id));
                 }, 100);
@@ -649,12 +644,17 @@
             } catch (e) { console.warn('Ошибка подгрузки:', e); }
         }
 
-        // --- ЛОГИКА МОДАЛЬНОГО ОКНА С АНИМАЦИЯМИ ---
+        // --- ИСПРАВЛЕННАЯ ЛОГИКА МОДАЛЬНОГО ОКНА ДЛЯ ВСЕХ УСТРОЙСТВ ---
         function openModal() {
             confirmModal.style.display = 'flex';
-            setTimeout(() => {
-                confirmModal.classList.add('open');
-            }, 10);
+            
+            // Двойной requestAnimationFrame принуждает мобильные движки 
+            // прорисовать дисплей до попытки добавить класс анимации
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    confirmModal.classList.add('open');
+                });
+            });
         }
 
         function closeModal() {
