@@ -473,7 +473,16 @@
         }
 
         function renderMessage(msg, animate = false) {
+            // КРИТИЧЕСКИЙ ФИКС: Счётчик ID обновляется сразу, даже если это дубликат, 
+            // чтобы фоновый опрос базы не зависал на одном месте.
+            if (msg.id && !msg.id.toString().startsWith('optimistic')) {
+                if (!lastMessageId || msg.id > lastMessageId) {
+                    lastMessageId = msg.id;
+                }
+            }
+
             if (document.getElementById('msg-' + msg.id)) return;
+            
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
             if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
 
@@ -490,7 +499,6 @@
             div.innerHTML = html;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            if (msg.id && !msg.id.toString().startsWith('optimistic')) lastMessageId = msg.id;
 
             if (animate) {
                 div.classList.add('animate-in');
@@ -547,7 +555,6 @@
                 }).subscribe();
         }
 
-        // Автоматический сбор новых («пропущенных») сообщений из базы без перезагрузок страницы
         async function fetchMissedMessages() {
             if (!currentUser || !lastMessageId) return;
             try {
@@ -565,14 +572,17 @@
 
         refreshBtn.addEventListener('click', fetchMissedMessages);
 
-        // Функция запуска фонового таймера обновлений (каждые 4 секунды)
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(fetchMissedMessages, 4000); 
         }
 
+        // При выходе из сна или переключении вкладки принудительно пинаем таймер, чтобы он не засыпал
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) fetchMissedMessages();
+            if (!document.hidden && currentUser) {
+                fetchMissedMessages();
+                startPolling(); 
+            }
         });
 
         async function sendMessage(text) {
@@ -662,7 +672,7 @@
 
                 loadMessages().then(() => {
                     subscribeMessages();
-                    startPolling(); // Запуск 4-секундного авто-обновления
+                    startPolling(); 
                     if (window._pushSubscription) saveSubscription(window._pushSubscription);
                 });
                 msgInput.focus();
@@ -688,7 +698,7 @@
                     currentUser = data;
                     loadMessages().then(() => {
                         subscribeMessages();
-                        startPolling(); // Запуск 4-секундного авто-обновления для сохраненной сессии
+                        startPolling(); 
                     });
                 } else {
                     localStorage.removeItem('semejka_user');
