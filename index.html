@@ -527,7 +527,6 @@
                         const optimisticId = 'optimistic-' + payload.new.text.trim();
                         const optimisticEl = document.getElementById('msg-' + optimisticId);
                         
-                        // Если это наше собственное сообщение, которое мы уже отрендерили оптимистично
                         if (optimisticEl && payload.new.user_id === currentUser.id) {
                             optimisticEl.id = 'msg-' + payload.new.id;
                             const timeEl = optimisticEl.querySelector('.time');
@@ -535,7 +534,6 @@
                             addLongPressListeners(optimisticEl, payload.new.id);
                             if (!lastMessageId || payload.new.id > lastMessageId) lastMessageId = payload.new.id;
                         } else {
-                            // Если это чужое сообщение или новое входящее
                             renderMessage(payload.new, true);
                         }
                         messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -549,16 +547,16 @@
                 }).subscribe();
         }
 
+        // Автоматический сбор новых («пропущенных») сообщений из базы без перезагрузок страницы
         async function fetchMissedMessages() {
             if (!currentUser || !lastMessageId) return;
             try {
                 const { data } = await _sgClient.from('messages')
                     .select('id, user_id, user_name, text, created_at')
                     .gt('id', lastMessageId)
-                    .order('created_at', { ascending: true }).limit(20);
+                    .order('created_at', { ascending: true });
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
-                    lastMessageId = data[data.length - 1].id;
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     loadReactions(data.map(m => m.id));
                 }
@@ -567,9 +565,10 @@
 
         refreshBtn.addEventListener('click', fetchMissedMessages);
 
+        // Функция запуска фонового таймера обновлений (каждые 4 секунды)
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(fetchMissedMessages, 3000);
+            pollingInterval = setInterval(fetchMissedMessages, 4000); 
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -584,7 +583,6 @@
             sendBtn.disabled = true;
             const tempId = 'optimistic-' + cleanText;
             
-            // Мгновенный показ сообщения на экране
             const optimisticMsg = {
                 id: tempId, user_id: currentUser.id, user_name: currentUser.name,
                 text: cleanText, created_at: new Date().toISOString()
@@ -592,7 +590,6 @@
             renderMessage(optimisticMsg, true);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            // Сброс поля ввода сразу для непрерывного набора текста
             resetTextarea();
 
             try {
@@ -665,7 +662,7 @@
 
                 loadMessages().then(() => {
                     subscribeMessages();
-                    startPolling();
+                    startPolling(); // Запуск 4-секундного авто-обновления
                     if (window._pushSubscription) saveSubscription(window._pushSubscription);
                 });
                 msgInput.focus();
@@ -691,7 +688,7 @@
                     currentUser = data;
                     loadMessages().then(() => {
                         subscribeMessages();
-                        startPolling();
+                        startPolling(); // Запуск 4-секундного авто-обновления для сохраненной сессии
                     });
                 } else {
                     localStorage.removeItem('semejka_user');
