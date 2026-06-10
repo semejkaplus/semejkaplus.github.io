@@ -47,13 +47,13 @@
         .title-logo img { width: 100%; height: auto; border-radius: 24px; }
 
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
-        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; }
+        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
-        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
-        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; align-items: center; }
+        #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
         .refresh-btn {
@@ -75,7 +75,7 @@
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
-        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
@@ -104,7 +104,7 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .time font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
@@ -113,7 +113,7 @@
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.7); }
+        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
         .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
         .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
 
@@ -261,7 +261,7 @@
             if (error) console.error('Push subscription save error:', error);
         }
 
-        // ==================== Supabase ====================
+        // ==================== Supabase Setup ====================
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
@@ -281,8 +281,9 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
+        
         let realtimeChannel = null;
-        let pollingInterval = null;
+        let backupSyncInterval = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -306,7 +307,7 @@
 
         function logout() {
             localStorage.removeItem('semejka_user');
-            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+            if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
             regScreen.classList.add('active');
@@ -324,10 +325,19 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
+        // КЭШ-БЛАСТЕР НА ТЕХНИЧЕСКИЙ RAW FETCH РЕАКЦИЙ
         async function loadReactions(messageIds) {
             if (!messageIds.length) return;
             try {
-                const { data } = await _sgClient.from('reactions').select('*').in('message_id', messageIds);
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})&_cb=${Date.now()}`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
+                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
+                    }
+                });
+                if (!res.ok) throw new Error('Network fail');
+                const data = await res.json();
                 if (data) {
                     data.forEach(r => {
                         if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
@@ -474,8 +484,7 @@
         }
 
         function renderMessage(msg, animate = false) {
-            // ФИКС ТИПИЗАЦИИ: Переводим всё в строгое числовое значение, исключая ошибки JS-коэрции строк
-            if (msg.id && !msg.id.toString().startsWith('optimistic')) {
+            if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) {
                     lastMessageId = currentId;
@@ -484,7 +493,7 @@
 
             if (document.getElementById('msg-' + msg.id)) return;
             
-            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('sv-SE');
+            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
             if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
 
             const div = document.createElement('div');
@@ -509,106 +518,188 @@
             addLongPressListeners(div, msg.id);
         }
 
-        async function loadMessages() {
-            loadingSpinner.classList.add('active');
-            try {
-                const { data, error } = await _sgClient.from('messages')
-                    .select('id, user_id, user_name, text, created_at')
-                    .order('created_at', { ascending: true }).limit(50);
-                if (error) { console.error(error); return; }
-                const children = Array.from(messagesDiv.children);
-                children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
-                lastDisplayedDate = null;
-                data.forEach(msg => renderMessage(msg, false));
-                if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                loadReactions(data.map(m => m.id));
-            } finally {
-                loadingSpinner.classList.remove('active');
-            }
-        }
+        // ==================== НОВАЯ СИСТЕМА ДОСТАВКИ (BROADCAST + ДЕЛЬТА) ====================
 
-        async function fetchMissedMessages() {
+        // 1. УМНЫЙ ДОБОР ИЗ БАЗЫ (Не моргает экраном, дописывает только новинки)
+        async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
-                let query = _sgClient.from('messages').select('id, user_id, user_name, text, created_at');
+                let query = _sgClient
+                    .from('messages')
+                    .select('id, user_id, user_name, text, created_at')
+                    .order('created_at', { ascending: true });
                 
-                // ФИКС КНОПКИ: Если ID пустой, скрипт больше не падает, а делает аварийный перезапрос последних сообщений
                 if (lastMessageId) {
-                    query = query.gt('id', Number(lastMessageId)).order('created_at', { ascending: true });
-                } else {
-                    query = query.order('created_at', { ascending: false }).limit(50);
+                    query = query.gt('id', lastMessageId);
                 }
 
-                const { data, error } = await query;
+                const { data, error } = await query.headers({ 'cache-control': 'no-cache' });
                 if (error) throw error;
-
+                
                 if (data && data.length > 0) {
-                    const messagesToRender = lastMessageId ? data : [...data].reverse();
-                    messagesToRender.forEach(msg => renderMessage(msg, true));
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(messagesToRender.map(m => m.id));
+                    data.forEach(msg => renderMessage(msg, true));
+                    loadReactions(data.map(m => m.id));
                 }
-            } catch (e) { 
-                console.error('Ошибка автоматического обновления:', e.message); 
+            } catch (e) {
+                console.warn('Пропуск фоновой проверки базы данных:', e.message);
             }
         }
 
-        refreshBtn.addEventListener('click', fetchMissedMessages);
+        // Первичная холодная выкачка чата с нуля при входе
+        async function loadMessages() {
+            try {
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc&limit=50&_cb=${Date.now()}`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
+                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
+                    }
+                });
+                if (!res.ok) throw new Error('HTTP Error');
+                const data = await res.json();
 
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            // ФИКС ЗАДЕРЖКИ: Интервал опроса базы уменьшен до 3000мс (3 секунды)
-            pollingInterval = setInterval(fetchMissedMessages, 3000); 
+                if (data) {
+                    const children = Array.from(messagesDiv.children);
+                    children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
+                    
+                    lastDisplayedDate = null;
+                    lastMessageId = null;
+
+                    data.forEach(msg => renderMessage(msg, false));
+                    if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
+                    
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    loadReactions(data.map(m => m.id));
+                }
+            } catch (e) {
+                console.error('Ошибка холодной загрузки истории:', e.message);
+            }
         }
 
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) {
-                fetchMissedMessages();
+        // 2. СВЕРХСКОРОСТНАЯ ПОДПИСКА ЧЕРЕЗ BROADCAST (ПО ВОЗДУХУ)
+        function subscribeMessages() {
+            if (realtimeChannel) {
+                _sgClient.removeChannel(realtimeChannel);
             }
-        });
 
+            // Создаем канал с активированным вещанием в памяти и гарантированным ACK
+            realtimeChannel = _sgClient.channel('chat-room', {
+                config: {
+                    broadcast: { self: false, ack: true }
+                }
+            });
+
+            // Ловим живые сообщения от других членов семьи мгновенно
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => {
+                if (currentUser) {
+                    renderMessage(payload.payload, true);
+                }
+            });
+
+            // Слушаем изменения реакций в базе
+            _sgClient.channel('realtime:reactions')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
+                    const ids = Object.keys(reactionsCache);
+                    if (ids.length) loadReactions(ids);
+                }).subscribe();
+
+            // Запускаем трубу вещания
+            realtimeChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Эфир Broadcast успешно подключен!');
+                    syncNewMessagesOnly();
+                }
+                if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+                    console.log('Сбой канала вещания. Попытка реанимации...');
+                    setTimeout(subscribeMessages, 2000);
+                }
+            });
+        }
+
+        // 3. ОТПРАВКА СООБЩЕНИЯ (Мгновенный выстрел в эфир + запись в базу тихим ходом)
         async function sendMessage(text) {
             const cleanText = text.trim();
             if (!currentUser || !cleanText) return;
             if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
-            const tempId = 'optimistic-' + cleanText;
             
-            const optimisticMsg = {
-                id: tempId, user_id: currentUser.id, user_name: currentUser.name,
-                text: cleanText, created_at: new Date().toISOString()
+            const msgPayload = {
+                id: 'brc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                user_id: currentUser.id,
+                user_name: currentUser.name,
+                text: cleanText,
+                created_at: new Date().toISOString()
             };
-            renderMessage(optimisticMsg, true);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
+            // Шаг А: Мгновенно рендерим у себя на экране без ожидания ответов
+            renderMessage(msgPayload, true);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
             resetTextarea();
 
+            // Шаг Б: Вещаем по воздуху остальным участникам
+            if (realtimeChannel && realtimeChannel.state === 'joined') {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'shout',
+                    payload: msgPayload
+                }).then((resp) => {
+                    if (resp !== 'ok') console.warn('Broadcast не достучался до серверов, сработает база.');
+                });
+            }
+
+            // Шаг В: Беззвучно пишем в базу для сохранения в истории
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
                     user_id: currentUser.id, user_name: currentUser.name, text: cleanText
-                }).select('id, user_id, user_name, text, created_at').single();
+                }).select('id, created_at').single();
 
-                if (error) throw error;
-                if (data) {
-                    const tempElement = document.getElementById('msg-' + tempId);
-                    if (tempElement) {
-                        tempElement.id = 'msg-' + data.id;
-                        if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id);
-                        const timeElement = tempElement.querySelector('.time');
-                        if (timeElement) timeElement.textContent = formatTime(data.created_at);
-                        addLongPressListeners(tempElement, data.id);
+                if (!error && data) {
+                    // Подменяем временный ID на постоянный из базы для работы долгих реакций
+                    const tempEl = document.getElementById('msg-' + msgPayload.id);
+                    if (tempEl) {
+                        tempEl.id = 'msg-' + data.id;
+                        addLongPressListeners(tempEl, data.id);
+                        if (!lastMessageId || Number(data.id) > Number(lastMessageId)) {
+                            lastMessageId = Number(data.id);
+                        }
                     }
                 }
             } catch (err) {
-                console.warn('Сбой отправки сообщения перехвачен: ', err.message);
+                console.error('Ошибка фиксации сообщения в истории:', err.message);
             } finally {
                 sendBtn.disabled = false;
                 msgInput.focus();
             }
         }
 
+        // 4. СТРАХОВОЧНЫЙ СЛЕПОЙ ТАЙМЕР НА СЛУЧАЙ ЛИФТОВ И МЕТРО
+        function startPolling() {
+            if (backupSyncInterval) clearInterval(backupSyncInterval);
+            backupSyncInterval = setInterval(syncNewMessagesOnly, 4000);
+        }
+
+        // Кнопка ручного обновления (работает как невидимая докачка)
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.style.transform = 'rotate(360deg)';
+            refreshBtn.style.transition = 'transform 0.5s ease';
+            await syncNewMessagesOnly();
+            const ids = Object.keys(reactionsCache);
+            if (ids.length) await loadReactions(ids);
+            setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
+        });
+
+        // Бронебойное пробуждение скрипта смартфона при разблокировке или открытии вкладок
+        ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (currentUser) {
+                    syncNewMessagesOnly();
+                    subscribeMessages();
+                }
+            });
+        });
+
+        // ==================== Системные события UI ====================
         msgInput.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); }
         });
@@ -650,13 +741,18 @@
                 regScreen.classList.remove('active');
                 chatScreen.classList.add('active');
                 loadingSpinner.classList.add('active');
+                
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
 
-                loadMessages().then(() => {
-                    startPolling(); 
-                    if (window._pushSubscription) saveSubscription(window._pushSubscription);
-                });
+                loadingSpinner.classList.add('active');
+                await loadMessages();
+                loadingSpinner.classList.remove('active');
+                
+                subscribeMessages();
+                startPolling(); 
+                if (window._pushSubscription) saveSubscription(window._pushSubscription);
+                
                 msgInput.focus();
                 resetTextarea();
             } catch (err) {
@@ -675,12 +771,13 @@
             regScreen.classList.remove('active');
             chatScreen.classList.add('active');
             loadingSpinner.classList.add('active');
-            _sgClient.from('users').select('*').eq('id', user.id).single().then(({ data }) => {
+            _sgClient.from('users').select('*').eq('id', user.id).single().then(async ({ data }) => {
                 if (data) {
                     currentUser = data;
-                    loadMessages().then(() => {
-                        startPolling(); 
-                    });
+                    await loadMessages();
+                    loadingSpinner.classList.remove('active');
+                    subscribeMessages();
+                    startPolling(); 
                 } else {
                     localStorage.removeItem('semejka_user');
                     regScreen.classList.add('active');
