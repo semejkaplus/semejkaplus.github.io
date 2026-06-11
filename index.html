@@ -152,6 +152,7 @@
             border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
             border: 1px solid rgba(108,99,255,0.3);
             width: calc(100% - 20px); max-width: 800px;
+            position: relative;
         }
         .input-area textarea {
             flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px;
@@ -190,6 +191,10 @@
             box-shadow: 0 8px 24px rgba(255, 107, 91, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
         }
         .input-area button#attachBtn:hover { box-shadow: 0 12px 28px rgba(255, 107, 91, 0.5); }
+        .input-area button#attachBtn.photo-ready {
+            background: linear-gradient(145deg, #2ecc71 0%, #27ae60 100%) !important;
+            box-shadow: 0 8px 24px rgba(46, 204, 113, 0.35) !important;
+        }
 
         .input-area button#sendBtn {
             background: linear-gradient(135deg, #6C63FF, #8B82FF);
@@ -237,7 +242,7 @@
         <div class="input-area">
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
             <button id="attachBtn" class="action-btn" title="Отправить фото">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg id="attachIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16.5 6V17.5C16.5 19.9853 14.4853 22 12 22C9.51472 22 7.5 19.9853 7.5 17.5V5C7.5 3.34315 8.84315 2 10.5 2C12.1569 2 13.5 3.34315 13.5 5V15.5C13.5 16.3284 12.8284 17 12 17C11.1716 17 10.5 16.3284 10.5 15.5V6H12V15.5C12 15.7761 12.2239 16 12.5 16C12.7761 16 13 15.7761 13 15.5V5C13 3.61929 11.8807 2.5 10.5 2.5C9.11929 2.5 8 3.61929 8 5V17.5C8 19.7091 9.79086 21.5 12 21.5C14.2091 21.5 16 19.7091 16 17.5V6H16.5Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
                 </svg>
             </button>
@@ -271,6 +276,10 @@
         let currentUser = null, lastMessageId = null;
         let realtimeChannel = null;
         let backupSyncInterval = null;
+        let localMessagesCache = [];
+        let pendingImageUrl = null; // Буфер для загруженной ссылки на фото
+
+        const originalAttachSVG = document.getElementById('attachIcon').outerHTML;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -292,11 +301,19 @@
             localStorage.removeItem('chat_cached_messages');
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
-            currentUser = null; lastMessageId = null;
+            currentUser = null; lastMessageId = null; localMessagesCache = []; pendingImageUrl = null;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
+            resetAttachButton();
+        }
+
+        function resetAttachButton() {
+            pendingImageUrl = null;
+            attachBtn.innerHTML = originalAttachSVG;
+            attachBtn.classList.remove('photo-ready');
+            attachBtn.disabled = false;
         }
 
         function linkify(text) {
@@ -415,34 +432,32 @@
                 if (error) return;
 
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderSingleMessage(msg, true));
-                    cacheCurrentMessages();
+                    data.forEach(msg => {
+                        if (!localMessagesCache.some(m => m.id === msg.id)) {
+                            localMessagesCache.push(msg);
+                            renderSingleMessage(msg, true);
+                        }
+                    });
+                    saveCacheToLocalStorage();
                 }
             } catch (e) {}
         }
 
-        async function cacheCurrentMessages() {
+        function saveCacheToLocalStorage() {
             try {
-                const { data } = await _sgClient
-                    .from('messages')
-                    .select('id,user_id,user_name,text,image_url,created_at')
-                    .order('created_at', { ascending: false })
-                    .limit(30);
-                
-                if (data && data.length) {
-                    localStorage.setItem('chat_cached_messages', JSON.stringify([...data].reverse()));
-                }
+                const sliced = localMessagesCache.slice(-30);
+                localStorage.setItem('chat_cached_messages', JSON.stringify(sliced));
             } catch(e){}
         }
 
         async function loadMessages() {
-            let localData = [];
             try {
                 const cached = localStorage.getItem('chat_cached_messages');
                 if (cached) {
-                    localData = JSON.parse(cached);
+                    const localData = JSON.parse(cached);
                     if (localData && localData.length > 0) {
-                        renderMessagesArray(localData);
+                        localMessagesCache = localData;
+                        renderMessagesArray(localMessagesCache);
                         loadingSpinner.classList.remove('active'); 
                     }
                 }
@@ -457,8 +472,9 @@
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    renderMessagesArray(data);
-                    localStorage.setItem('chat_cached_messages', JSON.stringify(data));
+                    localMessagesCache = data;
+                    renderMessagesArray(localMessagesCache);
+                    saveCacheToLocalStorage();
                 }
             } catch (e) {
                 console.log('Сбой сети. Используется локальный кэш.');
@@ -470,7 +486,15 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderSingleMessage(payload.payload, true); cacheCurrentMessages(); } });
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { 
+                if (currentUser) { 
+                    if (!localMessagesCache.some(m => m.id === payload.payload.id)) {
+                        localMessagesCache.push(payload.payload);
+                        renderSingleMessage(payload.payload, true); 
+                        saveCacheToLocalStorage(); 
+                    }
+                } 
+            });
 
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') syncNewMessagesOnly();
@@ -478,7 +502,11 @@
             });
         }
 
-        async function compressAndUploadImage(file) {
+        // Выделенный изолированный метод фоновой загрузки фото
+        async function handleImageUpload(file) {
+            attachBtn.disabled = true;
+            attachBtn.innerHTML = '<div class="btn-spinner"></div>';
+
             try {
                 const options = { 
                     maxSizeMB: 0.04, 
@@ -488,20 +516,33 @@
                 };
                 const compressedFile = await imageCompression(file, options);
                 const fileName = `${Date.now()}_r${Math.random().toString(36).substr(2, 4)}.webp`;
+                
                 const { error } = await _sgClient.storage.from('chat-attachments').upload(fileName, compressedFile);
                 if (error) throw error;
-                return _sgClient.storage.from('chat-attachments').getPublicUrl(fileName).data.publicUrl;
+
+                pendingImageUrl = _sgClient.storage.from('chat-attachments').getPublicUrl(fileName).data.publicUrl;
+                
+                // Меняем индикатор кнопки на зеленый (Готово к отправке)
+                attachBtn.innerHTML = '✅';
+                attachBtn.classList.add('photo-ready');
+                attachBtn.disabled = false;
             } catch (err) {
-                alert('Сбой сети при отправке. Попробуйте отправить фото ещё раз.'); return null;
+                alert('Не удалось загрузить фотографию. Попробуйте снова.');
+                resetAttachButton();
             }
         }
 
-        async function sendMessage(text, imageUrl = null) {
+        async function sendMessage() {
+            const text = msgInput.value;
             const cleanText = text ? text.trim() : '';
+            const imageUrl = pendingImageUrl; // Хватаем ссылку из буфера, если она есть
+
             if (!currentUser || (!cleanText && !imageUrl)) return;
             if (cleanText === '@exit') { logout(); return; }
 
-            sendBtn.disabled = true; attachBtn.disabled = true;
+            // Блокируем кнопку отправки на сотые доли секунды только для вставки строки
+            sendBtn.disabled = true; 
+            
             const timeStamp = new Date().toISOString();
             const msgPayload = {
                 id: 'brc-' + timeStamp,
@@ -509,39 +550,58 @@
                 text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
-            renderSingleMessage(msgPayload, true);
+            // Полностью очищаем логику выбора фото ДО транзакции в базу
             resetTextarea();
+            resetAttachButton();
+
+            localMessagesCache.push(msgPayload);
+            renderSingleMessage(msgPayload, true);
 
             if (realtimeChannel && realtimeChannel.state === 'joined') {
                 realtimeChannel.send({ type: 'broadcast', event: 'shout', payload: msgPayload });
             }
 
             try {
-                const { data } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
+                const { data, error } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
+                if (error) throw error;
                 if (data) {
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
-                    if (tempEl) { tempEl.id = 'msg-' + data.id; if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
-                    cacheCurrentMessages();
+                    if (tempEl) { tempEl.id = 'msg-' + data.id; }
+                    const cachedMsg = localMessagesCache.find(m => m.id === msgPayload.id);
+                    if (cachedMsg) cachedMsg.id = data.id;
+                    if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id);
+                    saveCacheToLocalStorage();
                 }
-            } catch (err) {} finally { sendBtn.disabled = false; attachBtn.disabled = false; msgInput.focus(); }
+            } catch (err) {
+                console.error("Ошибка сохранения сообщения:", err);
+            } finally { 
+                sendBtn.disabled = false;
+                msgInput.focus(); autoResize();
+            }
         }
 
-        attachBtn.addEventListener('click', () => fileInput.click());
+        attachBtn.addEventListener('click', () => {
+            if (pendingImageUrl) {
+                // Если фото уже загружено, повторный клик отменяет его прикрепление
+                resetAttachButton();
+                fileInput.value = '';
+            } else {
+                fileInput.click();
+            }
+        });
+
         fileInput.addEventListener('change', async () => {
-            const file = fileInput.files[0]; if (!file) return;
-            const originalSVG = attachBtn.innerHTML;
-            attachBtn.innerHTML = '<div class="btn-spinner"></div>'; attachBtn.disabled = true;
-            const imageUrl = await compressAndUploadImage(file);
-            if (imageUrl) await sendMessage(msgInput.value, imageUrl);
-            fileInput.value = ''; attachBtn.innerHTML = originalSVG; attachBtn.disabled = false;
+            const file = fileInput.files[0]; 
+            if (!file) return;
+            await handleImageUpload(file);
         });
 
         function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 6000); }
         refreshBtn.addEventListener('click', async () => { await syncNewMessagesOnly(); });
 
         ['visibilitychange', 'focus'].forEach(evt => { window.addEventListener(evt, () => { if (currentUser) { syncNewMessagesOnly(); subscribeMessages(); } }); });
-        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
-        sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
+        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
+        sendBtn.addEventListener('click', async () => { await sendMessage(); });
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
