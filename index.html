@@ -49,21 +49,41 @@
         input[type="text"] { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         input[type="text"]:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
         
-        .box button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
-        .box button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
-        .box button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
+        /* УНИФИЦИРОВАННЫЙ СТИЛЬ КНОПОК С КРАСИВЫМ ГРАДИЕНТОМ И ОБЪЕМОМ */
+        .box button { 
+            width: 100%; padding: 18px; 
+            background: linear-gradient(135deg, #6C63FF, #8B82FF); 
+            color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; 
+            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+            border: 1.5px solid rgba(255, 255, 255, 0.6);
+            position: relative; overflow: hidden;
+        }
+        .box button::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.12); border-radius: 25px; pointer-events: none;
+        }
+        .box button:hover { transform: scale(1.02) translateY(-1px); box-shadow: 0 12px 28px rgba(108, 99, 255, 0.5); }
+        .box button:disabled { background: #B0B0B0; box-shadow: none; transform: none; border-color: transparent; }
+        .box button:disabled::before { display: none; }
 
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
+        /* СТИЛЬ КНОПКИ ОБНОВЛЕНИЯ НА ОСНОВЕ КНОПКИ ФОТО */
         .refresh-btn {
             position: absolute; top: 15px; right: 15px; z-index: 10;
             width: 44px; height: 44px; border-radius: 50%;
-            background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.6); font-size: 22px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #3A3A4A;
+            background: linear-gradient(135deg, #6C63FF, #8B82FF);
+            border: 1.5px solid rgba(255, 255, 255, 0.6); font-size: 20px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; 
+            box-shadow: 0 6px 18px rgba(108, 99, 255, 0.35), inset 0 1.5px 3px rgba(255, 255, 255, 0.4), inset 0 -1.5px 3px rgba(0, 0, 0, 0.15);
+            color: #FFFFFF; position: relative; overflow: hidden;
         }
-        .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+        .refresh-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.12); border-radius: 50%; pointer-events: none;
+        }
+        .refresh-btn:hover { background: linear-gradient(135deg, #7A72FF, #9C94FF); transform: scale(1.05) translateY(-1px); box-shadow: 0 10px 22px rgba(108, 99, 255, 0.5); }
 
         .messages {
             flex: 1 1 auto; overflow-y: auto;
@@ -175,40 +195,37 @@
             box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1);
         }
         
+        /* ОБЩИЙ НЕОМОРФНЫЙ ДИЗАЙН КНОПОК УПРАВЛЕНИЯ В ЧАТЕ */
         .input-area button.action-btn {
             width: 52px; height: 52px; border-radius: 50%; padding: 0;
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #6C63FF, #8B82FF);
-            box-shadow: 0 10px 20px rgba(108,99,255,0.4); border: none; flex-shrink: 0;
+            border: 1.5px solid rgba(255, 255, 255, 0.6); flex-shrink: 0;
             color: white; cursor: pointer; transition: 0.2s;
+            position: relative; overflow: hidden;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
-        .input-area button.action-btn:hover { transform: scale(1.05); }
-        .input-area button.action-btn:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
+        .input-area button.action-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.12); border-radius: 50%; pointer-events: none;
+        }
+        .input-area button.action-btn:hover { transform: scale(1.05) translateY(-1px); }
+        .input-area button.action-btn:disabled { background: #B0B0B0 !important; box-shadow: none !important; transform: none !important; border-color: transparent; }
+        .input-area button.action-btn:disabled::before { display: none; }
+        .input-area button.action-btn svg { filter: drop-shadow(0px 1.5px 3px rgba(0,0,0,0.25)); transition: transform 0.2s ease; }
+        .input-area button.action-btn:active svg { transform: scale(0.9); }
 
+        /* ОТДЕЛЬНЫЕ ЦВЕТОВЫЕ ГРАДИЕНТЫ ДЛЯ СОХРАНЕНИЯ УЗНАВАЕМОСТИ */
         .input-area button#attachBtn {
             background: linear-gradient(145deg, #FF6B5B 0%, #FFA852 100%);
-            box-shadow: 
-                0 8px 24px rgba(255, 107, 91, 0.35),
-                inset 0 2px 4px rgba(255, 255, 255, 0.4),
-                inset 0 -2px 4px rgba(0, 0, 0, 0.15);
-            border: 1.5px solid rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            position: relative; overflow: hidden;
+            box-shadow: 0 8px 24px rgba(255, 107, 91, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
         }
-        .input-area button#attachBtn::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.12); border-radius: 50%;
-            pointer-events: none;
+        .input-area button#attachBtn:hover { box-shadow: 0 12px 28px rgba(255, 107, 91, 0.5); }
+
+        .input-area button#sendBtn {
+            background: linear-gradient(135deg, #6C63FF, #8B82FF);
+            box-shadow: 0 8px 24px rgba(108, 99, 255, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
         }
-        .input-area button#attachBtn:hover {
-            transform: scale(1.05) translateY(-1px);
-            box-shadow: 0 12px 28px rgba(255, 107, 91, 0.5);
-        }
-        .input-area button#attachBtn svg {
-            filter: drop-shadow(0px 1.5px 3px rgba(0,0,0,0.25));
-            color: #FFFFFF; transition: transform 0.2s ease;
-        }
-        .input-area button#attachBtn:active svg { transform: scale(0.9); }
+        .input-area button#sendBtn:hover { box-shadow: 0 12px 28px rgba(108, 99, 255, 0.5); }
 
         .btn-spinner {
             width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3);
@@ -284,7 +301,6 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
 
         let currentUser = null, lastMessageId = null;
-        let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
         let realtimeChannel = null;
@@ -310,7 +326,7 @@
             localStorage.removeItem('chat_cached_messages');
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
-            currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
+            currentUser = null; lastMessageId = null; reactionsCache = {};
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -461,7 +477,62 @@
             return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
-        function renderMessage(msg, animate = false) {
+        // ЖЕСТКАЯ СОРТИРОВКА: Исключает перемешивание дат и сообщений на экране
+        function renderMessagesArray(messagesArray) {
+            Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
+            
+            messagesArray.sort((a, b) => {
+                const idA = a.id.toString().startsWith('brc-') ? 0 : Number(a.id);
+                const idB = b.id.toString().startsWith('brc-') ? 0 : Number(b.id);
+                if (idA !== 0 && idB !== 0) return idA - idB;
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            });
+
+            let currentTrackedDate = null;
+
+            messagesArray.forEach(msg => {
+                if (document.getElementById('msg-' + msg.id)) return;
+
+                const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
+                if (msgDate !== currentTrackedDate) {
+                    const sep = document.createElement('div'); sep.className = 'date-separator';
+                    sep.innerHTML = `<span>${formatDateSeparator(msg.created_at)}</span>`;
+                    messagesDiv.appendChild(sep);
+                    currentTrackedDate = msgDate;
+                }
+
+                if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
+                    const currentId = Number(msg.id);
+                    if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
+                }
+
+                const div = document.createElement('div');
+                div.id = 'msg-' + msg.id;
+                div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+
+                let html = msg.user_id !== currentUser?.id ? `<div class="name">${escapeHtml(msg.user_name || '')}</div>` : '';
+                let bubbleContent = linkify(escapeHtml(msg.text || ''));
+                
+                if (msg.image_url) {
+                    const safetyImageUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(msg.image_url);
+                    bubbleContent += `
+                        <div class="img-wrapper">
+                            <img src="${safetyImageUrl}" class="chat-image" onload="this.classList.add('loaded')" onerror="this.src='${msg.image_url}'" loading="lazy">
+                        </div>`;
+                }
+
+                html += `<div class="msg-content"><div class="bubble">${bubbleContent}</div></div>`;
+                html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
+
+                div.innerHTML = html;
+                messagesDiv.appendChild(div);
+                addLongPressListeners(div, msg.id);
+            });
+
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function renderSingleMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
 
             if (msg.id && !msg.id.toString().startsWith('brc-')) {
@@ -473,9 +544,6 @@
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
             }
-            
-            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
-            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
@@ -514,7 +582,7 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg, true));
+                    data.forEach(msg => renderSingleMessage(msg, true));
                     cacheCurrentMessages();
                     loadReactions(data.map(m => m.id));
                 }
@@ -535,20 +603,15 @@
         }
 
         async function loadMessages() {
-            let loadedFromCache = false;
+            let localData = [];
             try {
                 const cached = localStorage.getItem('chat_cached_messages');
                 if (cached) {
-                    const data = JSON.parse(cached);
-                    if (data && data.length > 0) {
-                        Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
-                        lastDisplayedDate = null;
-                        data.forEach(msg => renderMessage(msg, false));
-                        lastMessageId = Number(data[data.length - 1].id);
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    localData = JSON.parse(cached);
+                    if (localData && localData.length > 0) {
+                        renderMessagesArray(localData);
                         loadingSpinner.classList.remove('active'); 
-                        loadedFromCache = true;
-                        setTimeout(() => loadReactions(data.map(m => m.id)), 50);
+                        setTimeout(() => loadReactions(localData.map(m => m.id)), 50);
                     }
                 }
             } catch(e) {}
@@ -557,18 +620,14 @@
                 const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=30`;
                 const res = await fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 3500);
                 if (!res.ok) throw new Error();
-                const data = await res.json();
-                if (data) {
-                    Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
-                    lastDisplayedDate = null; lastMessageId = null;
-                    data.forEach(msg => renderMessage(msg, false));
-                    if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    localStorage.setItem('chat_cached_messages', JSON.stringify(data));
-                    setTimeout(() => loadReactions(data.map(m => m.id)), 50);
+                const serverData = await res.json();
+                if (serverData && serverData.length > 0) {
+                    renderMessagesArray(serverData);
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(serverData));
+                    setTimeout(() => loadReactions(serverData.map(m => m.id)), 50);
                 }
             } catch (e) {
-                console.log('Сетевой таймаут. Переход в автономный режим.');
+                console.log('Сетевой таймаут. Интерфейс зафиксирован на локальном кэше.');
             } finally {
                 loadingSpinner.classList.remove('active');
             }
@@ -577,7 +636,7 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderMessage(payload.payload, true); cacheCurrentMessages(); } });
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderSingleMessage(payload.payload, true); cacheCurrentMessages(); } });
             
             _sgClient.channel('realtime:reactions').on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                 const ids = Object.keys(reactionsCache); if (ids.length) loadReactions(ids);
@@ -592,8 +651,8 @@
         async function compressAndUploadImage(file) {
             try {
                 const options = { 
-                    maxSizeMB: 0.05, 
-                    maxWidthOrHeight: 900, 
+                    maxSizeMB: 0.04, 
+                    maxWidthOrHeight: 800, 
                     useWebWorker: true, 
                     fileType: 'image/webp' 
                 };
@@ -620,7 +679,7 @@
                 text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
-            renderMessage(msgPayload, true);
+            renderSingleMessage(msgPayload, true);
             resetTextarea();
 
             if (realtimeChannel && realtimeChannel.state === 'joined') {
@@ -657,10 +716,6 @@
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
             const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
-        }
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep);
         }
 
         joinBtn.addEventListener('click', async () => {
