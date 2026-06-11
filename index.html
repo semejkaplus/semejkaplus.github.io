@@ -91,7 +91,6 @@
             margin: 70px auto 0 auto;
             width: 100%; max-width: 800px;
             align-items: stretch;
-            -webkit-overflow-scrolling: touch;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -141,41 +140,10 @@
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 20px; color: #6C63FF; font-size: 16px; width: 100%; }
+        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
-        .spinner-circle { width: 34px; height: 34px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
-        .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
-        .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
-        .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
-
-        .emoji-panel {
-            display: none; position: absolute; bottom: 100%;
-            background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 6px;
-            gap: 6px; z-index: 9999; margin-bottom: 8px; max-width: calc(100vw - 30px);
-            flex-direction: column; align-items: stretch; width: max-content;
-        }
-        .sent .emoji-panel { left: auto; right: 0; transform: none; }
-        .received .emoji-panel { left: 0; right: auto; transform: none; }
-        .emoji-panel.open { display: flex; }
-        
-        .search-block { display: flex; justify-content: flex-end; margin-bottom: 2px; }
-        .search-toggle { font-size: 16px; cursor: pointer; background: none; border: none; padding: 2px; opacity: 0.7; transition: opacity 0.2s; line-height: 1; }
-        .search-toggle:hover { opacity: 1; }
-        .search-row { display: none; margin-top: 4px; }
-        .search-row.active { display: flex; flex-direction: column; gap: 6px; }
-        .emoji-search { width: 100%; padding: 6px 10px; font-size: 13px; border: 1px solid #ddd; border-radius: 10px; outline: none; background: #f9f9f9; }
-        .emoji-search:focus { border-color: #6C63FF; box-shadow: 0 0 0 2px rgba(108,99,255,0.2); }
-        
-        .quick-emojis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
-        .quick-emojis.hidden { display: none; }
-        .emoji-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
-        
-        .emoji-option { font-size: 18px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
-        .emoji-option:hover { transform: scale(1.25); }
 
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
@@ -239,9 +207,6 @@
         .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
-            .emoji-panel { max-width: calc(100vw - 30px); }
-            .sent .emoji-panel { left: auto !important; right: 0 !important; transform: none !important; }
-            .received .emoji-panel { left: 0 !important; right: auto !important; transform: none !important; }
             .messages { padding: 5px 10px; gap: 10px; margin-top: 60px; }
             .bubble { font-size: 15px; padding: 10px 14px; }
             .msg { max-width: 85%; }
@@ -304,14 +269,8 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
 
         let currentUser = null, lastMessageId = null;
-        let reactionsCache = {};
-        let longPressTimer = null;
         let realtimeChannel = null;
         let backupSyncInterval = null;
-        
-        let loadedMessagesArray = [];
-        let hasMoreOldMessages = true;
-        let isLoadingOld = false;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -333,153 +292,19 @@
             localStorage.removeItem('chat_cached_messages');
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
-            currentUser = null; lastMessageId = null; reactionsCache = {};
-            loadedMessagesArray = []; hasMoreOldMessages = true; isLoadingOld = false;
+            currentUser = null; lastMessageId = null;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
         }
 
-        const EMOJI_LIST = [
-            { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
-            { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
-            { emoji: '😡', name: 'Злюсь' }, { emoji: '😂', name: 'Смех' }, { emoji: '😮', name: 'Удивлён' },
-            { emoji: '😴', name: 'Сонный' }, { emoji: '😎', name: 'Круто' }, { emoji: '🤔', name: 'Задумчивость' },
-            { emoji: '😍', name: 'Восхищён' }, { emoji: '👏', name: 'Аплодисменты' }, { emoji: '💪', name: 'Сила' },
-            { emoji: '🙏', name: 'Спасибо' }
-        ];
-
-        async function loadReactions(messageIds) {
-            if (!messageIds || !messageIds.length) return;
-            try {
-                const { data, error } = await _sgClient
-                    .from('reactions')
-                    .select('id,message_id,user_id,emoji')
-                    .in('message_id', messageIds);
-                
-                if (error || !data) return;
-                data.forEach(r => {
-                    if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
-                    if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
-                });
-                messageIds.forEach(id => updateReactionDisplay(id));
-            } catch (err) {}
-        }
-
-        function updateReactionDisplay(messageId) {
-            const msgEl = document.getElementById('msg-' + messageId);
-            if (!msgEl) return;
-            let container = msgEl.querySelector('.reactions-container');
-            if (!container) {
-                const footer = msgEl.querySelector('.msg-footer');
-                if (!footer) return;
-                container = document.createElement('div'); container.className = 'reactions-container';
-                footer.appendChild(container);
-            }
-            const reactions = reactionsCache[messageId] || [];
-            const counts = {};
-            reactions.forEach(r => counts[r.emoji] = (counts[r.emoji] || 0) + 1);
-            const userReaction = reactions.find(r => r.user_id === currentUser?.id);
-            container.innerHTML = '';
-            Object.entries(counts).forEach(([emoji, count]) => {
-                const badge = document.createElement('span');
-                badge.className = 'reaction-badge' + (userReaction && userReaction.emoji === emoji ? ' active' : '');
-                badge.textContent = emoji + ' ' + count;
-                badge.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, emoji); };
-                container.appendChild(badge);
-            });
-        }
-
-        async function toggleReaction(messageId, emoji) {
-            if (!currentUser) return;
-            const reactions = reactionsCache[messageId] || [];
-            const existing = reactions.find(r => r.user_id === currentUser.id);
-            if (existing && existing.emoji === emoji) {
-                reactionsCache[messageId] = reactions.filter(r => r.id !== existing.id);
-            } else {
-                if (existing) reactionsCache[messageId] = reactions.filter(r => r.id !== existing.id);
-                reactionsCache[messageId] = [...(reactionsCache[messageId] || []), { id: 'temp-' + Date.now(), message_id: messageId, user_id: currentUser.id, emoji: emoji }];
-            }
-            updateReactionDisplay(messageId);
-            try {
-                if (existing) await _sgClient.from('reactions').delete().eq('id', existing.id);
-                if (!existing || existing.emoji !== emoji) {
-                    const { data, error } = await _sgClient.from('reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji: emoji }).select().single();
-                    if (!error && data) {
-                        reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
-                        reactionsCache[messageId].push(data);
-                    }
-                }
-            } catch (err) {} finally { updateReactionDisplay(messageId); }
-        }
-
-        function showEmojiPanel(messageId) {
-            const msgEl = document.getElementById('msg-' + messageId);
-            if (!msgEl) return;
-            document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            let panel = msgEl.querySelector('.emoji-panel');
-            if (!panel) {
-                panel = document.createElement('div'); panel.className = 'emoji-panel';
-                const searchBlock = document.createElement('div'); searchBlock.className = 'search-block';
-                const searchToggle = document.createElement('button'); searchToggle.className = 'search-toggle'; searchToggle.innerHTML = '🔍';
-                searchBlock.appendChild(searchToggle); panel.appendChild(searchBlock);
-                const quickContainer = document.createElement('div'); quickContainer.className = 'quick-emojis';
-                EMOJI_LIST.slice(0, 8).forEach(item => {
-                    const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
-                    span.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, item.emoji); panel.classList.remove('open'); };
-                    quickContainer.appendChild(span);
-                });
-                panel.appendChild(quickContainer);
-                const searchRow = document.createElement('div'); searchRow.className = 'search-row';
-                const searchInput = document.createElement('input'); searchInput.type = 'text'; searchInput.className = 'emoji-search'; searchInput.placeholder = 'Поиск...';
-                const optionsContainer = document.createElement('div'); optionsContainer.className = 'emoji-options';
-                const renderFilteredEmojis = (filterText = '') => {
-                    optionsContainer.innerHTML = '';
-                    EMOJI_LIST.filter(item => item.name.toLowerCase().includes(filterText.toLowerCase()) || item.emoji.includes(filterText)).forEach(item => {
-                        const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
-                        span.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, item.emoji); panel.classList.remove('open'); };
-                        optionsContainer.appendChild(span);
-                    });
-                };
-                searchInput.addEventListener('input', () => renderFilteredEmojis(searchInput.value));
-                renderFilteredEmojis();
-                searchRow.appendChild(searchInput); searchRow.appendChild(optionsContainer); panel.appendChild(searchRow);
-                searchToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (searchRow.classList.contains('active')) { searchRow.classList.remove('active'); quickContainer.classList.remove('hidden'); }
-                    else { quickContainer.classList.add('hidden'); searchRow.classList.add('active'); searchInput.focus(); }
-                });
-                msgEl.appendChild(panel);
-            }
-            panel.classList.add('open');
-        }
-        document.addEventListener('click', (e) => { if (!e.target.closest('.emoji-panel') && !e.target.closest('.bubble')) document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open')); });
-
-        function addLongPressListeners(msgElement, messageId) {
-            const bubble = msgElement.querySelector('.bubble');
-            if (!bubble) return;
-            bubble.addEventListener('mousedown', (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); });
-            bubble.addEventListener('mouseup', () => clearTimeout(longPressTimer));
-            bubble.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-            bubble.addEventListener('touchstart', (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); }, { passive: true });
-            bubble.addEventListener('touchend', () => clearTimeout(longPressTimer));
-        }
-
         function linkify(text) {
             return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
-        function renderMessagesArray(messagesArray, appendToTop = false) {
-            const previousScrollHeight = messagesDiv.scrollHeight;
-            const previousScrollTop = messagesDiv.scrollTop;
-
-            if (!appendToTop) {
-                Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
-            } else {
-                const separators = messagesDiv.querySelectorAll('.date-separator');
-                separators.forEach(s => s.remove());
-            }
+        function renderMessagesArray(messagesArray) {
+            Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
             
             messagesArray.sort((a, b) => {
                 const idA = a.id.toString().startsWith('brc-') ? 0 : Number(a.id);
@@ -489,28 +314,23 @@
             });
 
             let currentTrackedDate = null;
-            const frag = document.createDocumentFragment();
 
             messagesArray.forEach(msg => {
+                if (document.getElementById('msg-' + msg.id)) return;
+
                 const dObj = new Date(msg.created_at || Date.now());
                 const msgDateString = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
 
                 if (msgDateString !== currentTrackedDate) {
                     const sep = document.createElement('div'); sep.className = 'date-separator';
                     sep.innerHTML = `<span>${formatDateSeparator(msg.created_at)}</span>`;
-                    frag.appendChild(sep);
+                    messagesDiv.appendChild(sep);
                     currentTrackedDate = msgDateString;
                 }
 
                 if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                     const currentId = Number(msg.id);
                     if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
-                }
-
-                let existingEl = document.getElementById('msg-' + msg.id);
-                if (existingEl) {
-                    frag.appendChild(existingEl);
-                    return;
                 }
 
                 const div = document.createElement('div');
@@ -532,17 +352,10 @@
                 html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
 
                 div.innerHTML = html;
-                frag.appendChild(div);
-                addLongPressListeners(div, msg.id);
+                messagesDiv.appendChild(div);
             });
 
-            if (appendToTop) {
-                messagesDiv.insertBefore(frag, messagesDiv.firstChild);
-                messagesDiv.scrollTop = previousScrollTop + (messagesDiv.scrollHeight - previousScrollHeight);
-            } else {
-                messagesDiv.appendChild(frag);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
         function renderSingleMessage(msg, animate = false) {
@@ -550,22 +363,12 @@
 
             if (msg.id && !msg.id.toString().startsWith('brc-')) {
                 const el = document.getElementById('msg-brc-' + msg.created_at);
-                if (el) { el.id = 'msg-' + msg.id; addLongPressListeners(el, msg.id); return; }
+                if (el) { el.id = 'msg-' + msg.id; return; }
             }
 
             if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
-            }
-
-            const dObj = new Date(msg.created_at || Date.now());
-            const msgDateString = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
-            
-            const lastSeparator = messagesDiv.querySelector('.date-separator:last-of-type span');
-            if (!lastSeparator || formatDateSeparator(msg.created_at) !== lastSeparator.textContent) {
-                const sep = document.createElement('div'); sep.className = 'date-separator';
-                sep.innerHTML = `<span>${formatDateSeparator(msg.created_at)}</span>`;
-                messagesDiv.appendChild(sep);
             }
 
             const div = document.createElement('div');
@@ -580,9 +383,9 @@
                     <div class="img-wrapper">
                         <img src="${msg.image_url}" class="chat-image" onload="this.classList.add('loaded')" loading="lazy" decoding="async">
                     </div></div></div>`;
-            } else {
-                html += `<div class="msg-content"><div class="bubble">${bubbleContent}</div></div>`;
-            }
+                } else {
+                    html += `<div class="msg-content"><div class="bubble">${bubbleContent}</div></div>`;
+                }
 
             html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
 
@@ -594,7 +397,6 @@
                 div.classList.add('animate-in');
                 div.addEventListener('animationend', () => div.classList.remove('animate-in'), { once: true });
             }
-            addLongPressListeners(div, msg.id);
         }
 
         async function syncNewMessagesOnly() {
@@ -613,71 +415,22 @@
                 if (error) return;
 
                 if (data && data.length > 0) {
-                    data.forEach(msg => {
-                        if(!loadedMessagesArray.some(m => m.id === msg.id)){
-                            loadedMessagesArray.push(msg);
-                        }
-                        renderSingleMessage(msg, true);
-                    });
+                    data.forEach(msg => renderSingleMessage(msg, true));
                     cacheCurrentMessages();
-                    loadReactions(data.map(m => m.id));
                 }
             } catch (e) {}
         }
 
-        async function loadOldMessages() {
-            if (isLoadingOld || !hasMoreOldMessages || loadedMessagesArray.length === 0) return;
-            isLoadingOld = true;
-            
-            const firstMsg = loadedMessagesArray.reduce((min, m) => {
-                const id = m.id.toString().startsWith('brc-') ? Infinity : Number(m.id);
-                return id < min.id ? {id, created_at: m.created_at} : min;
-            }, {id: Infinity, created_at: null});
-
-            if (!firstMsg.created_at) { isLoadingOld = false; return; }
-
-            try {
-                const { data, error } = await _sgClient
-                    .from('messages')
-                    .select('id,user_id,user_name,text,image_url,created_at')
-                    .lt('created_at', firstMsg.created_at)
-                    .order('created_at', { ascending: false })
-                    .limit(20);
-
-                if (error) throw error;
-
-                if (!data || data.length < 20) {
-                    hasMoreOldMessages = false;
-                }
-
-                if (data && data.length > 0) {
-                    const oldMsgs = data.reverse();
-                    oldMsgs.forEach(m => {
-                        if(!loadedMessagesArray.some(ex => ex.id === m.id)) {
-                            loadedMessagesArray.push(m);
-                        }
-                    });
-                    renderMessagesArray(loadedMessagesArray, true);
-                    setTimeout(() => loadReactions(oldMsgs.map(m => m.id)), 50);
-                }
-            } catch (e) {
-                console.log('Не удалось подгрузить старые сообщения');
-            } finally {
-                isLoadingOld = false;
-            }
-        }
-
-        messagesDiv.addEventListener('scroll', () => {
-            if (messagesDiv.scrollTop <= 30) {
-                loadOldMessages();
-            }
-        });
-
         async function cacheCurrentMessages() {
             try {
-                const sliced = loadedMessagesArray.slice(-30);
-                if (sliced.length) {
-                    localStorage.setItem('chat_cached_messages', JSON.stringify(sliced));
+                const { data } = await _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,image_url,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(30);
+                
+                if (data && data.length) {
+                    localStorage.setItem('chat_cached_messages', JSON.stringify([...data].reverse()));
                 }
             } catch(e){}
         }
@@ -689,10 +442,8 @@
                 if (cached) {
                     localData = JSON.parse(cached);
                     if (localData && localData.length > 0) {
-                        loadedMessagesArray = [...localData];
-                        renderMessagesArray(loadedMessagesArray);
+                        renderMessagesArray(localData);
                         loadingSpinner.classList.remove('active'); 
-                        setTimeout(() => loadReactions(loadedMessagesArray.map(m => m.id)), 50);
                     }
                 }
             } catch(e) {}
@@ -701,17 +452,13 @@
                 const { data, error } = await _sgClient
                     .from('messages')
                     .select('id,user_id,user_name,text,image_url,created_at')
-                    .order('created_at', { ascending: false })
-                    .limit(20);
+                    .order('created_at', { ascending: true });
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    const freshData = data.reverse();
-                    loadedMessagesArray = [...freshData];
-                    renderMessagesArray(loadedMessagesArray);
-                    localStorage.setItem('chat_cached_messages', JSON.stringify(loadedMessagesArray));
-                    setTimeout(() => loadReactions(loadedMessagesArray.map(m => m.id)), 50);
+                    renderMessagesArray(data);
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(data));
                 }
             } catch (e) {
                 console.log('Сбой сети. Используется локальный кэш.');
@@ -723,19 +470,7 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { 
-                if (currentUser) { 
-                    if(!loadedMessagesArray.some(m => m.id === payload.payload.id)){
-                        loadedMessagesArray.push(payload.payload);
-                    }
-                    renderSingleMessage(payload.payload, true); 
-                    cacheCurrentMessages(); 
-                } 
-            });
-            
-            _sgClient.channel('realtime:reactions').on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
-                const ids = Object.keys(reactionsCache); if (ids.length) loadReactions(ids);
-            }).subscribe();
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderSingleMessage(payload.payload, true); cacheCurrentMessages(); } });
 
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') syncNewMessagesOnly();
@@ -774,7 +509,6 @@
                 text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
-            loadedMessagesArray.push(msgPayload);
             renderSingleMessage(msgPayload, true);
             resetTextarea();
 
@@ -786,9 +520,7 @@
                 const { data } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
                 if (data) {
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
-                    if (tempEl) { tempEl.id = 'msg-' + data.id; addLongPressListeners(tempEl, data.id); if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
-                    const found = loadedMessagesArray.find(m => m.id === msgPayload.id);
-                    if (found) found.id = data.id;
+                    if (tempEl) { tempEl.id = 'msg-' + data.id; if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
                     cacheCurrentMessages();
                 }
             } catch (err) {} finally { sendBtn.disabled = false; attachBtn.disabled = false; msgInput.focus(); }
@@ -805,7 +537,7 @@
         });
 
         function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 6000); }
-        refreshBtn.addEventListener('click', async () => { await syncNewMessagesOnly(); const ids = Object.keys(reactionsCache); if (ids.length) await loadReactions(ids); });
+        refreshBtn.addEventListener('click', async () => { await syncNewMessagesOnly(); });
 
         ['visibilitychange', 'focus'].forEach(evt => { window.addEventListener(evt, () => { if (currentUser) { syncNewMessagesOnly(); subscribeMessages(); } }); });
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
