@@ -326,13 +326,26 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
+        async function fetchWithTimeout(url, options, timeout = 3000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
+            }
+        }
+
         async function loadReactions(messageIds) {
             if (!messageIds || !messageIds.length) return;
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})`;
-                const res = await fetch(url, {
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=id,message_id,user_id,emoji&message_id=in.(${messageIds.join(',')})`;
+                const res = await fetchWithTimeout(url, {
                     headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' }
-                });
+                }, 2500);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data) {
@@ -472,9 +485,10 @@
             let bubbleContent = linkify(escapeHtml(msg.text || ''));
             
             if (msg.image_url) {
+                const safetyImageUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(msg.image_url);
                 bubbleContent += `
                     <div class="img-wrapper">
-                        <img src="${msg.image_url}" class="chat-image" onload="this.classList.add('loaded')" loading="lazy">
+                        <img src="${safetyImageUrl}" class="chat-image" onload="this.classList.add('loaded')" onerror="this.src='${msg.image_url}'" loading="lazy">
                     </div>`;
             }
 
@@ -496,7 +510,7 @@
             if (!currentUser) return;
             try {
                 const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc${lastMessageId ? '&id=gt.' + lastMessageId : ''}`;
-                const res = await fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } });
+                const res = await fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 3000);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.length > 0) {
@@ -507,19 +521,10 @@
             } catch (e) {}
         }
 
-        // КЭШИРОВАНИЕ: Сохраняем историю на устройстве
         function cacheCurrentMessages() {
             try {
-                const allMsgDivs = messagesDiv.querySelectorAll('.msg');
-                const msgsToCache = [];
-                const datesChecked = new Set();
-                
-                // Загружаем только реальные сообщения (не оптимистичные наброски)
-                const currentCache = JSON.parse(localStorage.getItem('chat_cached_messages') || '[]');
-                
-                // Ограничим локальный кэш последними 40 элементами
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.desc&limit=40`;
-                fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } })
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.desc&limit=30`;
+                fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 2500)
                 .then(r => r.json())
                 .then(data => {
                     if (data && data.length) {
@@ -529,9 +534,8 @@
             } catch(e){}
         }
 
-        // АВТОНОМНОСТЬ: Загрузка сначала из кэша, потом асинхронный запрос к серверу
         async function loadMessages() {
-            // Шаг 1: Сразу выводим то, что сохранено локально (Решает проблему бесконечного колеса)
+            let loadedFromCache = false;
             try {
                 const cached = localStorage.getItem('chat_cached_messages');
                 if (cached) {
@@ -542,16 +546,16 @@
                         data.forEach(msg => renderMessage(msg, false));
                         lastMessageId = Number(data[data.length - 1].id);
                         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        loadingSpinner.classList.remove('active'); // Скрываем загрузку сразу!
+                        loadingSpinner.classList.remove('active'); 
+                        loadedFromCache = true;
                         setTimeout(() => loadReactions(data.map(m => m.id)), 50);
                     }
                 }
             } catch(e) {}
 
-            // Шаг 2: В фоне опрашиваем сервер и догружаем новые сообщения, если они есть
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=40`;
-                const res = await fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } });
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=30`;
+                const res = await fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 3500);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 if (data) {
@@ -564,8 +568,7 @@
                     setTimeout(() => loadReactions(data.map(m => m.id)), 50);
                 }
             } catch (e) {
-                // Если сеть заблокирована провайдером, у пользователя останется локальная история чата
-                console.log('Загружено из локального кэша устройства из-за ограничений сети.');
+                console.log('Сетевой таймаут. Переход в автономный режим.');
             } finally {
                 loadingSpinner.classList.remove('active');
             }
@@ -582,19 +585,25 @@
 
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') syncNewMessagesOnly();
-                else setTimeout(subscribeMessages, 4000);
+                else setTimeout(subscribeMessages, 5000);
             });
         }
 
         async function compressAndUploadImage(file) {
             try {
-                const compressedFile = await imageCompression(file, { maxSizeMB: 0.10, maxWidthOrHeight: 1100, useWebWorker: true, fileType: 'image/webp' });
+                const options = { 
+                    maxSizeMB: 0.05, 
+                    maxWidthOrHeight: 900, 
+                    useWebWorker: true, 
+                    fileType: 'image/webp' 
+                };
+                const compressedFile = await imageCompression(file, options);
                 const fileName = `${Date.now()}_r${Math.random().toString(36).substr(2, 4)}.webp`;
                 const { error } = await _sgClient.storage.from('chat-attachments').upload(fileName, compressedFile);
                 if (error) throw error;
                 return _sgClient.storage.from('chat-attachments').getPublicUrl(fileName).data.publicUrl;
             } catch (err) {
-                alert('Сбой сети. Включите обход блокировок для загрузки медиа-файлов.'); return null;
+                alert('Сбой сети при отправке. Попробуйте отправить фото ещё раз.'); return null;
             }
         }
 
@@ -638,7 +647,7 @@
             fileInput.value = ''; attachBtn.innerHTML = originalSVG; attachBtn.disabled = false;
         });
 
-        function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 5000); }
+        function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 6000); }
         refreshBtn.addEventListener('click', async () => { await syncNewMessagesOnly(); const ids = Object.keys(reactionsCache); if (ids.length) await loadReactions(ids); });
 
         ['visibilitychange', 'focus'].forEach(evt => { window.addEventListener(evt, () => { if (currentUser) { syncNewMessagesOnly(); subscribeMessages(); } }); });
