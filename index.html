@@ -91,6 +91,7 @@
             margin: 70px auto 0 auto;
             width: 100%; max-width: 800px;
             align-items: stretch;
+            -webkit-overflow-scrolling: touch;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -140,9 +141,9 @@
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
+        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 20px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
-        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner-circle { width: 34px; height: 34px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -307,6 +308,10 @@
         let longPressTimer = null;
         let realtimeChannel = null;
         let backupSyncInterval = null;
+        
+        let loadedMessagesArray = [];
+        let hasMoreOldMessages = true;
+        let isLoadingOld = false;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -329,6 +334,7 @@
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; reactionsCache = {};
+            loadedMessagesArray = []; hasMoreOldMessages = true; isLoadingOld = false;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -344,35 +350,20 @@
             { emoji: '🙏', name: 'Спасибо' }
         ];
 
-        async function fetchWithTimeout(url, options, timeout = 3000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            try {
-                const response = await fetch(url, { ...options, signal: controller.signal });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
-            }
-        }
-
         async function loadReactions(messageIds) {
             if (!messageIds || !messageIds.length) return;
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=id,message_id,user_id,emoji&message_id=in.(${messageIds.join(',')})`;
-                const res = await fetchWithTimeout(url, {
-                    headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' }
-                }, 2500);
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data) {
-                    data.forEach(r => {
-                        if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
-                        if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
-                    });
-                    messageIds.forEach(id => updateReactionDisplay(id));
-                }
+                const { data, error } = await _sgClient
+                    .from('reactions')
+                    .select('id,message_id,user_id,emoji')
+                    .in('message_id', messageIds);
+                
+                if (error || !data) return;
+                data.forEach(r => {
+                    if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
+                    if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
+                });
+                messageIds.forEach(id => updateReactionDisplay(id));
             } catch (err) {}
         }
 
@@ -479,9 +470,16 @@
             return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
-        // ИСПРАВЛЕНО: Жёсткое и точное сравнение дат без смещений во времени
-        function renderMessagesArray(messagesArray) {
-            Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
+        function renderMessagesArray(messagesArray, appendToTop = false) {
+            const previousScrollHeight = messagesDiv.scrollHeight;
+            const previousScrollTop = messagesDiv.scrollTop;
+
+            if (!appendToTop) {
+                Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
+            } else {
+                const separators = messagesDiv.querySelectorAll('.date-separator');
+                separators.forEach(s => s.remove());
+            }
             
             messagesArray.sort((a, b) => {
                 const idA = a.id.toString().startsWith('brc-') ? 0 : Number(a.id);
@@ -491,24 +489,28 @@
             });
 
             let currentTrackedDate = null;
+            const frag = document.createDocumentFragment();
 
             messagesArray.forEach(msg => {
-                if (document.getElementById('msg-' + msg.id)) return;
-
-                // Унифицированное получение системной даты без погрешности часовых поясов
                 const dObj = new Date(msg.created_at || Date.now());
                 const msgDateString = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
 
                 if (msgDateString !== currentTrackedDate) {
                     const sep = document.createElement('div'); sep.className = 'date-separator';
                     sep.innerHTML = `<span>${formatDateSeparator(msg.created_at)}</span>`;
-                    messagesDiv.appendChild(sep);
+                    frag.appendChild(sep);
                     currentTrackedDate = msgDateString;
                 }
 
                 if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                     const currentId = Number(msg.id);
                     if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
+                }
+
+                let existingEl = document.getElementById('msg-' + msg.id);
+                if (existingEl) {
+                    frag.appendChild(existingEl);
+                    return;
                 }
 
                 const div = document.createElement('div');
@@ -530,11 +532,17 @@
                 html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
 
                 div.innerHTML = html;
-                messagesDiv.appendChild(div);
+                frag.appendChild(div);
                 addLongPressListeners(div, msg.id);
             });
 
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            if (appendToTop) {
+                messagesDiv.insertBefore(frag, messagesDiv.firstChild);
+                messagesDiv.scrollTop = previousScrollTop + (messagesDiv.scrollHeight - previousScrollHeight);
+            } else {
+                messagesDiv.appendChild(frag);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
         }
 
         function renderSingleMessage(msg, animate = false) {
@@ -548,6 +556,16 @@
             if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                 const currentId = Number(msg.id);
                 if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
+            }
+
+            const dObj = new Date(msg.created_at || Date.now());
+            const msgDateString = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
+            
+            const lastSeparator = messagesDiv.querySelector('.date-separator:last-of-type span');
+            if (!lastSeparator || formatDateSeparator(msg.created_at) !== lastSeparator.textContent) {
+                const sep = document.createElement('div'); sep.className = 'date-separator';
+                sep.innerHTML = `<span>${formatDateSeparator(msg.created_at)}</span>`;
+                messagesDiv.appendChild(sep);
             }
 
             const div = document.createElement('div');
@@ -582,28 +600,85 @@
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc${lastMessageId ? '&id=gt.' + lastMessageId : ''}`;
-                const res = await fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 3000);
-                if (!res.ok) return;
-                const data = await res.json();
+                let query = _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,image_url,created_at')
+                    .order('created_at', { ascending: true });
+
+                if (lastMessageId) {
+                    query = query.gt('id', lastMessageId);
+                }
+
+                const { data, error } = await query;
+                if (error) return;
+
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderSingleMessage(msg, true));
+                    data.forEach(msg => {
+                        if(!loadedMessagesArray.some(m => m.id === msg.id)){
+                            loadedMessagesArray.push(msg);
+                        }
+                        renderSingleMessage(msg, true);
+                    });
                     cacheCurrentMessages();
                     loadReactions(data.map(m => m.id));
                 }
             } catch (e) {}
         }
 
-        function cacheCurrentMessages() {
+        async function loadOldMessages() {
+            if (isLoadingOld || !hasMoreOldMessages || loadedMessagesArray.length === 0) return;
+            isLoadingOld = true;
+            
+            const firstMsg = loadedMessagesArray.reduce((min, m) => {
+                const id = m.id.toString().startsWith('brc-') ? Infinity : Number(m.id);
+                return id < min.id ? {id, created_at: m.created_at} : min;
+            }, {id: Infinity, created_at: null});
+
+            if (!firstMsg.created_at) { isLoadingOld = false; return; }
+
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.desc&limit=30`;
-                fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 2500)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.length) {
-                        localStorage.setItem('chat_cached_messages', JSON.stringify(data.reverse()));
-                    }
-                }).catch(()=>{});
+                const { data, error } = await _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,image_url,created_at')
+                    .lt('created_at', firstMsg.created_at)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (error) throw error;
+
+                if (!data || data.length < 20) {
+                    hasMoreOldMessages = false;
+                }
+
+                if (data && data.length > 0) {
+                    const oldMsgs = data.reverse();
+                    oldMsgs.forEach(m => {
+                        if(!loadedMessagesArray.some(ex => ex.id === m.id)) {
+                            loadedMessagesArray.push(m);
+                        }
+                    });
+                    renderMessagesArray(loadedMessagesArray, true);
+                    setTimeout(() => loadReactions(oldMsgs.map(m => m.id)), 50);
+                }
+            } catch (e) {
+                console.log('Не удалось подгрузить старые сообщения');
+            } finally {
+                isLoadingOld = false;
+            }
+        }
+
+        messagesDiv.addEventListener('scroll', () => {
+            if (messagesDiv.scrollTop <= 30) {
+                loadOldMessages();
+            }
+        });
+
+        async function cacheCurrentMessages() {
+            try {
+                const sliced = loadedMessagesArray.slice(-30);
+                if (sliced.length) {
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(sliced));
+                }
             } catch(e){}
         }
 
@@ -614,25 +689,32 @@
                 if (cached) {
                     localData = JSON.parse(cached);
                     if (localData && localData.length > 0) {
-                        renderMessagesArray(localData);
+                        loadedMessagesArray = [...localData];
+                        renderMessagesArray(loadedMessagesArray);
                         loadingSpinner.classList.remove('active'); 
-                        setTimeout(() => loadReactions(localData.map(m => m.id)), 50);
+                        setTimeout(() => loadReactions(loadedMessagesArray.map(m => m.id)), 50);
                     }
                 }
             } catch(e) {}
 
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=30`;
-                const res = await fetchWithTimeout(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } }, 3500);
-                if (!res.ok) throw new Error();
-                const serverData = await res.json();
-                if (serverData && serverData.length > 0) {
-                    renderMessagesArray(serverData);
-                    localStorage.setItem('chat_cached_messages', JSON.stringify(serverData));
-                    setTimeout(() => loadReactions(serverData.map(m => m.id)), 50);
+                const { data, error } = await _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,image_url,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    const freshData = data.reverse();
+                    loadedMessagesArray = [...freshData];
+                    renderMessagesArray(loadedMessagesArray);
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(loadedMessagesArray));
+                    setTimeout(() => loadReactions(loadedMessagesArray.map(m => m.id)), 50);
                 }
             } catch (e) {
-                console.log('Сетевой таймаут. Зафиксировано на локальном кэше.');
+                console.log('Сбой сети. Используется локальный кэш.');
             } finally {
                 loadingSpinner.classList.remove('active');
             }
@@ -641,7 +723,15 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderSingleMessage(payload.payload, true); cacheCurrentMessages(); } });
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { 
+                if (currentUser) { 
+                    if(!loadedMessagesArray.some(m => m.id === payload.payload.id)){
+                        loadedMessagesArray.push(payload.payload);
+                    }
+                    renderSingleMessage(payload.payload, true); 
+                    cacheCurrentMessages(); 
+                } 
+            });
             
             _sgClient.channel('realtime:reactions').on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
                 const ids = Object.keys(reactionsCache); if (ids.length) loadReactions(ids);
@@ -684,6 +774,7 @@
                 text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
+            loadedMessagesArray.push(msgPayload);
             renderSingleMessage(msgPayload, true);
             resetTextarea();
 
@@ -696,6 +787,8 @@
                 if (data) {
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
                     if (tempEl) { tempEl.id = 'msg-' + data.id; addLongPressListeners(tempEl, data.id); if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
+                    const found = loadedMessagesArray.find(m => m.id === msgPayload.id);
+                    if (found) found.id = data.id;
                     cacheCurrentMessages();
                 }
             } catch (err) {} finally { sendBtn.disabled = false; attachBtn.disabled = false; msgInput.focus(); }
