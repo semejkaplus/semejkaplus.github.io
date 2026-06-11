@@ -261,10 +261,26 @@
             if (error) console.error('Push subscription save error:', error);
         }
 
-        // ==================== Supabase Setup ====================
+        // ==================== Модифицированный Supabase Setup ====================
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
-            'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
+            'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true
+                },
+                realtime: {
+                    params: { eventsPerSecond: 10 }
+                },
+                global: {
+                    // Автоматический перезапрос при сбое сети (помогает без VPN)
+                    fetch: (...args) => fetch(...args).catch(err => {
+                        console.warn("Резервная попытка подключения к Supabase...");
+                        return fetch(...args);
+                    })
+                }
+            }
         );
 
         const regScreen = document.getElementById('regScreen');
@@ -482,11 +498,29 @@
             });
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function formatTime(isoString) {
+            if (!isoString) return '';
+            const d = new Date(isoString);
+            return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function insertDateSeparator(isoString) {
+            const d = new Date(isoString);
+            const text = d.toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const div = document.createElement('div');
+            div.className = 'date-separator';
+            div.innerHTML = `<span>${text}</span>`;
+            messagesDiv.appendChild(div);
+        }
+
         function renderMessage(msg, animate = false) {
-            // Защита от дубликатов: если сообщение с таким ID уже есть на экране, игнорируем его
             if (document.getElementById('msg-' + msg.id)) return;
 
-            // Дополнительная защита: если пришло сообщение из базы, проверяем, нет ли на экране его временного Broadcast-клона
             if (msg.id && !msg.id.toString().startsWith('brc-')) {
                 const existingElements = Array.from(messagesDiv.querySelectorAll('.msg.sent, .msg.received'));
                 const isDuplicate = existingElements.some(el => {
@@ -496,7 +530,6 @@
                     const sameUser = msg.user_id === currentUser?.id ? el.classList.contains('sent') : (nameEl && nameEl.textContent === msg.user_name);
                     
                     if (sameText && sameUser && el.id.startsWith('msg-brc-')) {
-                        // Нашли «воздушный» клон! Меняем его временный ID на постоянный из базы и выходим
                         el.id = 'msg-' + msg.id;
                         addLongPressListeners(el, msg.id);
                         return true;
@@ -539,7 +572,7 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // ==================== СИСТЕМА ДОСТАВКИ (BROADCAST + ДЕЛЬТА) ====================
+        // ==================== СИСТЕМА СИНХРОНИЗАЦИИ И РАБОТЫ ЧАТА ====================
 
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
@@ -551,249 +584,173 @@
                         'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
                     }
                 });
-                if (!res.ok) throw new Error('API Sync Fail');
+                if (!res.ok) throw new Error('Delta sync failed');
                 const data = await res.json();
-                
                 if (data && data.length > 0) {
-                    data.forEach(msg => renderMessage(msg, true));
-                    loadReactions(data.map(m => m.id));
+                    const idsToLoadReactions = data.map(m => m.id);
+                    data.forEach(m => renderMessage(m, true));
+                    loadReactions(idsToLoadReactions);
                 }
-            } catch (e) {
-                console.warn('Пропуск фоновой проверки базы данных:', e.message);
-            }
+            } catch(e) { console.error('Ошибка синхронизации дельты:', e); }
         }
 
-        async function loadMessages() {
+        async function loadInitialMessages() {
+            loadingSpinner.classList.add('active');
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc&limit=50`;
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.desc&limit=40`;
                 const res = await fetch(url, {
                     headers: {
                         'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
                         'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
                     }
                 });
-                
-                if (!res.ok) throw new Error('Не удалось связаться с сервером истории');
+                if (!res.ok) throw new Error('Initial load failed');
                 const data = await res.json();
+                loadingSpinner.classList.remove('active');
+                
+                messagesDiv.querySelectorAll('.msg, .date-separator').forEach(el => el.remove());
+                lastDisplayedDate = null;
 
-                if (data) {
-                    const children = Array.from(messagesDiv.children);
-                    children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
-                    
-                    lastDisplayedDate = null;
-                    lastMessageId = null;
-
-                    data.forEach(msg => renderMessage(msg, false));
-                    if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
-                    
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(data.map(m => m.id));
+                if (data && data.length > 0) {
+                    const sorted = data.reverse();
+                    const ids = sorted.map(m => m.id);
+                    sorted.forEach(m => renderMessage(m, false));
+                    loadReactions(ids);
                 }
-            } catch (e) {
-                console.error('Ошибка холодной загрузки истории:', e.message);
-                alert('Ошибка сети при загрузке истории. Попробуйте обновить страницу.');
+            } catch(e) {
+                console.error('Ошибка первичной загрузки:', e);
+                loadingSpinner.classList.remove('active');
             }
         }
 
-        function subscribeMessages() {
-            if (realtimeChannel) {
-                _sgClient.removeChannel(realtimeChannel);
-            }
+        async function sendMessage() {
+            const text = msgInput.value.trim();
+            if (!text || !currentUser) return;
 
-            realtimeChannel = _sgClient.channel('chat-room', {
-                config: {
-                    broadcast: { self: false, ack: true }
-                }
-            });
-
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => {
-                if (currentUser) {
-                    renderMessage(payload.payload, true);
-                }
-            });
-
-            _sgClient.channel('realtime:reactions')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
-                    const ids = Object.keys(reactionsCache);
-                    if (ids.length) loadReactions(ids);
-                }).subscribe();
-
-            realtimeChannel.subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Эфир Broadcast успешно подключен!');
-                    syncNewMessagesOnly();
-                }
-                if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-                    console.log('Сбой канала вещания. Попытка реанимации...');
-                    setTimeout(subscribeMessages, 2000);
-                }
-            });
-        }
-
-        async function sendMessage(text) {
-            const cleanText = text.trim();
-            if (!currentUser || !cleanText) return;
-            if (cleanText === '@exit') { logout(); return; }
-
-            sendBtn.disabled = true;
-            
-            const msgPayload = {
-                id: 'brc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+            const tempId = 'optimistic-' + Date.now();
+            const localMsg = {
+                id: tempId,
                 user_id: currentUser.id,
-                user_name: currentUser.name,
-                text: cleanText,
+                user_name: currentUser.name || currentUser.user_name || 'Вы',
+                text: text,
                 created_at: new Date().toISOString()
             };
 
-            renderMessage(msgPayload, true);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            renderMessage(localMsg, true);
             resetTextarea();
 
-            if (realtimeChannel && realtimeChannel.state === 'joined') {
+            if (realtimeChannel) {
                 realtimeChannel.send({
                     type: 'broadcast',
-                    event: 'shout',
-                    payload: msgPayload
-                }).then((resp) => {
-                    if (resp !== 'ok') console.warn('Broadcast не достучался до серверов, сработает база.');
+                    event: 'msg',
+                    payload: { ...localMsg, id: 'brc-' + tempId }
                 });
             }
 
             try {
                 const { data, error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, user_name: currentUser.name, text: cleanText
-                }).select('id, created_at').single();
+                    user_id: currentUser.id,
+                    user_name: currentUser.name || currentUser.user_name || 'Аноним',
+                    text: text,
+                    created_at: new Date().toISOString()
+                }).select().single();
 
-                if (!error && data) {
-                    const tempEl = document.getElementById('msg-' + msgPayload.id);
-                    if (tempEl) {
-                        tempEl.id = 'msg-' + data.id;
-                        addLongPressListeners(tempEl, data.id);
-                        if (!lastMessageId || Number(data.id) > Number(lastMessageId)) {
-                            lastMessageId = Number(data.id);
-                        }
+                if (error) throw error;
+
+                const tempEl = document.getElementById('msg-' + tempId);
+                if (tempEl && data) {
+                    tempEl.id = 'msg-' + data.id;
+                    addLongPressListeners(tempEl, data.id);
+                }
+            } catch(err) {
+                console.error('Ошибка отправки на сервер:', err);
+                const tempEl = document.getElementById('msg-' + tempId);
+                if (tempEl) {
+                    const bubble = tempEl.querySelector('.bubble');
+                    if (bubble) bubble.style.border = '1px solid #FF8383';
+                }
+            }
+        }
+
+        function initRealtime() {
+            if (realtimeChannel) return;
+
+            realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false } } });
+
+            realtimeChannel
+                .on('broadcast', { event: 'msg' }, (payload) => {
+                    if (payload.payload) renderMessage(payload.payload, true);
+                })
+                .on('postgres_changes', { event: 'INSERT', scheme: 'public', table: 'messages' }, (payload) => {
+                    if (payload.new) renderMessage(payload.new, true);
+                })
+                .on('postgres_changes', { event: 'INSERT', scheme: 'public', table: 'reactions' }, (payload) => {
+                    if (payload.new) {
+                        const r = payload.new;
+                        if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
+                        if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
+                        updateReactionDisplay(r.message_id);
                     }
-                }
-            } catch (err) {
-                console.error('Ошибка фиксации сообщения в истории:', err.message);
-            } finally {
-                sendBtn.disabled = false;
-                msgInput.focus();
-            }
+                })
+                .on('postgres_changes', { event: 'DELETE', scheme: 'public', table: 'reactions' }, (payload) => {
+                    if (payload.old) {
+                        const oldId = payload.old.id;
+                        Object.keys(reactionsCache).forEach(msgId => {
+                            const beforeLen = reactionsCache[msgId].length;
+                            reactionsCache[msgId] = reactionsCache[msgId].filter(r => r.id !== oldId);
+                            if (reactionsCache[msgId].length !== beforeLen) updateReactionDisplay(msgId);
+                        });
+                    }
+                })
+                .subscribe((status) => {
+                    console.log('Статус подписки Realtime:', status);
+                });
+
+            backupSyncInterval = setInterval(syncNewMessagesOnly, 5000);
         }
 
-        function startPolling() {
-            if (backupSyncInterval) clearInterval(backupSyncInterval);
-            backupSyncInterval = setInterval(syncNewMessagesOnly, 4000);
-        }
-
-        refreshBtn.addEventListener('click', async () => {
-            refreshBtn.style.transform = 'rotate(360deg)';
-            refreshBtn.style.transition = 'transform 0.5s ease';
-            await syncNewMessagesOnly();
-            const ids = Object.keys(reactionsCache);
-            if (ids.length) await loadReactions(ids);
-            setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
-        });
-
-        ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                if (currentUser) {
-                    syncNewMessagesOnly();
-                    subscribeMessages();
-                }
-            });
-        });
-
-        // ==================== Системные события UI ====================
-        msgInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); }
-        });
-        sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
-
-        const savedUser = localStorage.getItem('semejka_user');
-        if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
-
-        function formatDateSeparator(dateStr) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr);
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
-        }
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            const svDate = new Date(dateString).toLocaleDateString('sv-SE'); sep.dataset.date = svDate;
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`;
-            messagesDiv.appendChild(sep);
-        }
-
-        joinBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            if (!name) return;
-            joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
-
-            try {
-                const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
-                let user = users?.[0];
-                if (user) {
-                    await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
-                } else {
-                    const { data: newUser, error } = await _sgClient.from('users').insert({ name, email: null }).select().single();
-                    if (error) throw error;
-                    user = newUser;
-                }
-                currentUser = user;
-                localStorage.setItem('semejka_user', JSON.stringify(user));
-
-                regScreen.classList.remove('active');
-                chatScreen.classList.add('active');
-                loadingSpinner.classList.add('active');
-                
-                const children = Array.from(messagesDiv.children);
-                children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
-
-                loadingSpinner.classList.add('active');
-                await loadMessages();
-                loadingSpinner.classList.remove('active');
-                
-                subscribeMessages();
-                startPolling(); 
-                if (window._pushSubscription) saveSubscription(window._pushSubscription);
-                
-                msgInput.focus();
-                resetTextarea();
-            } catch (err) {
-                alert('Ошибка входа: ' + err.message);
-                regScreen.classList.add('active');
-                chatScreen.classList.remove('active');
-            } finally {
-                joinBtn.disabled = false;
-                joinBtn.textContent = 'Войти';
-            }
-        });
-
-        const saved = localStorage.getItem('semejka_user');
-        if (saved) {
-            const user = JSON.parse(saved);
+        function enterChat(userObj) {
+            currentUser = userObj;
+            localStorage.setItem('semejka_user', JSON.stringify(currentUser));
             regScreen.classList.remove('active');
             chatScreen.classList.add('active');
-            loadingSpinner.classList.add('active');
-            _sgClient.from('users').select('*').eq('id', user.id).single().then(async ({ data }) => {
-                if (data) {
-                    currentUser = data;
-                    await loadMessages();
-                    loadingSpinner.classList.remove('active');
-                    subscribeMessages();
-                    startPolling(); 
-                } else {
-                    localStorage.removeItem('semejka_user');
-                    regScreen.classList.add('active');
-                    chatScreen.classList.remove('active');
-                }
-            });
+            
+            loadInitialMessages();
+            initRealtime();
+
+            if (window._pushSubscription) {
+                saveSubscription(window._pushSubscription);
+            }
         }
 
-        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
+        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+
+        joinBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (!name) return alert('Пожалуйста, введите имя');
+            enterChat({ id: 'user-' + Date.now(), name: name, user_name: name });
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        refreshBtn.addEventListener('click', () => {
+            loadInitialMessages();
+        });
+
+        // Авто-логин при загрузке страницы
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('semejka_user');
+            if (saved) {
+                try { enterChat(JSON.parse(saved)); } catch(e) { logout(); }
+            }
+        });
     </script>
 </body>
 </html>
