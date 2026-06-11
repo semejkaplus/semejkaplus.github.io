@@ -271,7 +271,6 @@
         let currentUser = null, lastMessageId = null;
         let realtimeChannel = null;
         let backupSyncInterval = null;
-        let localMessagesCache = [];
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -293,7 +292,7 @@
             localStorage.removeItem('chat_cached_messages');
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
-            currentUser = null; lastMessageId = null; localMessagesCache = [];
+            currentUser = null; lastMessageId = null;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -416,32 +415,34 @@
                 if (error) return;
 
                 if (data && data.length > 0) {
-                    data.forEach(msg => {
-                        if (!localMessagesCache.some(m => m.id === msg.id)) {
-                            localMessagesCache.push(msg);
-                            renderSingleMessage(msg, true);
-                        }
-                    });
-                    saveCacheToLocalStorage();
+                    data.forEach(msg => renderSingleMessage(msg, true));
+                    cacheCurrentMessages();
                 }
             } catch (e) {}
         }
 
-        function saveCacheToLocalStorage() {
+        async function cacheCurrentMessages() {
             try {
-                const sliced = localMessagesCache.slice(-30);
-                localStorage.setItem('chat_cached_messages', JSON.stringify(sliced));
+                const { data } = await _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,image_url,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(30);
+                
+                if (data && data.length) {
+                    localStorage.setItem('chat_cached_messages', JSON.stringify([...data].reverse()));
+                }
             } catch(e){}
         }
 
         async function loadMessages() {
+            let localData = [];
             try {
                 const cached = localStorage.getItem('chat_cached_messages');
                 if (cached) {
-                    const localData = JSON.parse(cached);
+                    localData = JSON.parse(cached);
                     if (localData && localData.length > 0) {
-                        localMessagesCache = localData;
-                        renderMessagesArray(localMessagesCache);
+                        renderMessagesArray(localData);
                         loadingSpinner.classList.remove('active'); 
                     }
                 }
@@ -456,9 +457,8 @@
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    localMessagesCache = data;
-                    renderMessagesArray(localMessagesCache);
-                    saveCacheToLocalStorage();
+                    renderMessagesArray(data);
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(data));
                 }
             } catch (e) {
                 console.log('Сбой сети. Используется локальный кэш.');
@@ -470,15 +470,7 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { 
-                if (currentUser) { 
-                    if (!localMessagesCache.some(m => m.id === payload.payload.id)) {
-                        localMessagesCache.push(payload.payload);
-                        renderSingleMessage(payload.payload, true); 
-                        saveCacheToLocalStorage(); 
-                    }
-                } 
-            });
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderSingleMessage(payload.payload, true); cacheCurrentMessages(); } });
 
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') syncNewMessagesOnly();
@@ -517,7 +509,6 @@
                 text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
-            localMessagesCache.push(msgPayload);
             renderSingleMessage(msgPayload, true);
             resetTextarea();
 
@@ -526,32 +517,23 @@
             }
 
             try {
-                const { data, error } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
-                if (error) throw error;
+                const { data } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
                 if (data) {
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
-                    if (tempEl) { tempEl.id = 'msg-' + data.id; }
-                    const cachedMsg = localMessagesCache.find(m => m.id === msgPayload.id);
-                    if (cachedMsg) cachedMsg.id = data.id;
-                    if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id);
-                    saveCacheToLocalStorage();
+                    if (tempEl) { tempEl.id = 'msg-' + data.id; if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
+                    cacheCurrentMessages();
                 }
-            } catch (err) {
-                console.error("Ошибка сохранения сообщения:", err);
-            } finally { 
-                sendBtn.disabled = false; attachBtn.disabled = false; 
-                msgInput.focus(); autoResize();
-            }
+            } catch (err) {} finally { sendBtn.disabled = false; attachBtn.disabled = false; msgInput.focus(); }
         }
 
         attachBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', async () => {
             const file = fileInput.files[0]; if (!file) return;
             const originalSVG = attachBtn.innerHTML;
-            attachBtn.innerHTML = '<div class="btn-spinner"></div>'; attachBtn.disabled = true; sendBtn.disabled = true;
+            attachBtn.innerHTML = '<div class="btn-spinner"></div>'; attachBtn.disabled = true;
             const imageUrl = await compressAndUploadImage(file);
             if (imageUrl) await sendMessage(msgInput.value, imageUrl);
-            fileInput.value = ''; attachBtn.innerHTML = originalSVG; attachBtn.disabled = false; sendBtn.disabled = false;
+            fileInput.value = ''; attachBtn.innerHTML = originalSVG; attachBtn.disabled = false;
         });
 
         function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 6000); }
