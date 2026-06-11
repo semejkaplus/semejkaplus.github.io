@@ -74,8 +74,8 @@
             align-items: stretch;
         }
 
-        .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
-        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
+        .date-separator { display: flex; justify-content: center; align-items: center; margin: 15px 0; width: 100%; }
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; font-weight: 600; }
 
         .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
@@ -274,7 +274,6 @@
                     params: { eventsPerSecond: 10 }
                 },
                 global: {
-                    // Автоматический перезапрос при сбое сети (помогает без VPN)
                     fetch: (...args) => fetch(...args).catch(err => {
                         console.warn("Резервная попытка подключения к Supabase...");
                         return fetch(...args);
@@ -509,12 +508,10 @@
             return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function insertDateSeparator(isoString) {
-            const d = new Date(isoString);
-            const text = d.toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        function insertDateSeparator(dateStr) {
             const div = document.createElement('div');
             div.className = 'date-separator';
-            div.innerHTML = `<span>${text}</span>`;
+            div.innerHTML = `<span>${dateStr}</span>`;
             messagesDiv.appendChild(div);
         }
 
@@ -529,7 +526,7 @@
                     const sameText = bubble && bubble.textContent === msg.text;
                     const sameUser = msg.user_id === currentUser?.id ? el.classList.contains('sent') : (nameEl && nameEl.textContent === msg.user_name);
                     
-                    if (sameText && sameUser && el.id.startsWith('msg-brc-')) {
+                    if (sameText && sameUser && (el.id.startsWith('msg-brc-') || el.id.startsWith('msg-optimistic-'))) {
                         el.id = 'msg-' + msg.id;
                         addLongPressListeners(el, msg.id);
                         return true;
@@ -547,13 +544,19 @@
                 }
             }
             
-            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
-            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
+            // ВОЗВРАЩЕНО НАЗАД: Красивый формат даты «11 июня 2026 г.» без дня недели
+            const rawDateObj = new Date(msg.created_at || Date.now());
+            const msgDateText = rawDateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            if (msgDateText !== lastDisplayedDate) { 
+                insertDateSeparator(msgDateText); 
+                lastDisplayedDate = msgDateText; 
+            }
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
-            if (msg.created_at) div.dataset.msgDate = msgDate;
+            if (msg.created_at) div.dataset.msgDate = msgDateText;
 
             let html = '';
             if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name || '')}</div>`;
@@ -614,6 +617,7 @@
                 if (data && data.length > 0) {
                     const sorted = data.reverse();
                     const ids = sorted.map(m => m.id);
+                    
                     sorted.forEach(m => renderMessage(m, false));
                     loadReactions(ids);
                 }
@@ -673,7 +677,8 @@
         }
 
         function initRealtime() {
-            if (realtimeChannel) return;
+            try { _sgClient.removeAllChannels(); } catch(e) { console.warn(e); }
+            realtimeChannel = null;
 
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false } } });
 
@@ -706,6 +711,7 @@
                     console.log('Статус подписки Realtime:', status);
                 });
 
+            if (backupSyncInterval) clearInterval(backupSyncInterval);
             backupSyncInterval = setInterval(syncNewMessagesOnly, 5000);
         }
 
@@ -744,7 +750,6 @@
             loadInitialMessages();
         });
 
-        // Авто-логин при загрузке страницы
         window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('semejka_user');
             if (saved) {
