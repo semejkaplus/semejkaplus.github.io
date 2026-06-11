@@ -97,12 +97,16 @@
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
         
-        /* Стили для вложенных фотографий в сообщениях */
-        .chat-image {
-            max-width: 100%; display: block; border-radius: 14px; 
-            margin-top: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-height: 300px; object-fit: cover;
+        .img-wrapper {
+            position: relative; margin-top: 6px; border-radius: 14px; 
+            overflow: hidden; max-height: 300px; width: 100%; min-width: 150px; min-height: 100px;
+            background: rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        .chat-image {
+            width: 100%; height: auto; max-height: 300px; object-fit: cover;
+            display: block; opacity: 0; transition: opacity 0.2s ease-in;
+        }
+        .chat-image.loaded { opacity: 1; }
 
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
@@ -181,7 +185,6 @@
         .input-area button.action-btn:hover { transform: scale(1.05); }
         .input-area button.action-btn:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
-        /* УЛЬТРА-СТИЛИЗАЦИЯ КНОПКИ СКРЕПКИ ИЗ ФОТОГРАФИИ */
         .input-area button#attachBtn {
             background: linear-gradient(145deg, #FF6B5B 0%, #FFA852 100%);
             box-shadow: 
@@ -192,7 +195,6 @@
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             position: relative; overflow: hidden;
         }
-        /* Внутренний матовый стеклянный слой */
         .input-area button#attachBtn::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.12); border-radius: 50%;
@@ -208,7 +210,6 @@
         }
         .input-area button#attachBtn:active svg { transform: scale(0.9); }
 
-        /* Анимация крутилки ожидания вместо скрепки */
         .btn-spinner {
             width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3);
             border-top: 3px solid #FFF; border-radius: 50%;
@@ -250,15 +251,12 @@
         </div>
         <div class="input-area">
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            
             <button id="attachBtn" class="action-btn" title="Отправить фото">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16.5 6V17.5C16.5 19.9853 14.4853 22 12 22C9.51472 22 7.5 19.9853 7.5 17.5V5C7.5 3.34315 8.84315 2 10.5 2C12.1569 2 13.5 3.34315 13.5 5V15.5C13.5 16.3284 12.8284 17 12 17C11.1716 17 10.5 16.3284 10.5 15.5V6H12V15.5C12 15.7761 12.2239 16 12.5 16C12.7761 16 13 15.7761 13 15.5V5C13 3.61929 11.8807 2.5 10.5 2.5C9.11929 2.5 8 3.61929 8 5V17.5C8 19.7091 9.79086 21.5 12 21.5C14.2091 21.5 16 19.7091 16 17.5V6H16.5Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
                 </svg>
             </button>
-            
             <textarea id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
-            
             <button id="sendBtn" class="action-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/></svg>
             </button>
@@ -268,54 +266,6 @@
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ==================== PWA + Push ====================
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            window.addEventListener('load', async () => {
-                try {
-                    const registration = await navigator.serviceWorker.register('/service-worker.js');
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                if (confirm('Доступна новая версия приложения. Обновить сейчас?')) {
-                                    window.location.reload();
-                                }
-                            }
-                        });
-                    });
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        const subscription = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array('BPOJS8FN1hoVsNOyaUMKk1HdExG2fFgMDmg3mV_C2QBdOTWT6h5RKWfMLy-wedJlJoT2jXnBnfArU8ixOPvE554')
-                        });
-                        window._pushSubscription = subscription;
-                    }
-                } catch (err) { console.error('Push setup error:', err); }
-            });
-        }
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-            return outputArray;
-        }
-
-        async function saveSubscription(subscription) {
-            if (!currentUser) return;
-            const { error } = await _sgClient
-                .from('push_subscriptions')
-                .upsert({ 
-                    user_id: currentUser.id, 
-                    subscription: JSON.stringify(subscription) 
-                }, { onConflict: 'user_id' });
-            if (error) console.error('Push subscription save error:', error);
-        }
-
-        // ==================== Supabase Setup ====================
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
@@ -337,7 +287,6 @@
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
-        
         let realtimeChannel = null;
         let backupSyncInterval = null;
 
@@ -345,13 +294,8 @@
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
             const maxHeight = 200;
-            if (scrollHeight > maxHeight) {
-                msgInput.style.height = maxHeight + 'px';
-                msgInput.style.overflowY = 'auto';
-            } else {
-                msgInput.style.height = scrollHeight + 'px';
-                msgInput.style.overflowY = 'hidden';
-            }
+            msgInput.style.height = (scrollHeight > maxHeight ? maxHeight : scrollHeight) + 'px';
+            msgInput.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
         }
         msgInput.addEventListener('input', autoResize);
 
@@ -363,6 +307,7 @@
 
         function logout() {
             localStorage.removeItem('semejka_user');
+            localStorage.removeItem('chat_cached_messages');
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
@@ -382,16 +327,13 @@
         ];
 
         async function loadReactions(messageIds) {
-            if (!messageIds.length) return;
+            if (!messageIds || !messageIds.length) return;
             try {
                 const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})`;
                 const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
+                    headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' }
                 });
-                if (!res.ok) throw new Error('Network fail');
+                if (!res.ok) return;
                 const data = await res.json();
                 if (data) {
                     data.forEach(r => {
@@ -400,7 +342,7 @@
                     });
                     messageIds.forEach(id => updateReactionDisplay(id));
                 }
-            } catch (err) { console.error('Ошибка загрузки реакций:', err); }
+            } catch (err) {}
         }
 
         function updateReactionDisplay(messageId) {
@@ -442,16 +384,12 @@
                 if (existing) await _sgClient.from('reactions').delete().eq('id', existing.id);
                 if (!existing || existing.emoji !== emoji) {
                     const { data, error } = await _sgClient.from('reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji: emoji }).select().single();
-                    if (error) throw error;
-                    if (data) {
-                        reactionsCache[messageId] = reactions.filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
-                        if (!reactionsCache[messageId]) reactionsCache[messageId] = [];
-                        if (!reactionsCache[messageId].some(r => r.id === data.id)) reactionsCache[r.message_id].push(data);
+                    if (!error && data) {
+                        reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
+                        reactionsCache[messageId].push(data);
                     }
                 }
-                reactionsCache[messageId] = (reactionsCache[messageId] || []).filter(r => !r.id.toString().startsWith('temp-'));
-            } catch (err) { console.error('Ошибка реакции:', err); }
-            finally { updateReactionDisplay(messageId); }
+            } catch (err) {} finally { updateReactionDisplay(messageId); }
         }
 
         function showEmojiPanel(messageId) {
@@ -462,26 +400,22 @@
             if (!panel) {
                 panel = document.createElement('div'); panel.className = 'emoji-panel';
                 const searchBlock = document.createElement('div'); searchBlock.className = 'search-block';
-                const searchToggle = document.createElement('button'); searchToggle.className = 'search-toggle'; searchToggle.innerHTML = '🔍'; searchToggle.title = 'Поиск эмодзи';
+                const searchToggle = document.createElement('button'); searchToggle.className = 'search-toggle'; searchToggle.innerHTML = '🔍';
                 searchBlock.appendChild(searchToggle); panel.appendChild(searchBlock);
                 const quickContainer = document.createElement('div'); quickContainer.className = 'quick-emojis';
                 EMOJI_LIST.slice(0, 8).forEach(item => {
-                    const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji; span.title = item.name;
+                    const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
                     span.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, item.emoji); panel.classList.remove('open'); };
                     quickContainer.appendChild(span);
                 });
                 panel.appendChild(quickContainer);
                 const searchRow = document.createElement('div'); searchRow.className = 'search-row';
-                const searchInput = document.createElement('input'); searchInput.type = 'text'; searchInput.className = 'emoji-search'; searchInput.placeholder = 'Поиск эмодзи...';
-                searchInput.addEventListener('mousedown', e => e.stopPropagation());
-                searchInput.addEventListener('touchstart', e => e.stopPropagation());
-                searchInput.addEventListener('click', e => e.stopPropagation());
+                const searchInput = document.createElement('input'); searchInput.type = 'text'; searchInput.className = 'emoji-search'; searchInput.placeholder = 'Поиск...';
                 const optionsContainer = document.createElement('div'); optionsContainer.className = 'emoji-options';
                 const renderFilteredEmojis = (filterText = '') => {
                     optionsContainer.innerHTML = '';
-                    const filtered = EMOJI_LIST.filter(item => item.name.toLowerCase().includes(filterText.toLowerCase()) || item.emoji.includes(filterText));
-                    filtered.forEach(item => {
-                        const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji; span.title = item.name;
+                    EMOJI_LIST.filter(item => item.name.toLowerCase().includes(filterText.toLowerCase()) || item.emoji.includes(filterText)).forEach(item => {
+                        const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
                         span.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, item.emoji); panel.classList.remove('open'); };
                         optionsContainer.appendChild(span);
                     });
@@ -491,90 +425,40 @@
                 searchRow.appendChild(searchInput); searchRow.appendChild(optionsContainer); panel.appendChild(searchRow);
                 searchToggle.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isActive = searchRow.classList.contains('active');
-                    if (isActive) { searchRow.classList.remove('active'); quickContainer.classList.remove('hidden'); }
+                    if (searchRow.classList.contains('active')) { searchRow.classList.remove('active'); quickContainer.classList.remove('hidden'); }
                     else { quickContainer.classList.add('hidden'); searchRow.classList.add('active'); searchInput.focus(); }
                 });
-                panel.addEventListener('mousedown', e => e.stopPropagation());
-                panel.addEventListener('touchstart', e => e.stopPropagation());
                 msgEl.appendChild(panel);
-            } else {
-                const quickContainer = panel.querySelector('.quick-emojis');
-                const searchRow = panel.querySelector('.search-row');
-                const searchInput = panel.querySelector('.emoji-search');
-                if (quickContainer) quickContainer.classList.remove('hidden');
-                if (searchRow) searchRow.classList.remove('active');
-                if (searchInput) searchInput.value = '';
             }
             panel.classList.add('open');
         }
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.emoji-panel') && !e.target.closest('.bubble')) {
-                document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            }
-        });
+        document.addEventListener('click', (e) => { if (!e.target.closest('.emoji-panel') && !e.target.closest('.bubble')) document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open')); });
 
         function addLongPressListeners(msgElement, messageId) {
             const bubble = msgElement.querySelector('.bubble');
             if (!bubble) return;
-            const startPress = (e) => {
-                if (e.target.closest('a')) return;
-                longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300);
-            };
-            const cancelPress = () => { clearTimeout(longPressTimer); };
-            bubble.addEventListener('mousedown', startPress);
-            bubble.addEventListener('mouseup', cancelPress);
-            bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: true });
-            bubble.addEventListener('touchend', cancelPress);
-            bubble.addEventListener('touchcancel', cancelPress);
+            bubble.addEventListener('mousedown', (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); });
+            bubble.addEventListener('mouseup', () => clearTimeout(longPressTimer));
+            bubble.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+            bubble.addEventListener('touchstart', (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); }, { passive: true });
+            bubble.addEventListener('touchend', () => clearTimeout(longPressTimer));
         }
 
         function linkify(text) {
-            const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-            return text.replace(urlRegex, (url) => {
-                const safeUrl = url.replace(/"/g, '&quot;');
-                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-            });
+            return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
         function renderMessage(msg, animate = false) {
             if (document.getElementById('msg-' + msg.id)) return;
 
             if (msg.id && !msg.id.toString().startsWith('brc-')) {
-                const existingElements = Array.from(messagesDiv.querySelectorAll('.msg.sent, .msg.received'));
-                const isDuplicate = existingElements.some(el => {
-                    const bubble = el.querySelector('.bubble');
-                    const nameEl = el.querySelector('.name');
-                    
-                    const hasText = msg.text && msg.text.trim().length > 0;
-                    const sameText = hasText ? (bubble && bubble.textContent.includes(msg.text)) : true;
-                    const sameUser = msg.user_id === currentUser?.id ? el.classList.contains('sent') : (nameEl && nameEl.textContent === msg.user_name);
-                    
-                    if (sameText && sameUser && el.id.startsWith('msg-brc-')) {
-                        el.id = 'msg-' + msg.id;
-                        addLongPressListeners(el, msg.id);
-                        
-                        const img = el.querySelector('.chat-image');
-                        if (msg.image_url && !img) {
-                            const targetBubble = el.querySelector('.bubble');
-                            if (targetBubble) {
-                                targetBubble.innerHTML += `<img src="${msg.image_url}" class="chat-image" loading="lazy">`;
-                            }
-                        }
-                        return true;
-                    }
-                    return false;
-                });
-                
-                if (isDuplicate) return;
+                const el = document.getElementById('msg-brc-' + msg.created_at);
+                if (el) { el.id = 'msg-' + msg.id; addLongPressListeners(el, msg.id); return; }
             }
 
             if (msg.id && !msg.id.toString().startsWith('optimistic') && !msg.id.toString().startsWith('brc-')) {
                 const currentId = Number(msg.id);
-                if (!lastMessageId || currentId > Number(lastMessageId)) {
-                    lastMessageId = currentId;
-                }
+                if (!lastMessageId || currentId > Number(lastMessageId)) lastMessageId = currentId;
             }
             
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
@@ -583,14 +467,15 @@
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
-            if (msg.created_at) div.dataset.msgDate = msgDate;
 
-            let html = '';
-            if (msg.user_id !== currentUser?.id) html += `<div class="name">${escapeHtml(msg.user_name || '')}</div>`;
-            
+            let html = msg.user_id !== currentUser?.id ? `<div class="name">${escapeHtml(msg.user_name || '')}</div>` : '';
             let bubbleContent = linkify(escapeHtml(msg.text || ''));
+            
             if (msg.image_url) {
-                bubbleContent += `<img src="${msg.image_url}" class="chat-image" loading="lazy">`;
+                bubbleContent += `
+                    <div class="img-wrapper">
+                        <img src="${msg.image_url}" class="chat-image" onload="this.classList.add('loaded')" loading="lazy">
+                    </div>`;
             }
 
             html += `<div class="msg-content"><div class="bubble">${bubbleContent}</div></div>`;
@@ -604,131 +489,112 @@
                 div.classList.add('animate-in');
                 div.addEventListener('animationend', () => div.classList.remove('animate-in'), { once: true });
             }
-
             addLongPressListeners(div, msg.id);
         }
-
-        // ==================== СИСТЕМА ДОСТАВКИ (BROADCAST + ДЕЛЬТА) ====================
 
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
                 const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc${lastMessageId ? '&id=gt.' + lastMessageId : ''}`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
-                if (!res.ok) throw new Error('API Sync Fail');
+                const res = await fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } });
+                if (!res.ok) return;
                 const data = await res.json();
-                
                 if (data && data.length > 0) {
                     data.forEach(msg => renderMessage(msg, true));
+                    cacheCurrentMessages();
                     loadReactions(data.map(m => m.id));
                 }
-            } catch (e) {
-                console.warn('Пропуск фоновой проверки базы данных:', e.message);
-            }
+            } catch (e) {}
         }
 
-        async function loadMessages() {
+        // КЭШИРОВАНИЕ: Сохраняем историю на устройстве
+        function cacheCurrentMessages() {
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=50`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
+                const allMsgDivs = messagesDiv.querySelectorAll('.msg');
+                const msgsToCache = [];
+                const datesChecked = new Set();
                 
-                if (!res.ok) throw new Error('Не удалось связаться с сервером истории');
+                // Загружаем только реальные сообщения (не оптимистичные наброски)
+                const currentCache = JSON.parse(localStorage.getItem('chat_cached_messages') || '[]');
+                
+                // Ограничим локальный кэш последними 40 элементами
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.desc&limit=40`;
+                fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.length) {
+                        localStorage.setItem('chat_cached_messages', JSON.stringify(data.reverse()));
+                    }
+                }).catch(()=>{});
+            } catch(e){}
+        }
+
+        // АВТОНОМНОСТЬ: Загрузка сначала из кэша, потом асинхронный запрос к серверу
+        async function loadMessages() {
+            // Шаг 1: Сразу выводим то, что сохранено локально (Решает проблему бесконечного колеса)
+            try {
+                const cached = localStorage.getItem('chat_cached_messages');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    if (data && data.length > 0) {
+                        Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
+                        lastDisplayedDate = null;
+                        data.forEach(msg => renderMessage(msg, false));
+                        lastMessageId = Number(data[data.length - 1].id);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        loadingSpinner.classList.remove('active'); // Скрываем загрузку сразу!
+                        setTimeout(() => loadReactions(data.map(m => m.id)), 50);
+                    }
+                }
+            } catch(e) {}
+
+            // Шаг 2: В фоне опрашиваем сервер и догружаем новые сообщения, если они есть
+            try {
+                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,image_url,created_at&order=created_at.asc&limit=40`;
+                const res = await fetch(url, { headers: { 'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj', 'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj' } });
+                if (!res.ok) throw new Error();
                 const data = await res.json();
-
                 if (data) {
-                    const children = Array.from(messagesDiv.children);
-                    children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
-                    
-                    lastDisplayedDate = null;
-                    lastMessageId = null;
-
+                    Array.from(messagesDiv.children).forEach(child => { if (child !== loadingSpinner) child.remove(); });
+                    lastDisplayedDate = null; lastMessageId = null;
                     data.forEach(msg => renderMessage(msg, false));
                     if (data.length > 0) lastMessageId = Number(data[data.length - 1].id);
-                    
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    loadReactions(data.map(m => m.id));
+                    localStorage.setItem('chat_cached_messages', JSON.stringify(data));
+                    setTimeout(() => loadReactions(data.map(m => m.id)), 50);
                 }
             } catch (e) {
-                console.error('Ошибка холодной загрузки истории:', e.message);
-                alert('Ошибка сети при загрузке истории. Попробуйте обновить страницу.');
+                // Если сеть заблокирована провайдером, у пользователя останется локальная история чата
+                console.log('Загружено из локального кэша устройства из-за ограничений сети.');
+            } finally {
+                loadingSpinner.classList.remove('active');
             }
         }
 
         function subscribeMessages() {
-            if (realtimeChannel) {
-                _sgClient.removeChannel(realtimeChannel);
-            }
-
-            realtimeChannel = _sgClient.channel('chat-room', {
-                config: {
-                    broadcast: { self: false, ack: true }
-                }
-            });
-
-            realtimeChannel.on('broadcast', { event: 'shout' }, payload => {
-                if (currentUser) {
-                    renderMessage(payload.payload, true);
-                }
-            });
-
-            _sgClient.channel('realtime:reactions')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
-                    const ids = Object.keys(reactionsCache);
-                    if (ids.length) loadReactions(ids);
-                }).subscribe();
+            if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
+            realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
+            realtimeChannel.on('broadcast', { event: 'shout' }, payload => { if (currentUser) { renderMessage(payload.payload, true); cacheCurrentMessages(); } });
+            
+            _sgClient.channel('realtime:reactions').on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => {
+                const ids = Object.keys(reactionsCache); if (ids.length) loadReactions(ids);
+            }).subscribe();
 
             realtimeChannel.subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Эфир Broadcast успешно подключен!');
-                    syncNewMessagesOnly();
-                }
-                if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-                    console.log('Сбой канала вещания. Попытка реанимации...');
-                    setTimeout(subscribeMessages, 2000);
-                }
+                if (status === 'SUBSCRIBED') syncNewMessagesOnly();
+                else setTimeout(subscribeMessages, 4000);
             });
         }
 
-        // КЛИЕНТСКОЕ СЖАТИЕ И ЗАГРУЗКА ИЗОБРАЖЕНИЙ
         async function compressAndUploadImage(file) {
-            const options = {
-                maxSizeMB: 0.15,           // Лимит на стороне клиента ~150 килобайт
-                maxWidthOrHeight: 1200,    // Сжимаем пропорционально до Full HD по длинной стороне
-                useWebWorker: true,
-                fileType: 'image/webp'     // Конвертируем в ультра-эффективный WebP
-            };
-            
             try {
-                const compressedFile = await imageCompression(file, options);
-                
-                const fileExt = 'webp';
-                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                
-                const { data, error } = await _sgClient.storage
-                    .from('chat-attachments')
-                    .upload(fileName, compressedFile);
-                    
+                const compressedFile = await imageCompression(file, { maxSizeMB: 0.10, maxWidthOrHeight: 1100, useWebWorker: true, fileType: 'image/webp' });
+                const fileName = `${Date.now()}_r${Math.random().toString(36).substr(2, 4)}.webp`;
+                const { error } = await _sgClient.storage.from('chat-attachments').upload(fileName, compressedFile);
                 if (error) throw error;
-                
-                const { data: { publicUrl } } = _sgClient.storage
-                    .from('chat-attachments')
-                    .getPublicUrl(fileName);
-                    
-                return publicUrl;
+                return _sgClient.storage.from('chat-attachments').getPublicUrl(fileName).data.publicUrl;
             } catch (err) {
-                console.error('Ошибка обработки картинки:', err);
-                alert('Не удалось сжать и загрузить изображение.');
-                return null;
+                alert('Сбой сети. Включите обход блокировок для загрузки медиа-файлов.'); return null;
             }
         }
 
@@ -737,192 +603,83 @@
             if (!currentUser || (!cleanText && !imageUrl)) return;
             if (cleanText === '@exit') { logout(); return; }
 
-            sendBtn.disabled = true;
-            attachBtn.disabled = true;
-            
+            sendBtn.disabled = true; attachBtn.disabled = true;
+            const timeStamp = new Date().toISOString();
             const msgPayload = {
-                id: 'brc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-                user_id: currentUser.id,
-                user_name: currentUser.name,
-                text: cleanText,
-                image_url: imageUrl,
-                created_at: new Date().toISOString()
+                id: 'brc-' + timeStamp,
+                user_id: currentUser.id, user_name: currentUser.name,
+                text: cleanText, image_url: imageUrl, created_at: timeStamp
             };
 
             renderMessage(msgPayload, true);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
             resetTextarea();
 
             if (realtimeChannel && realtimeChannel.state === 'joined') {
-                realtimeChannel.send({
-                    type: 'broadcast',
-                    event: 'shout',
-                    payload: msgPayload
-                }).then((resp) => {
-                    if (resp !== 'ok') console.warn('Broadcast не достучался до серверов, сработает база.');
-                });
+                realtimeChannel.send({ type: 'broadcast', event: 'shout', payload: msgPayload });
             }
 
             try {
-                const { data, error } = await _sgClient.from('messages').insert({
-                    user_id: currentUser.id, 
-                    user_name: currentUser.name, 
-                    text: cleanText,
-                    image_url: imageUrl
-                }).select('id, created_at').single();
-
-                if (!error && data) {
+                const { data } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText, image_url: imageUrl }).select('id').single();
+                if (data) {
                     const tempEl = document.getElementById('msg-' + msgPayload.id);
-                    if (tempEl) {
-                        tempEl.id = 'msg-' + data.id;
-                        addLongPressListeners(tempEl, data.id);
-                        if (!lastMessageId || Number(data.id) > Number(lastMessageId)) {
-                            lastMessageId = Number(data.id);
-                        }
-                    }
+                    if (tempEl) { tempEl.id = 'msg-' + data.id; addLongPressListeners(tempEl, data.id); if (!lastMessageId || Number(data.id) > Number(lastMessageId)) lastMessageId = Number(data.id); }
+                    cacheCurrentMessages();
                 }
-            } catch (err) {
-                console.error('Ошибка фиксации сообщения в истории:', err.message);
-            } finally {
-                sendBtn.disabled = false;
-                attachBtn.disabled = false;
-                msgInput.focus();
-            }
+            } catch (err) {} finally { sendBtn.disabled = false; attachBtn.disabled = false; msgInput.focus(); }
         }
 
-        // Логика нажатия на кастомную скрепку
         attachBtn.addEventListener('click', () => fileInput.click());
-
         fileInput.addEventListener('change', async () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-            
-            // Сохраняем исходную иконку скрепки внутри кнопки
+            const file = fileInput.files[0]; if (!file) return;
             const originalSVG = attachBtn.innerHTML;
-            // Переключаем кнопку в режим загрузки (крутящийся спиннер)
-            attachBtn.innerHTML = '<div class="btn-spinner"></div>';
-            attachBtn.disabled = true;
-            
+            attachBtn.innerHTML = '<div class="btn-spinner"></div>'; attachBtn.disabled = true;
             const imageUrl = await compressAndUploadImage(file);
-            
-            if (imageUrl) {
-                const currentText = msgInput.value;
-                await sendMessage(currentText, imageUrl);
-            }
-            
-            fileInput.value = ''; 
-            // Возвращаем исходную стеклянную скрепку на место
-            attachBtn.innerHTML = originalSVG;
-            attachBtn.disabled = false;
+            if (imageUrl) await sendMessage(msgInput.value, imageUrl);
+            fileInput.value = ''; attachBtn.innerHTML = originalSVG; attachBtn.disabled = false;
         });
 
-        function startPolling() {
-            if (backupSyncInterval) clearInterval(backupSyncInterval);
-            backupSyncInterval = setInterval(syncNewMessagesOnly, 4000);
-        }
+        function startPolling() { if (backupSyncInterval) clearInterval(backupSyncInterval); backupSyncInterval = setInterval(syncNewMessagesOnly, 5000); }
+        refreshBtn.addEventListener('click', async () => { await syncNewMessagesOnly(); const ids = Object.keys(reactionsCache); if (ids.length) await loadReactions(ids); });
 
-        refreshBtn.addEventListener('click', async () => {
-            refreshBtn.style.transform = 'rotate(360deg)';
-            refreshBtn.style.transition = 'transform 0.5s ease';
-            await syncNewMessagesOnly();
-            const ids = Object.keys(reactionsCache);
-            if (ids.length) await loadReactions(ids);
-            setTimeout(() => { refreshBtn.style.transform = 'none'; refreshBtn.style.transition = 'none'; }, 500);
-        });
-
-        ['visibilitychange', 'focus', 'pageshow', 'online'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                if (currentUser) {
-                    syncNewMessagesOnly();
-                    subscribeMessages();
-                }
-            });
-        });
-
-        // ==================== Системные события UI ====================
-        msgInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); }
-        });
+        ['visibilitychange', 'focus'].forEach(evt => { window.addEventListener(evt, () => { if (currentUser) { syncNewMessagesOnly(); subscribeMessages(); } }); });
+        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
-
-        const savedUser = localStorage.getItem('semejka_user');
-        if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr);
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
         }
         function insertDateSeparator(dateString) {
             const sep = document.createElement('div'); sep.className = 'date-separator';
-            const svDate = new Date(dateString).toLocaleDateString('sv-SE'); sep.dataset.date = svDate;
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`;
-            messagesDiv.appendChild(sep);
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep);
         }
 
         joinBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            if (!name) return;
-            joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
-
+            const name = nameInput.value.trim(); if (!name) return;
+            joinBtn.disabled = true;
             try {
                 const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
                 let user = users?.[0];
-                if (user) {
-                    await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
-                } else {
-                    const { data: newUser, error } = await _sgClient.from('users').insert({ name, email: null }).select().single();
-                    if (error) throw error;
-                    user = newUser;
-                }
-                currentUser = user;
-                localStorage.setItem('semejka_user', JSON.stringify(user));
-
-                regScreen.classList.remove('active');
-                chatScreen.classList.add('active');
-                loadingSpinner.classList.add('active');
+                if (user) await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
+                else user = (await _sgClient.from('users').insert({ name, email: null }).select().single()).data;
                 
-                const children = Array.from(messagesDiv.children);
-                children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
-
+                currentUser = user; localStorage.setItem('semejka_user', JSON.stringify(user));
+                regScreen.classList.remove('active'); chatScreen.classList.add('active');
                 loadingSpinner.classList.add('active');
                 await loadMessages();
                 loadingSpinner.classList.remove('active');
-                
-                subscribeMessages();
-                startPolling(); 
-                if (window._pushSubscription) saveSubscription(window._pushSubscription);
-                
-                msgInput.focus();
-                resetTextarea();
-            } catch (err) {
-                alert('Ошибка входа: ' + err.message);
-                regScreen.classList.add('active');
-                chatScreen.classList.remove('active');
-            } finally {
-                joinBtn.disabled = false;
-                joinBtn.textContent = 'Войти';
-            }
+                subscribeMessages(); startPolling();
+            } catch (err) { alert('Ошибка сети при авторизации'); regScreen.classList.add('active'); }
+            finally { joinBtn.disabled = false; }
         });
 
         const saved = localStorage.getItem('semejka_user');
         if (saved) {
             const user = JSON.parse(saved);
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
-            loadingSpinner.classList.add('active');
+            regScreen.classList.remove('active'); chatScreen.classList.add('active'); loadingSpinner.classList.add('active');
             _sgClient.from('users').select('*').eq('id', user.id).single().then(async ({ data }) => {
-                if (data) {
-                    currentUser = data;
-                    await loadMessages();
-                    loadingSpinner.classList.remove('active');
-                    subscribeMessages();
-                    startPolling(); 
-                } else {
-                    localStorage.removeItem('semejka_user');
-                    regScreen.classList.add('active');
-                    chatScreen.classList.remove('active');
-                }
+                if (data) { currentUser = data; await loadMessages(); loadingSpinner.classList.remove('active'); subscribeMessages(); startPolling(); }
+                else { localStorage.removeItem('semejka_user'); logout(); }
             });
         }
 
