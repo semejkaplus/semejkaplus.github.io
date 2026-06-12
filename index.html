@@ -201,7 +201,7 @@
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
-                <span>Загрузка сообщений...</span>
+                <span>Загрузка messages...</span>
             </div>
         </div>
         <div class="input-area">
@@ -251,13 +251,10 @@
 
         async function saveSubscription(subscription) {
             if (!currentUser) return;
-            const { error } = await _sgClient
-                .from('push_subscriptions')
-                .upsert({ 
-                    user_id: currentUser.id, 
-                    subscription: JSON.stringify(subscription) 
-                }, { onConflict: 'user_id' });
-            if (error) console.error('Push subscription save error:', error);
+            await _sgClient.from('push_subscriptions').upsert({ 
+                user_id: currentUser.id, 
+                subscription: JSON.stringify(subscription) 
+            }, { onConflict: 'user_id' });
         }
 
         const _sgClient = window.supabase.createClient(
@@ -308,7 +305,7 @@
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
-            regScreen.classList.add('active');
+            regScreen.className = 'active';
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
@@ -326,15 +323,12 @@
         async function loadReactions(messageIds) {
             if (!messageIds.length) return;
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/reactions?select=*&message_id=in.(${messageIds.join(',')})`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
-                if (!res.ok) throw new Error('Network fail');
-                const data = await res.json();
+                const { data, error } = await _sgClient
+                    .from('reactions')
+                    .select('*')
+                    .in('message_id', messageIds);
+
+                if (error) throw error;
                 if (data) {
                     data.forEach(r => {
                         if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
@@ -539,18 +533,16 @@
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
-                // Извлекаем последние 40 сообщений (от новых к старым)
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.desc&limit=40`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
-                if (!res.ok) throw new Error('API Sync Fail');
-                const data = await res.json();
+                // Используем нативный клиент SDK вместо сырого fetch-запроса к REST API
+                const { data, error } = await _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(40);
 
-                // ЕСЛИ БАЗА ДАННЫХ ПУСТАЯ (Очищена история на сервере)
+                if (error) throw error;
+
+                // Если на сервере пусто — значит была очистка истории
                 if (!data || data.length === 0) {
                     const children = Array.from(messagesDiv.children);
                     let hasMessages = false;
@@ -561,17 +553,13 @@
                         lastDisplayedDate = null;
                         lastMessageId = null;
                         reactionsCache = {};
-                        console.log('История очищена на сервере. Экран чата обновлен.');
+                        console.log('История очищена на сервере.');
                     }
                     return;
                 }
 
-                // Переворачиваем массив, чтобы отрисовать от старых к новым
                 const correctOrder = data.reverse();
-                
-                correctOrder.forEach(msg => {
-                    renderMessage(msg, true);
-                });
+                correctOrder.forEach(msg => renderMessage(msg, true));
 
                 const newestMsg = correctOrder[correctOrder.length - 1];
                 if (newestMsg) {
@@ -580,22 +568,26 @@
 
                 loadReactions(correctOrder.map(m => m.id));
             } catch (e) {
-                console.warn('Пропуск фоновой проверки базы данных:', e.message);
+                console.warn('Фоновое обновление пропущено (проблема сети):', e.message);
             }
         }
 
         async function loadMessages() {
             try {
-                const url = `https://sfsxflsbueyotiksqknp.supabase.co/rest/v1/messages?select=id,user_id,user_name,text,created_at&order=created_at.asc&limit=50`;
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': 'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj',
-                        'Authorization': 'Bearer sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-                    }
-                });
+                // Защитный тайм-аут на 5 секунд, чтобы холодная загрузка не вешала приложение без VPN
+                const loadPromise = _sgClient
+                    .from('messages')
+                    .select('id,user_id,user_name,text,created_at')
+                    .order('created_at', { ascending: true })
+                    .limit(50);
 
-                if (!res.ok) throw new Error('Не удалось связаться с сервером истории');
-                const data = await res.json();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 5000)
+                );
+
+                const { data, error } = await Promise.race([loadPromise, timeoutPromise]);
+
+                if (error) throw error;
 
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
@@ -610,8 +602,10 @@
                     loadReactions(data.map(m => m.id));
                 }
             } catch (e) {
-                console.error('Ошибка холодной загрузки истории:', e.message);
-                alert('Ошибка сети при загрузке истории. Попробуйте обновить страницу.');
+                console.warn('Холодная загрузка не удалась, активируем живой режим:', e.message);
+                // Мягко убираем спиннер, чтобы дать пользователю писать сообщения
+                const children = Array.from(messagesDiv.children);
+                children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
             }
         }
 
@@ -621,9 +615,7 @@
             }
 
             realtimeChannel = _sgClient.channel('chat-room', {
-                config: {
-                    broadcast: { self: false, ack: true }
-                }
+                config: { broadcast: { self: false, ack: true } }
             });
 
             realtimeChannel.on('broadcast', { event: 'shout' }, payload => {
@@ -640,12 +632,10 @@
 
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('Эфир Broadcast успешно подключен!');
                     syncNewMessagesOnly();
                 }
                 if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-                    console.log('Поиск сети для вещания...');
-                    setTimeout(subscribeMessages, 3000);
+                    setTimeout(subscribeMessages, 4000);
                 }
             });
         }
@@ -669,7 +659,6 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             resetTextarea();
 
-            // Мобильный интернет: отправляем broadcast без блокировки интерфейса
             if (realtimeChannel) {
                 realtimeChannel.send({
                     type: 'broadcast',
@@ -679,7 +668,6 @@
             }
 
             try {
-                // Прямой сетевой запрос на сохранение — работает при любом типе связи
                 const { data, error } = await _sgClient.from('messages').insert({
                     user_id: currentUser.id, user_name: currentUser.name, text: cleanText
                 }).select('id, created_at').single();
@@ -693,7 +681,7 @@
                     }
                 }
             } catch (err) {
-                console.error('Ошибка фиксации сообщения:', err.message);
+                console.error('Ошибка отправки:', err.message);
             } finally {
                 sendBtn.disabled = false;
                 msgInput.focus();
@@ -771,7 +759,6 @@
 
                 subscribeMessages();
                 startPolling(); 
-                if (window._pushSubscription) saveSubscription(window._pushSubscription);
 
                 msgInput.focus();
                 resetTextarea();
