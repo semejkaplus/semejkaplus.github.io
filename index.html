@@ -37,14 +37,23 @@
             text-align: center; border: 1px solid rgba(255,255,255,0.8);
         }
 
+        /* === ВЕКТОРНЫЙ ЦИФРОВОЙ ЛОГОТИП (БЕЗ КАРТИНКИ) === */
         .title-logo {
-            display: block; max-width: 400px; width: 95%; margin: 0 auto 30px;
-            border-radius: 32px; background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.6);
-            padding: 10px;
+            display: block; 
+            max-width: 320px; 
+            width: 90%; 
+            margin: 0 auto 25px;
+            padding: 0;
+            background: none;
+            border: none;
+            user-select: none;
         }
-        .title-logo img { width: 100%; height: auto; border-radius: 24px; }
+        .title-logo svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        /* ================================================= */
 
         p { color: #555; margin-bottom: 35px; font-size: 18px; }
         input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
@@ -188,7 +197,27 @@
     <div id="regScreen" class="screen active">
         <div class="box">
             <div class="title-logo">
-                <img src="https://s10.iimage.su/s/01/th_gbQUgmlxJOC82rwE42zTtHdJvyk5H1YnnJ3AfyWuK.png" alt="SEMEJKA PLUS" onerror="this.style.display='none'">
+                <svg viewBox="0 0 400 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4A4A5A" />
+                            <stop offset="100%" stop-color="#2D2D3A" />
+                        </linearGradient>
+                        <linearGradient id="plusGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#6C63FF" />
+                            <stop offset="100%" stop-color="#FF6584" />
+                        </linearGradient>
+                        <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    <text x="10" y="65" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="54" letter-spacing="1.5" fill="url(#textGrad)">SEMEJKA</text>
+                    <g filter="url(#neonGlow)">
+                        <rect x="285" y="24" width="105" height="46" rx="14" fill="url(#plusGrad)" />
+                        <text x="337.5" y="55" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="800" font-size="24" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">PLUS</text>
+                    </g>
+                </svg>
             </div>
             <p>Семейный чат для самых близких</p>
             <input type="text" id="nameInput" placeholder="Ваше имя">
@@ -201,7 +230,7 @@
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
-                <span>Загрузка messages...</span>
+                <span>Загрузка...</span>
             </div>
         </div>
         <div class="input-area">
@@ -214,49 +243,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            window.addEventListener('load', async () => {
-                try {
-                    const registration = await navigator.serviceWorker.register('/service-worker.js');
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                if (confirm('Доступна новая версия приложения. Обновить сейчас?')) {
-                                    window.location.reload();
-                                }
-                            }
-                        });
-                    });
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        const subscription = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array('BPOJS8FN1hoVsNOyaUMKk1HdExG2fFgMDmg3mV_C2QBdOTWT6h5RKWfMLy-wedJlJoT2jXnBnfArU8ixOPvE554')
-                        });
-                        window._pushSubscription = subscription;
-                    }
-                } catch (err) { console.error('Push setup error:', err); }
-            });
-        }
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-            return outputArray;
-        }
-
-        async function saveSubscription(subscription) {
-            if (!currentUser) return;
-            await _sgClient.from('push_subscriptions').upsert({ 
-                user_id: currentUser.id, 
-                subscription: JSON.stringify(subscription) 
-            }, { onConflict: 'user_id' });
-        }
-
         const _sgClient = window.supabase.createClient(
             'https://sfsxflsbueyotiksqknp.supabase.co',
             'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
@@ -305,7 +291,7 @@
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
-            regScreen.className = 'active';
+            regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
@@ -528,12 +514,9 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // ==================== СИСТЕМА ОБНОВЛЕНИЯ И ОЧИСТКИ БАЗЫ ====================
-
         async function syncNewMessagesOnly() {
             if (!currentUser) return;
             try {
-                // Используем нативный клиент SDK вместо сырого fetch-запроса к REST API
                 const { data, error } = await _sgClient
                     .from('messages')
                     .select('id,user_id,user_name,text,created_at')
@@ -542,7 +525,6 @@
 
                 if (error) throw error;
 
-                // Если на сервере пусто — значит была очистка истории
                 if (!data || data.length === 0) {
                     const children = Array.from(messagesDiv.children);
                     let hasMessages = false;
@@ -553,7 +535,6 @@
                         lastDisplayedDate = null;
                         lastMessageId = null;
                         reactionsCache = {};
-                        console.log('История очищена на сервере.');
                     }
                     return;
                 }
@@ -568,13 +549,12 @@
 
                 loadReactions(correctOrder.map(m => m.id));
             } catch (e) {
-                console.warn('Фоновое обновление пропущено (проблема сети):', e.message);
+                console.warn('Фоновое обновление пропущено:', e.message);
             }
         }
 
         async function loadMessages() {
             try {
-                // Защитный тайм-аут на 5 секунд, чтобы холодная загрузка не вешала приложение без VPN
                 const loadPromise = _sgClient
                     .from('messages')
                     .select('id,user_id,user_name,text,created_at')
@@ -602,8 +582,7 @@
                     loadReactions(data.map(m => m.id));
                 }
             } catch (e) {
-                console.warn('Холодная загрузка не удалась, активируем живой режим:', e.message);
-                // Мягко убираем спиннер, чтобы дать пользователю писать сообщения
+                console.warn('Загрузка не удалась, живой режим:', e.message);
                 const children = Array.from(messagesDiv.children);
                 children.forEach(child => { if (child !== loadingSpinner) child.remove(); });
             }
@@ -668,7 +647,7 @@
             }
 
             try {
-                const { data, error } = await _sgClient.from('messages').insert({
+                const { data, error = null } = await _sgClient.from('messages').insert({
                     user_id: currentUser.id, user_name: currentUser.name, text: cleanText
                 }).select('id, created_at').single();
 
@@ -715,18 +694,13 @@
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
 
         const savedUser = localStorage.getItem('semejka_user');
-        if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
-
-        function formatDateSeparator(dateStr) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr);
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
-        }
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            const svDate = new Date(dateString).toLocaleDateString('sv-SE'); sep.dataset.date = svDate;
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`;
-            messagesDiv.appendChild(sep);
+        if (savedUser) { 
+            try { 
+                const parsed = JSON.parse(savedUser);
+                nameInput.value = parsed.name || ''; 
+            } catch(e) {
+                localStorage.removeItem('semejka_user');
+            } 
         }
 
         joinBtn.addEventListener('click', async () => {
@@ -735,15 +709,18 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                const { data: users } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
+                const { data: users, error: findError } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
+                if (findError) throw findError;
+
                 let user = users?.[0];
                 if (user) {
                     await _sgClient.from('users').update({ last_seen: new Date() }).eq('id', user.id);
                 } else {
-                    const { data: newUser, error } = await _sgClient.from('users').insert({ name, email: null }).select().single();
-                    if (error) throw error;
+                    const { data: newUser, error: createError } = await _sgClient.from('users').insert({ name, email: null }).select().single();
+                    if (createError) throw createError;
                     user = newUser;
                 }
+                
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
 
@@ -763,34 +740,22 @@
                 msgInput.focus();
                 resetTextarea();
             } catch (err) {
-                alert('Ошибка входа: ' + err.message);
-                regScreen.classList.add('active');
-                chatScreen.classList.remove('active');
-            } finally {
+                alert('Ошибка входа (проверьте сеть или VPN): ' + err.message);
                 joinBtn.disabled = false;
                 joinBtn.textContent = 'Войти';
             }
         });
 
-        const saved = localStorage.getItem('semejka_user');
-        if (saved) {
-            const user = JSON.parse(saved);
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
-            loadingSpinner.classList.add('active');
-            _sgClient.from('users').select('*').eq('id', user.id).single().then(async ({ data }) => {
-                if (data) {
-                    currentUser = data;
-                    await loadMessages();
-                    loadingSpinner.classList.remove('active');
-                    subscribeMessages();
-                    startPolling(); 
-                } else {
-                    localStorage.removeItem('semejka_user');
-                    regScreen.classList.add('active');
-                    chatScreen.classList.remove('active');
-                }
-            });
+        function formatDateSeparator(dateStr) {
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            const d = new Date(dateStr);
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+        }
+        function insertDateSeparator(dateString) {
+            const sep = document.createElement('div'); sep.className = 'date-separator';
+            const svDate = new Date(dateString).toLocaleDateString('sv-SE'); sep.dataset.date = svDate;
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`;
+            messagesDiv.appendChild(sep);
         }
 
         function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
