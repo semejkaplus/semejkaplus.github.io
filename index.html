@@ -185,9 +185,9 @@
                             <stop offset="100%" stop-color="#C93D36" />
                         </linearGradient>
                         <linearGradient id="glassPlus" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#FFA17A" />
+                            <stop offset="0%" stop-color="#FFAA85" />
                             <stop offset="50%" stop-color="#ED5D52" />
-                            <stop offset="100%" stop-color="#A61C17" gradientspace="userSpaceOnUse" />
+                            <stop offset="100%" stop-color="#A61C17" />
                         </linearGradient>
                     </defs>
 
@@ -243,6 +243,9 @@
         let realtimeChannel = null;
         let backupSyncInterval = null;
 
+        // Временный лог текстов сообщений, отправленных лично этим клиентом
+        let mySentTextsLog = new Set();
+
         function autoResize() {
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
@@ -267,6 +270,7 @@
             if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
             if (_sgClient) _sgClient.removeAllChannels();
             currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
+            mySentTextsLog.clear();
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -412,7 +416,13 @@
                 const { data, error } = await _sgClient.from('messages').select('id,user_id,user_name,text,created_at').order('created_at', { ascending: false }).limit(30);
                 if (error) throw error;
                 if (data) {
-                    data.reverse().forEach(msg => renderMessage(msg, true));
+                    data.reverse().forEach(msg => {
+                        // ФИКС ДУБЛЕЙ: Если это наше сообщение и оно залогировано, игнорируем его рендер из базы
+                        if (msg.user_id === currentUser.id && mySentTextsLog.has(msg.text)) {
+                            return; 
+                        }
+                        renderMessage(msg, true);
+                    });
                     loadReactions(data.map(m => m.id));
                 }
             } catch (e) { console.error('Ошибка фоновой синхронизации:', e); }
@@ -434,7 +444,12 @@
         function subscribeMessages() {
             if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
             realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, p => currentUser && renderMessage(p.payload, true)).subscribe();
+            realtimeChannel.on('broadcast', { event: 'shout' }, p => {
+                if (!currentUser) return;
+                // Защита от дублирования через сокеты своего же сообщения
+                if (p.payload.user_id === currentUser.id) return;
+                renderMessage(p.payload, true);
+            }).subscribe();
             startPolling();
         }
 
@@ -444,23 +459,47 @@
             if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
+            const generatedId = 'brc-' + Date.now();
             const msgPayload = {
-                id: 'brc-' + Date.now(), user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
+                id: generatedId, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
             };
 
+            // Добавляем текст в лог отправки для предотвращения дублей
+            mySentTextsLog.add(cleanText);
+
+            // Мгновенная оптимистичная отрисовка на экране автора сообщения
             renderMessage(msgPayload, true);
             resetTextarea();
+
+            // Отправка по Broadcast-каналу для моментального отображения у других без ожидания БД
             if (realtimeChannel) realtimeChannel.send({ type: 'broadcast', event: 'shout', payload: msgPayload }).catch(() => {});
 
             try {
-                const { error } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText });
+                const { data, error } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText }).select().single();
                 if (error) throw error;
-            } catch (err) { console.error('Ошибка отправки в БД:', err); } finally { sendBtn.disabled = false; msgInput.focus(); }
+                
+                // Перепривязываем элемент интерфейса к реальному ID базы данных, когда он сгенерировался сервером
+                if (data) {
+                    const localBubble = document.getElementById('msg-' + generatedId);
+                    if (localBubble) {
+                        localBubble.id = 'msg-' + data.id;
+                        addLongPressListeners(localBubble, data.id);
+                    }
+                }
+            } catch (err) { 
+                console.error('Ошибка записи сообщения в БД:', err); 
+            } finally { 
+                sendBtn.disabled = false; 
+                msgInput.focus(); 
+                // Даем 5 секунд фоновому пуллингу пропустить дубли, затем очищаем память
+                setTimeout(() => mySentTextsLog.delete(cleanText), 5000);
+            }
         }
 
         function startPolling() {
             if (backupSyncInterval) clearInterval(backupSyncInterval);
-            backupSyncInterval = setInterval(syncNewMessagesOnly, 4000);
+            // Интервал синхронизации установлен на 3 секунды для лучшего баланса батареи мобильного и скорости доставки
+            backupSyncInterval = setInterval(syncNewMessagesOnly, 3000);
         }
 
         refreshBtn.addEventListener('click', async () => {
