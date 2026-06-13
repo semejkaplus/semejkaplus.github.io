@@ -42,11 +42,7 @@
             margin: 0 auto 20px auto;
             user-select: none;
         }
-        .logo-glass-container svg {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+        .logo-glass-container svg { width: 100%; height: auto; display: block; }
 
         p { color: #635857; margin-bottom: 35px; font-size: 17px; font-weight: 600; opacity: 0.85; }
         input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
@@ -201,12 +197,12 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const _sgClient = window.supabase.createClient(
-            'https://sfsxflsbueyotiksqknp.supabase.co',
-            'sb_publishable_32wqroL1fDtPIVwHbvZtIg_5Hipzmdj'
-        );
+        // Подключение к твоему настроенному серверу на Hugging Face Spaces
+        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
+        
+        const API_URL = `https://${HF_SPACE_DOMAIN}/api`;
+        const WS_URL = `wss://${HF_SPACE_DOMAIN}/ws`;
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
@@ -218,12 +214,11 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        let currentUser = null, lastMessageId = null;
+        let currentUser = null;
         let lastDisplayedDate = null;
         let reactionsCache = {};
         let longPressTimer = null;
-        let realtimeChannel = null;
-        let backupSyncInterval = null;
+        let socket = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -246,9 +241,8 @@
 
         function logout() {
             localStorage.removeItem('semejka_user');
-            if (backupSyncInterval) { clearInterval(backupSyncInterval); backupSyncInterval = null; }
-            if (_sgClient) _sgClient.removeAllChannels();
-            currentUser = null; lastMessageId = null; lastDisplayedDate = null; reactionsCache = {};
+            if (socket) { socket.close(); socket = null; }
+            currentUser = null; lastDisplayedDate = null; reactionsCache = {};
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -256,75 +250,20 @@
         }
 
         const EMOJI_LIST = [
-            { emoji: '👍', name: 'Нравится' }, { emoji: '❤️', name: 'Люблю' }, { emoji: '😊', name: 'Радость' },
-            { emoji: '😢', name: 'Грусть' }, { emoji: '🎉', name: 'Поздравляю' }, { emoji: '🔥', name: 'Огонь' },
-            { emoji: '😡', name: 'Злюсь' }, { emoji: '😂', name: 'Смех' }, { emoji: '😮', name: 'Удивлён' },
-            { emoji: '😴', name: 'Сонный' }, { emoji: '😎', name: 'Круто' }, { emoji: '🤔', name: 'Задумчивость' }
+            { emoji: '👍' }, { emoji: '❤️' }, { emoji: '😊' }, { emoji: '😢' }, 
+            { emoji: '🎉' }, { emoji: '🔥' }, { emoji: '😡' }, { emoji: '😂' }
         ];
 
-        async function loadReactions(messageIds) {
-            if (!messageIds.length || !_sgClient) return;
-            try {
-                const { data, error } = await _sgClient.from('reactions').select('*').in('message_id', messageIds);
-                if (error) throw error;
-                if (data) {
-                    data.forEach(r => {
-                        if (!reactionsCache[r.message_id]) reactionsCache[r.message_id] = [];
-                        if (!reactionsCache[r.message_id].some(ex => ex.id === r.id)) reactionsCache[r.message_id].push(r);
-                    });
-                    messageIds.forEach(id => updateReactionDisplay(id));
-                }
-            } catch (err) { console.error('Ошибка загрузки реакций:', err); }
-        }
-
-        function updateReactionDisplay(messageId) {
-            const msgEl = document.getElementById('msg-' + messageId);
-            if (!msgEl) return;
-            let container = msgEl.querySelector('.reactions-container');
-            if (!container) {
-                const footer = msgEl.querySelector('.msg-footer');
-                if (!footer) return;
-                container = document.createElement('div'); container.className = 'reactions-container';
-                footer.appendChild(container);
-            }
-            const reactions = reactionsCache[messageId] || [];
-            const counts = {};
-            reactions.forEach(r => counts[r.emoji] = (counts[r.emoji] || 0) + 1);
-            const userReaction = reactions.find(r => r.user_id === currentUser?.id);
-            container.innerHTML = '';
-            Object.entries(counts).forEach(([emoji, count]) => {
-                const badge = document.createElement('span');
-                badge.className = 'reaction-badge' + (userReaction && userReaction.emoji === emoji ? ' active' : '');
-                badge.textContent = emoji + ' ' + count;
-                badge.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, emoji); };
-                container.appendChild(badge);
-            });
-        }
-
-        async function toggleReaction(messageId, emoji) {
-            if (!currentUser || !_sgClient) return;
-            const reactions = reactionsCache[messageId] || [];
-            const existing = reactions.find(r => r.user_id === currentUser.id);
-            if (existing && existing.emoji === emoji) {
-                reactionsCache[messageId] = reactions.filter(r => r.id !== existing.id);
-            } else {
-                if (existing) reactionsCache[messageId] = reactions.filter(r => r.id !== existing.id);
-                reactionsCache[messageId] = [...(reactionsCache[messageId] || []), { id: 'temp-' + Date.now(), message_id: messageId, user_id: currentUser.id, emoji: emoji }];
-            }
-            updateReactionDisplay(messageId);
-            try {
-                if (existing) await _sgClient.from('reactions').delete().eq('id', existing.id);
-                if (!existing || existing.emoji !== emoji) {
-                    const { data, error } = await _sgClient.from('reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji: emoji }).select().single();
-                    if (error) throw error;
-                    if (data) {
-                        reactionsCache[messageId] = reactions.filter(r => r.id !== (existing?.id) && !r.id.toString().startsWith('temp-'));
-                        if (!reactionsCache[messageId]) reactionsCache[messageId] = [];
-                        reactionsCache[messageId].push(data);
-                    }
-                }
-            } catch (err) { console.error('Ошибка реакции:', err); }
-            finally { updateReactionDisplay(messageId); }
+        function addLongPressListeners(msgElement, messageId) {
+            const bubble = msgElement.querySelector('.bubble');
+            if (!bubble) return;
+            const startPress = (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
+            const cancelPress = () => { clearTimeout(longPressTimer); };
+            bubble.addEventListener('mousedown', startPress);
+            bubble.addEventListener('mouseup', cancelPress);
+            bubble.addEventListener('mouseleave', cancelPress);
+            bubble.addEventListener('touchstart', startPress, { passive: true });
+            bubble.addEventListener('touchend', cancelPress);
         }
 
         function showEmojiPanel(messageId) {
@@ -337,7 +276,7 @@
                 const quickContainer = document.createElement('div'); quickContainer.className = 'quick-emojis';
                 EMOJI_LIST.forEach(item => {
                     const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
-                    span.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, item.emoji); panel.classList.remove('open'); };
+                    span.onclick = (e) => { e.stopPropagation(); panel.classList.remove('open'); alert('Реакции временно на доработке'); };
                     quickContainer.appendChild(span);
                 });
                 panel.appendChild(quickContainer);
@@ -351,18 +290,6 @@
                 document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
             }
         });
-
-        function addLongPressListeners(msgElement, messageId) {
-            const bubble = msgElement.querySelector('.bubble');
-            if (!bubble) return;
-            const startPress = (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
-            const cancelPress = () => { clearTimeout(longPressTimer); };
-            bubble.addEventListener('mousedown', startPress);
-            bubble.addEventListener('mouseup', cancelPress);
-            bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: true });
-            bubble.addEventListener('touchend', cancelPress);
-        }
 
         function linkify(text) {
             const urlRegex = /(https?:\/\/[^\s<]+)/gi;
@@ -388,72 +315,54 @@
             addLongPressListeners(div, msg.id);
         }
 
-        // ПОЛНАЯ ФИКСАЦИЯ ДУБЛЕЙ: Умный поиск совпадений по тексту и склейка ID
-        async function syncNewMessagesOnly() {
-            if (!currentUser) return;
-            try {
-                const { data, error } = await _sgClient.from('messages').select('id,user_id,user_name,text,created_at').order('created_at', { ascending: false }).limit(30);
-                if (error) throw error;
-                if (data) {
-                    data.reverse().forEach(msg => {
-                        // 1. Проверяем, нет ли уже сообщения с таким точным ID базы данных
-                        if (document.getElementById('msg-' + msg.id)) return;
-
-                        // 2. Ищем, нет ли на экране "временного" Broadcast-сообщения с таким же текстом и автором
-                        const allBubbles = messagesDiv.querySelectorAll('.msg');
-                        let matchedLocalElement = null;
-
-                        for (let el of allBubbles) {
-                            if (el.id.startsWith('msg-brc-')) {
-                                const elText = el.querySelector('.bubble')?.textContent;
-                                const isMe = msg.user_id === currentUser.id && el.classList.contains('sent');
-                                const isOther = msg.user_id !== currentUser.id && el.classList.contains('received') && el.querySelector('.name')?.getAttribute('data-username') === msg.user_name;
-
-                                if (elText === msg.text && (isMe || isOther)) {
-                                    matchedLocalElement = el;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // 3. Если совпадение найдено — просто склеиваем ID, предотвращая дубликат!
-                        if (matchedLocalElement) {
-                            matchedLocalElement.id = 'msg-' + msg.id;
-                            addLongPressListeners(matchedLocalElement, msg.id);
-                        } else {
-                            // Если это реально новое сообщение — рендерим
-                            renderMessage(msg, true);
-                        }
-                    });
-                    loadReactions(data.map(m => m.id));
-                }
-            } catch (e) { console.error('Ошибка фоновой синхронизации:', e); }
-        }
-
         async function loadMessages() {
             try {
-                const { data, error } = await _sgClient.from('messages').select('id,user_id,user_name,text,created_at').order('created_at', { ascending: true }).limit(50);
-                if (error) throw error;
-                if (data) {
-                    const children = Array.from(messagesDiv.children);
-                    children.forEach(c => { if (c !== loadingSpinner) c.remove(); });
-                    data.forEach(msg => renderMessage(msg, false));
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }
-            } catch (e) { console.error('Ошибка загрузки истории сообщений:', e); } finally { loadingSpinner.classList.remove('active'); }
+                const response = await fetch(`${API_URL}/messages`);
+                if (!response.ok) throw new Error('Ошибка сети');
+                const data = await response.json();
+                
+                const children = Array.from(messagesDiv.children);
+                children.forEach(c => { if (c !== loadingSpinner) c.remove(); });
+                lastDisplayedDate = null;
+                
+                data.forEach(msg => renderMessage(msg, false));
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (e) { 
+                console.error('Ошибка загрузки истории сообщений:', e); 
+            } finally { 
+                loadingSpinner.classList.remove('active'); 
+            }
         }
 
-        function subscribeMessages() {
-            if (realtimeChannel) _sgClient.removeChannel(realtimeChannel);
-            realtimeChannel = _sgClient.channel('chat-room', { config: { broadcast: { self: false, ack: true } } });
-            realtimeChannel.on('broadcast', { event: 'shout' }, p => {
-                if (!currentUser) return;
-                if (p.payload.user_id === currentUser.id) return;
-                
-                // Мгновенно отображаем входящее сокет-сообщение от собеседника с временным ID
-                renderMessage(p.payload, true);
-            }).subscribe();
-            startPolling();
+        // Подключение WebSocket напрямую к серверу Hugging Face с автоматическим реконнектом
+        function connectWebSocket() {
+            if (socket) { socket.close(); }
+            
+            socket = new WebSocket(WS_URL);
+
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'shout' && data.payload) {
+                        const msg = data.payload;
+                        
+                        // Связываем временный ID оптимистичной отправки с реальным ID из БД
+                        const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
+                        if (localTempElement) {
+                            localTempElement.id = 'msg-' + msg.id;
+                            addLongPressListeners(localTempElement, msg.id);
+                        } else {
+                            // Сообщение от собеседника отрисовывается без дублирования
+                            renderMessage(msg, true);
+                        }
+                    }
+                } catch (e) { console.error("Ошибка парсинга сокета:", e); }
+            };
+
+            socket.onclose = () => {
+                // При обрыве сети пытается переподключиться каждые 3 секунды
+                setTimeout(connectWebSocket, 3000);
+            };
         }
 
         async function sendMessage(text) {
@@ -462,39 +371,42 @@
             if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
-            const generatedId = 'brc-' + Date.now();
-            const msgPayload = {
-                id: generatedId, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
+            const tempTimestamp = Date.now().toString();
+            
+            // Оптимистичный интерфейс: мгновенный локальный рендер
+            const localPayload = {
+                id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
             };
-
-            // Мгновенная оптимистичная отрисовка своего сообщения
-            renderMessage(msgPayload, true);
+            renderMessage(localPayload, true);
             resetTextarea();
 
-            if (realtimeChannel) realtimeChannel.send({ type: 'broadcast', event: 'shout', payload: msgPayload }).catch(() => {});
-
             try {
-                const { data, error } = await _sgClient.from('messages').insert({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText }).select().single();
-                if (error) throw error;
-                
-                if (data) {
-                    const localBubble = document.getElementById('msg-' + generatedId);
-                    if (localBubble) {
-                        localBubble.id = 'msg-' + data.id;
-                        addLongPressListeners(localBubble, data.id);
-                    }
+                // Отправка запроса на бэкенд сервера Hugging Face
+                const response = await fetch(`${API_URL}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        user_name: currentUser.name,
+                        text: cleanText
+                    })
+                });
+
+                if (!response.ok) throw new Error('Не удалось сохранить');
+                const realMsg = await response.json();
+
+                // Обновляем временный ID блока на постоянный числовой ID
+                const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
+                if (createdEl && realMsg) {
+                    createdEl.id = 'msg-' + realMsg.id;
+                    addLongPressListeners(createdEl, realMsg.id);
                 }
             } catch (err) { 
-                console.error('Ошибка записи сообщения в БД:', err); 
+                console.error('Ошибка отправки сообщения:', err); 
             } finally { 
                 sendBtn.disabled = false; 
                 msgInput.focus(); 
             }
-        }
-
-        function startPolling() {
-            if (backupSyncInterval) clearInterval(backupSyncInterval);
-            backupSyncInterval = setInterval(syncNewMessagesOnly, 3000);
         }
 
         refreshBtn.addEventListener('click', async () => {
@@ -514,14 +426,10 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                const { data: users, error } = await _sgClient.from('users').select('*').eq('name', name).limit(1);
-                if (error) throw error;
-                let user = users && users[0] ? users[0] : null;
-
-                if (!user) {
-                    const { data: newUser, error: insError } = await _sgClient.from('users').insert({ name, email: null }).select().single();
-                    if (insError) throw insError; user = newUser;
-                }
+                // Поиск или регистрация через API
+                const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
+                if (!response.ok) throw new Error('Ошибка авторизации');
+                const user = await response.json();
 
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
@@ -531,8 +439,12 @@
                 loadingSpinner.classList.add('active');
 
                 await loadMessages();
-                subscribeMessages();
-            } catch (err) { alert('Ошибка входа: ' + err.message); } finally { joinBtn.disabled = false; joinBtn.textContent = 'Войти'; }
+                connectWebSocket();
+            } catch (err) { 
+                alert('Ошибка входа: ' + err.message); 
+            } finally { 
+                joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
+            }
         });
 
         function formatDateSeparator(dateStr) {
