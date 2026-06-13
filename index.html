@@ -198,7 +198,6 @@
     </div>
 
     <script>
-        // Подключение к твоему настроенному серверу на Hugging Face Spaces
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
         
         const API_URL = `https://${HF_SPACE_DOMAIN}/api`;
@@ -216,7 +215,6 @@
 
         let currentUser = null;
         let lastDisplayedDate = null;
-        let reactionsCache = {};
         let longPressTimer = null;
         let socket = null;
 
@@ -242,7 +240,7 @@
         function logout() {
             localStorage.removeItem('semejka_user');
             if (socket) { socket.close(); socket = null; }
-            currentUser = null; lastDisplayedDate = null; reactionsCache = {};
+            currentUser = null; lastDisplayedDate = null;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
@@ -296,21 +294,31 @@
             return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
+        // ЖЕЛЕЗНЫЙ РЕНДЕР: Блокирует любые повторные сообщения с одинаковым ID
         function renderMessage(msg, animate = false) {
-            if (document.getElementById('msg-' + msg.id)) return;
+            if (!msg.id || document.getElementById('msg-' + msg.id)) return;
+            
             const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
-            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
+            if (msgDate !== lastDisplayedDate) { 
+                insertDateSeparator(msg.created_at || new Date().toISOString()); 
+                lastDisplayedDate = msgDate; 
+            }
 
             const div = document.createElement('div');
-            div.id = 'msg-' + msg.id; div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+            div.id = 'msg-' + msg.id; 
+            div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
 
             let html = '';
-            if (msg.user_id !== currentUser?.id) html += `<div class="name" data-username="${escapeHtml(msg.user_name || '')}">${escapeHtml(msg.user_name || '')}</div>`;
+            if (msg.user_id !== currentUser?.id) {
+                html += `<div class="name" data-username="${escapeHtml(msg.user_name || '')}">${escapeHtml(msg.user_name || '')}</div>`;
+            }
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
             html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
 
-            div.innerHTML = html; messagesDiv.appendChild(div);
+            div.innerHTML = html; 
+            messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
             if (animate) div.classList.add('animate-in');
             addLongPressListeners(div, msg.id);
         }
@@ -334,7 +342,6 @@
             }
         }
 
-        // Подключение WebSocket напрямую к серверу Hugging Face с автоматическим реконнектом
         function connectWebSocket() {
             if (socket) { socket.close(); }
             
@@ -344,45 +351,28 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
-                        const msg = data.payload;
-                        
-                        // Связываем временный ID оптимистичной отправки с реальным ID из БД
-                        const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
-                        if (localTempElement) {
-                            localTempElement.id = 'msg-' + msg.id;
-                            addLongPressListeners(localTempElement, msg.id);
-                        } else {
-                            // Сообщение от собеседника отрисовывается без дублирования
-                            renderMessage(msg, true);
-                        }
+                        // Отрисовываем сообщение, только если его еще нет на экране
+                        renderMessage(data.payload, true);
                     }
                 } catch (e) { console.error("Ошибка парсинга сокета:", e); }
             };
 
             socket.onclose = () => {
-                // При обрыве сети пытается переподключиться каждые 3 секунды
                 setTimeout(connectWebSocket, 3000);
             };
         }
 
+        // Чистая отправка БЕЗ локального «пре-рендера» (устраняет дублирование полностью)
         async function sendMessage(text) {
             const cleanText = text.trim();
             if (!currentUser || !cleanText) return;
             if (cleanText === '@exit') { logout(); return; }
 
             sendBtn.disabled = true;
-            const tempTimestamp = Date.now().toString();
-            
-            // Оптимистичный интерфейс: мгновенный локальный рендер
-            const localPayload = {
-                id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
-            };
-            renderMessage(localPayload, true);
             resetTextarea();
 
             try {
-                // Отправка запроса на бэкенд сервера Hugging Face
-                const response = await fetch(`${API_URL}/messages`, {
+                await fetch(`${API_URL}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -391,18 +381,10 @@
                         text: cleanText
                     })
                 });
-
-                if (!response.ok) throw new Error('Не удалось сохранить');
-                const realMsg = await response.json();
-
-                // Обновляем временный ID блока на постоянный числовой ID
-                const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
-                if (createdEl && realMsg) {
-                    createdEl.id = 'msg-' + realMsg.id;
-                    addLongPressListeners(createdEl, realMsg.id);
-                }
+                // Сообщение вернется обратно через WebSocket и выведется ровно ОДИН раз
             } catch (err) { 
                 console.error('Ошибка отправки сообщения:', err); 
+                alert('Не удалось отправить сообщение. Проверьте сеть.');
             } finally { 
                 sendBtn.disabled = false; 
                 msgInput.focus(); 
@@ -426,7 +408,6 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                // Поиск или регистрация через API
                 const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                 if (!response.ok) throw new Error('Ошибка авторизации');
                 const user = await response.json();
