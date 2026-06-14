@@ -413,7 +413,7 @@
         async function loadMessages() {
             try {
                 const response = await fetch(`${API_URL}/messages`);
-                if (!response.ok) throw new Error('Ошибка сети');
+                if (!response.ok) throw new Error('Ошибка сети при загрузке сообщений: ' + response.status);
                 const data = await response.json();
                 
                 const children = Array.from(messagesDiv.children);
@@ -478,6 +478,21 @@
             }
         }
 
+        function handleNewUserMode() {
+            console.log('Включаем режим создания нового аккаунта');
+            userStatusType = 'new_user';
+            usernameInput.value = '';
+            usernameInput.disabled = false;
+            usernameWrapper.classList.add('show');
+            
+            statusBadge.textContent = 'Новое имя! Придумайте уникальный юзернейм:';
+            statusBadge.className = 'status-badge info';
+            statusBadge.style.display = 'inline-block';
+            
+            registrationStep = 'final_join';
+            joinBtn.textContent = 'Создать аккаунт';
+        }
+
         refreshBtn.addEventListener('click', async () => {
             loadingSpinner.classList.add('active');
             await loadMessages();
@@ -506,17 +521,35 @@
 
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
-            if (!name) return;
+            if (!name) {
+                alert('Введите имя!');
+                return;
+            }
 
             if (registrationStep === 'check_name') {
-                joinBtn.disabled = true; joinBtn.textContent = 'Проверка...';
+                joinBtn.disabled = true; 
+                joinBtn.textContent = 'Проверка...';
                 statusBadge.style.display = 'none';
 
                 try {
+                    console.log('Отправка запроса на проверку пользователя:', name);
                     const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                    if (!response.ok) throw new Error('Ошибка связи с сервером');
-                    const user = await response.json();
+                    
+                    if (!response.ok) {
+                        console.warn(`Сервер вернул статус ${response.status}. Трактуем как нового пользователя.`);
+                        handleNewUserMode();
+                        return;
+                    }
 
+                    const user = await response.json();
+                    console.log('Сервер успешно вернул пользователя:', user);
+
+                    if (!user || !user.id) {
+                        handleNewUserMode();
+                        return;
+                    }
+
+                    console.log('Загружаем историю сообщений для проверки старых тегов...');
                     const messagesHistory = await loadMessages();
 
                     let existingUsername = '';
@@ -533,6 +566,7 @@
                     }
 
                     if (hasMessagesInHistory && existingUsername) {
+                        console.log('Найден старый пользователь с тегом:', existingUsername);
                         userStatusType = 'old_with_tag';
                         usernameInput.value = existingUsername;
                         usernameInput.disabled = true; 
@@ -546,6 +580,7 @@
                         joinBtn.textContent = `Войти как ${name}`;
 
                     } else if (hasMessagesInHistory && !existingUsername) {
+                        console.log('Найден старый пользователь БЕЗ ТЕГА. Требуется миграция.');
                         userStatusType = 'old_no_tag';
                         usernameInput.value = '';
                         usernameInput.disabled = false; 
@@ -559,20 +594,11 @@
                         joinBtn.textContent = 'Сохранить тег и войти';
 
                     } else {
-                        userStatusType = 'new_user';
-                        usernameInput.value = '';
-                        usernameInput.disabled = false;
-                        usernameWrapper.classList.add('show');
-                        
-                        statusBadge.textContent = 'Новое имя! Придумайте уникальный юзернейм:';
-                        statusBadge.className = 'status-badge info';
-                        statusBadge.style.display = 'inline-block';
-                        
-                        registrationStep = 'final_join';
-                        joinBtn.textContent = 'Создать аккаунт';
+                        handleNewUserMode();
                     }
                 } catch (err) {
-                    alert('Ошибка проверки имени: ' + err.message);
+                    console.error('Ошибка критического сбоя при проверке имени:', err);
+                    alert('Произошла ошибка связи с сервером чата. Пожалуйста, попробуйте еще раз. Ошибка: ' + err.message);
                 } finally {
                     joinBtn.disabled = false;
                 }
@@ -594,7 +620,8 @@
                     return;
                 }
 
-                joinBtn.disabled = true; joinBtn.textContent = 'Проверка тега...';
+                joinBtn.disabled = true; 
+                joinBtn.textContent = 'Проверка тега...';
 
                 try {
                     const history = await loadMessages();
@@ -622,7 +649,7 @@
                     }
 
                     const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                    if (!response.ok) throw new Error('Ошибка авторизации');
+                    if (!response.ok) throw new Error('Бэкенд отклонил авторизацию профиля');
                     const user = await response.json();
 
                     currentUser = {
@@ -640,7 +667,8 @@
                     await loadMessages();
                     connectWebSocket();
                 } catch (err) { 
-                    alert('Ошибка входа: ' + err.message); 
+                    console.error('Ошибка на этапе финального входа:', err);
+                    alert('Ошибка завершения входа: ' + err.message); 
                 } finally { 
                     joinBtn.disabled = false; 
                 }
