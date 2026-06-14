@@ -273,7 +273,6 @@
         let longPressTimer = null;
         let socket = null;
         
-        // Три сценария: 'new_user' (новый), 'old_with_tag' (зареган с тегом), 'old_no_tag' (зареган БЕЗ тега)
         let userStatusType = 'new_user';
         let registrationStep = 'check_name'; 
 
@@ -505,7 +504,6 @@
             } catch(e) {} 
         }
 
-        // КЛЮЧЕВАЯ ОБНОВЛЕННАЯ ЛОГИКА ДЛЯ МИГРАЦИИ СТАРЫХ ПОЛЬЗОВАТЕЛЕЙ
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             if (!name) return;
@@ -515,12 +513,10 @@
                 statusBadge.style.display = 'none';
 
                 try {
-                    // Делаем скрытый вызов к бэкенду для проверки, создавалось ли когда-то такое имя
                     const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                     if (!response.ok) throw new Error('Ошибка связи с сервером');
                     const user = await response.json();
 
-                    // Подтягиваем историю сообщений, чтобы понять, есть ли у этого человека тег
                     const messagesHistory = await loadMessages();
 
                     let existingUsername = '';
@@ -536,9 +532,7 @@
                         }
                     }
 
-                    // ОПРЕДЕЛЯЕМ ТИП КЛИЕНТА
                     if (hasMessagesInHistory && existingUsername) {
-                        // Вариант А: Старый пользователь, у которого юзернейм УЖЕ сохранен
                         userStatusType = 'old_with_tag';
                         usernameInput.value = existingUsername;
                         usernameInput.disabled = true; 
@@ -552,10 +546,9 @@
                         joinBtn.textContent = `Войти как ${name}`;
 
                     } else if (hasMessagesInHistory && !existingUsername) {
-                        // Вариант Б (Твой запрос!): Пользователь старый, сообщения есть, а тега НЕТ!
                         userStatusType = 'old_no_tag';
                         usernameInput.value = '';
-                        usernameInput.disabled = false; // Разрешаем создать тег!
+                        usernameInput.disabled = false; 
                         usernameWrapper.classList.add('show');
                         
                         statusBadge.textContent = 'С возвращением! Мы запустили систему юзернеймов. Пожалуйста, придумайте себе уникальный тег для входа:';
@@ -566,7 +559,6 @@
                         joinBtn.textContent = 'Сохранить тег и войти';
 
                     } else {
-                        // Вариант В: Абсолютно новый профиль
                         userStatusType = 'new_user';
                         usernameInput.value = '';
                         usernameInput.disabled = false;
@@ -581,7 +573,7 @@
                     }
                 } catch (err) {
                     alert('Ошибка проверки имени: ' + err.message);
-                } g{
+                } finally {
                     joinBtn.disabled = false;
                 }
 
@@ -605,7 +597,6 @@
                 joinBtn.disabled = true; joinBtn.textContent = 'Проверка тега...';
 
                 try {
-                    // Сканируем историю, чтобы проверить, не занят ли этот юзернейм кем-то другим
                     const history = await loadMessages();
                     let isUsernameTaken = false;
 
@@ -615,7 +606,6 @@
                             const takenUsername = parts[1] ? parts[1].trim() : '';
                             const takenName = parts[0] ? parts[0].trim() : '';
                             
-                            // Если юзернейм совпадает, но Имя другое — значит тег занят
                             if (takenUsername.toLowerCase() === username.toLowerCase() && takenName.toLowerCase() !== name.toLowerCase()) {
                                 isUsernameTaken = true;
                                 break;
@@ -623,7 +613,6 @@
                         }
                     }
 
-                    // Если тег занят и это НЕ наш старый сохраненный тег — выдаем ошибку
                     if (isUsernameTaken && userStatusType !== 'old_with_tag') {
                         statusBadge.textContent = `Юзернейм ${username} уже занят другим членом семьи!`;
                         statusBadge.className = 'status-badge error';
@@ -632,7 +621,6 @@
                         return;
                     }
 
-                    // Проверка пройдена успешно — авторизуем юзера
                     const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                     if (!response.ok) throw new Error('Ошибка авторизации');
                     const user = await response.json();
