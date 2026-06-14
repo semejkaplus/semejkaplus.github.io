@@ -402,7 +402,7 @@
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
-        // ИСПРАВЛЕНО: Сначала гарантированно загружаем историю, а сокеты подключаем следом, чтобы экран не оставался пустым при перезагрузке страницы
+        // ИСПРАВЛЕНО: Сначала гарантированно загружаем историю, а сокеты подключаем следом вот так, чтобы экран не оставался пустым при перезагрузке страницы
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             if (!name) return;
