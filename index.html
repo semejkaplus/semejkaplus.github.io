@@ -49,15 +49,7 @@
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
         
         .username-container {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.4s ease;
             width: 100%;
-        }
-        .username-container.show {
-            max-height: 100px;
-            opacity: 1;
             margin-bottom: 5px;
         }
 
@@ -70,10 +62,14 @@
             border-radius: 12px;
             line-height: 1.4;
         }
-        .status-badge.success { display: inline-block; background: rgba(46, 204, 113, 0.2); color: #1e7e34; }
-        .status-badge.info { display: inline-block; background: rgba(108, 99, 255, 0.2); color: #4A42D0; }
-        .status-badge.warning { display: inline-block; background: rgba(243, 156, 18, 0.2); color: #d35400; }
+        .status-badge.success { display: inline-block; background: rgba(46, 204, 113, 0.2); color: #1e7e34; margin-bottom: 15px; }
         .status-badge.error { display: inline-block; background: rgba(231, 76, 60, 0.2); color: #962d22; }
+
+        .change-account-btn {
+            background: none; border: none; color: #6C63FF; font-size: 14px; font-weight: 600; 
+            cursor: pointer; text-decoration: underline; margin-top: 12px; display: none; box-shadow: none; width: auto; padding: 0;
+        }
+        .change-account-btn:hover { color: #4A42D0; transform: none; box-shadow: none; }
 
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); margin-top: 10px; }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
@@ -219,17 +215,18 @@
                     </g>
                 </svg>
             </div>
-            <p>Семейный чат для самых близких</p>
+            <p id="subTitleText">Семейный чат для самых близких</p>
             
             <input type="text" id="nameInput" placeholder="Ваше имя">
             
             <div id="statusBadge" class="status-badge"></div>
 
             <div id="usernameWrapper" class="username-container">
-                <input type="text" id="usernameInput" placeholder="Придумайте юзернейм (напр. @alex)">
+                <input type="text" id="usernameInput" placeholder="Придумайте уникальный тег (напр. @alex)">
             </div>
 
-            <button id="joinBtn">Проверить имя</button>
+            <button id="joinBtn">Войти в чат</button>
+            <button id="changeAccountBtn" class="change-account-btn">Войти под другим именем</button>
         </div>
     </div>
 
@@ -262,6 +259,8 @@
         const usernameWrapper = document.getElementById('usernameWrapper');
         const statusBadge = document.getElementById('statusBadge');
         const joinBtn = document.getElementById('joinBtn');
+        const changeAccountBtn = document.getElementById('changeAccountBtn');
+        const subTitleText = document.getElementById('subTitleText');
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -272,9 +271,7 @@
         let lastDisplayedDate = null;
         let longPressTimer = null;
         let socket = null;
-        
-        let userStatusType = 'new_user';
-        let registrationStep = 'check_name'; 
+        let cachedAutoProfile = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -299,20 +296,19 @@
             localStorage.removeItem('semejka_user');
             if (socket) { socket.close(); socket = null; }
             currentUser = null; lastDisplayedDate = null;
-            registrationStep = 'check_name';
-            userStatusType = 'new_user';
+            cachedAutoProfile = null;
             
             statusBadge.className = 'status-badge';
             statusBadge.style.display = 'none';
-            usernameWrapper.classList.remove('show');
+            changeAccountBtn.style.display = 'none';
+            nameInput.style.display = 'block';
+            subTitleText.textContent = 'Семейный чат для самых близких';
             
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             usernameInput.value = '';
-            usernameInput.disabled = false;
-            nameInput.disabled = false;
-            joinBtn.textContent = 'Проверить имя';
+            joinBtn.textContent = 'Войти в чат';
             resetTextarea();
         }
 
@@ -478,19 +474,25 @@
             }
         }
 
-        function handleNewUserMode() {
-            console.log('Включаем режим создания нового аккаунта');
-            userStatusType = 'new_user';
-            usernameInput.value = '';
-            usernameInput.disabled = false;
-            usernameWrapper.classList.add('show');
-            
-            statusBadge.textContent = 'Новое имя! Придумайте уникальный юзернейм:';
-            statusBadge.className = 'status-badge info';
-            statusBadge.style.display = 'inline-block';
-            
-            registrationStep = 'final_join';
-            joinBtn.textContent = 'Создать аккаунт';
+        async function fetchWithTimeout(resource, options = {}) {
+            const { timeout = 4000 } = options;
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            const response = await fetch(resource, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        }
+
+        async function enterChat(userProfile) {
+            currentUser = userProfile;
+            localStorage.setItem('semejka_user', JSON.stringify(currentUser));
+
+            regScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+            loadingSpinner.classList.add('active');
+
+            await loadMessages();
+            connectWebSocket();
         }
 
         refreshBtn.addEventListener('click', async () => {
@@ -501,177 +503,118 @@
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
 
-        nameInput.addEventListener('input', () => {
-            if (registrationStep === 'final_join') {
-                registrationStep = 'check_name';
-                joinBtn.textContent = 'Проверить имя';
-                statusBadge.style.display = 'none';
-                usernameWrapper.classList.remove('show');
-            }
-        });
-
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { 
             try { 
                 const parsed = JSON.parse(savedUser);
-                nameInput.value = parsed.name || ''; 
-                usernameInput.value = parsed.username || '';
-            } catch(e) {} 
+                if (parsed && parsed.name && parsed.username) {
+                    cachedAutoProfile = parsed;
+                    
+                    nameInput.style.display = 'none';
+                    nameInput.value = parsed.name;
+                    usernameInput.value = parsed.username;
+                    
+                    statusBadge.textContent = `Рады видеть вас снова, ${parsed.name}!`;
+                    statusBadge.className = 'status-badge success';
+                    statusBadge.style.display = 'inline-block';
+                    
+                    joinBtn.textContent = `Войти как ${parsed.username}`;
+                    changeAccountBtn.style.display = 'inline-block';
+                }
+            } catch(e) {
+                console.error('Ошибка чтения профиля:', e);
+            } 
         }
+
+        changeAccountBtn.addEventListener('click', () => {
+            cachedAutoProfile = null;
+            nameInput.style.display = 'block';
+            nameInput.value = '';
+            usernameInput.value = '';
+            statusBadge.style.display = 'none';
+            changeAccountBtn.style.display = 'none';
+            joinBtn.textContent = 'Войти в чат';
+        });
 
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
+            let username = usernameInput.value.trim();
+            statusBadge.style.display = 'none';
+
             if (!name) {
-                alert('Введите имя!');
+                alert('Пожалуйста, введите ваше имя!');
+                return;
+            }
+            if (!username) {
+                alert('Пожалуйста, укажите ваш уникальный юзернейм!');
                 return;
             }
 
-            if (registrationStep === 'check_name') {
-                joinBtn.disabled = true; 
-                joinBtn.textContent = 'Проверка...';
-                statusBadge.style.display = 'none';
+            if (!username.startsWith('@')) {
+                username = '@' + username;
+            }
 
-                try {
-                    console.log('Отправка запроса на проверку пользователя:', name);
-                    const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                    
-                    if (!response.ok) {
-                        console.warn(`Сервер вернул статус ${response.status}. Трактуем как нового пользователя.`);
-                        handleNewUserMode();
-                        return;
-                    }
+            if (username.length < 3) {
+                alert('Юзернейм должен содержать не менее 3 символов!');
+                return;
+            }
 
-                    const user = await response.json();
-                    console.log('Сервер успешно вернул пользователя:', user);
+            joinBtn.disabled = true; 
+            joinBtn.textContent = 'Вход...';
 
-                    if (!user || !user.id) {
-                        handleNewUserMode();
-                        return;
-                    }
-
-                    console.log('Загружаем историю сообщений для проверки старых тегов...');
-                    const messagesHistory = await loadMessages();
-
-                    let existingUsername = '';
-                    let hasMessagesInHistory = false;
-
-                    for (let msg of messagesHistory) {
-                        if (msg.user_id === user.id) {
-                            hasMessagesInHistory = true;
-                            if (msg.user_name && msg.user_name.includes('||')) {
-                                existingUsername = msg.user_name.split('||')[1];
-                                break;
-                            }
-                        }
-                    }
-
-                    if (hasMessagesInHistory && existingUsername) {
-                        console.log('Найден старый пользователь с тегом:', existingUsername);
-                        userStatusType = 'old_with_tag';
-                        usernameInput.value = existingUsername;
-                        usernameInput.disabled = true; 
-                        usernameWrapper.classList.add('show');
-                        
-                        statusBadge.textContent = `С возвращением! Ваш тег: ${existingUsername}`;
-                        statusBadge.className = 'status-badge success';
-                        statusBadge.style.display = 'inline-block';
-                        
-                        registrationStep = 'final_join';
-                        joinBtn.textContent = `Войти как ${name}`;
-
-                    } else if (hasMessagesInHistory && !existingUsername) {
-                        console.log('Найден старый пользователь БЕЗ ТЕГА. Требуется миграция.');
-                        userStatusType = 'old_no_tag';
-                        usernameInput.value = '';
-                        usernameInput.disabled = false; 
-                        usernameWrapper.classList.add('show');
-                        
-                        statusBadge.textContent = 'С возвращением! Мы запустили систему юзернеймов. Пожалуйста, придумайте себе уникальный тег для входа:';
-                        statusBadge.className = 'status-badge warning';
-                        statusBadge.style.display = 'inline-block';
-                        
-                        registrationStep = 'final_join';
-                        joinBtn.textContent = 'Сохранить тег и войти';
-
-                    } else {
-                        handleNewUserMode();
-                    }
-                } catch (err) {
-                    console.error('Ошибка критического сбоя при проверке имени:', err);
-                    alert('Произошла ошибка связи с сервером чата. Пожалуйста, попробуйте еще раз. Ошибка: ' + err.message);
-                } finally {
-                    joinBtn.disabled = false;
-                }
-
-            } else if (registrationStep === 'final_join') {
-                let username = usernameInput.value.trim();
-                
-                if (!username) {
-                    alert('Пожалуйста, укажите ваш юзернейм!');
+            try {
+                if (cachedAutoProfile && username.toLowerCase() === cachedAutoProfile.username.toLowerCase()) {
+                    await enterChat(cachedAutoProfile);
                     return;
                 }
 
-                if (!username.startsWith('@')) {
-                    username = '@' + username;
+                const history = await loadMessages();
+                let isUsernameTaken = false;
+
+                for (let msg of history) {
+                    if (msg.user_name && msg.user_name.includes('||')) {
+                        const parts = msg.user_name.split('||');
+                        const takenName = parts[0] ? parts[0].trim() : '';
+                        const takenUsername = parts[1] ? parts[1].trim() : '';
+                        
+                        if (takenUsername.toLowerCase() === username.toLowerCase() && takenName.toLowerCase() !== name.toLowerCase()) {
+                            isUsernameTaken = true;
+                            break;
+                        }
+                    }
                 }
 
-                if (username.length < 3) {
-                    alert('Юзернейм слишком короткий!');
+                if (isUsernameTaken) {
+                    statusBadge.textContent = `Юзернейм ${username} уже занят другим членом семьи!`;
+                    statusBadge.className = 'status-badge error';
+                    statusBadge.style.display = 'inline-block';
                     return;
                 }
 
-                joinBtn.disabled = true; 
-                joinBtn.textContent = 'Проверка тега...';
+                let userId = Math.floor(Math.random() * 900000) + 100000;
 
                 try {
-                    const history = await loadMessages();
-                    let isUsernameTaken = false;
-
-                    for (let msg of history) {
-                        if (msg.user_name && msg.user_name.includes('||')) {
-                            const parts = msg.user_name.split('||');
-                            const takenUsername = parts[1] ? parts[1].trim() : '';
-                            const takenName = parts[0] ? parts[0].trim() : '';
-                            
-                            if (takenUsername.toLowerCase() === username.toLowerCase() && takenName.toLowerCase() !== name.toLowerCase()) {
-                                isUsernameTaken = true;
-                                break;
-                            }
-                        }
+                    const response = await fetchWithTimeout(`${API_URL}/users?name=${encodeURIComponent(name)}`);
+                    if (response.ok) {
+                        const user = await response.json();
+                        if (user && user.id) userId = user.id;
                     }
-
-                    if (isUsernameTaken && userStatusType !== 'old_with_tag') {
-                        statusBadge.textContent = `Юзернейм ${username} уже занят другим членом семьи!`;
-                        statusBadge.className = 'status-badge error';
-                        joinBtn.disabled = false; 
-                        joinBtn.textContent = userStatusType === 'old_no_tag' ? 'Сохранить тег и войти' : 'Создать аккаунт';
-                        return;
-                    }
-
-                    const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                    if (!response.ok) throw new Error('Бэкенд отклонил авторизацию профиля');
-                    const user = await response.json();
-
-                    currentUser = {
-                        id: user.id,
-                        name: user.name,
-                        username: username
-                    };
-                    
-                    localStorage.setItem('semejka_user', JSON.stringify(currentUser));
-
-                    regScreen.classList.remove('active');
-                    chatScreen.classList.add('active');
-                    loadingSpinner.classList.add('active');
-
-                    await loadMessages();
-                    connectWebSocket();
-                } catch (err) { 
-                    console.error('Ошибка на этапе финального входа:', err);
-                    alert('Ошибка завершения входа: ' + err.message); 
-                } finally { 
-                    joinBtn.disabled = false; 
+                } catch(e) {
+                    console.warn('Локальный профиль сгенерирован.');
                 }
+
+                await enterChat({
+                    id: userId,
+                    name: name,
+                    username: username
+                });
+
+            } catch (err) { 
+                console.error(err);
+                alert('Ошибка входа: ' + err.message); 
+            } finally { 
+                joinBtn.disabled = false; 
+                joinBtn.textContent = cachedAutoProfile ? `Войти как ${username}` : 'Войти в чат';
             }
         });
 
