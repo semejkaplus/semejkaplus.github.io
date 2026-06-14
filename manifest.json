@@ -1,22 +1,25 @@
 {
+  "nav_type": "none",
   "name": "SEMEJKA PLUS",
-  "short_name": "Семейка+",
-  "start_url": ".",
+  "short_name": "SEMEJKA +",
+  "description": "Приватный мессенджер для всей семьи",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FEE0B7",
-  "theme_color": "#6C63FF",
+  "theme-color": "#6C63FF",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
