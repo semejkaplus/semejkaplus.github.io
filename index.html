@@ -44,10 +44,38 @@
         }
         .logo-glass-container svg { width: 100%; height: auto; display: block; }
 
-        p { color: #635857; margin-bottom: 35px; font-size: 17px; font-weight: 600; opacity: 0.85; }
-        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
+        p { color: #635857; margin-bottom: 25px; font-size: 17px; font-weight: 600; opacity: 0.85; }
+        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 15px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
-        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
+        
+        .username-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            width: 100%;
+        }
+        .username-container.show {
+            max-height: 100px;
+            opacity: 1;
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            line-height: 1.4;
+        }
+        .status-badge.success { display: inline-block; background: rgba(46, 204, 113, 0.2); color: #1e7e34; }
+        .status-badge.info { display: inline-block; background: rgba(108, 99, 255, 0.2); color: #4A42D0; }
+        .status-badge.warning { display: inline-block; background: rgba(243, 156, 18, 0.2); color: #d35400; }
+        .status-badge.error { display: inline-block; background: rgba(231, 76, 60, 0.2); color: #962d22; }
+
+        button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); margin-top: 10px; }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
 
@@ -90,8 +118,24 @@
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
 
-        .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
+        .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; cursor: pointer; user-select: none; transition: color 0.1s; }
+        .name:hover { color: #6C63FF; }
         .sent .name { display: none; }
+        
+        .mention {
+            color: #6C63FF;
+            font-weight: 600;
+            text-decoration: none;
+            background: rgba(108, 99, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .mention:hover {
+            background: rgba(108, 99, 255, 0.2);
+            text-decoration: underline;
+        }
+
         .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; width: 100%; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
@@ -176,8 +220,16 @@
                 </svg>
             </div>
             <p>Семейный чат для самых близких</p>
+            
             <input type="text" id="nameInput" placeholder="Ваше имя">
-            <button id="joinBtn">Войти</button>
+            
+            <div id="statusBadge" class="status-badge"></div>
+
+            <div id="usernameWrapper" class="username-container">
+                <input type="text" id="usernameInput" placeholder="Придумайте юзернейм (напр. @alex)">
+            </div>
+
+            <button id="joinBtn">Проверить имя</button>
         </div>
     </div>
 
@@ -206,6 +258,9 @@
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const nameInput = document.getElementById('nameInput');
+        const usernameInput = document.getElementById('usernameInput'); 
+        const usernameWrapper = document.getElementById('usernameWrapper');
+        const statusBadge = document.getElementById('statusBadge');
         const joinBtn = document.getElementById('joinBtn');
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
@@ -217,6 +272,10 @@
         let lastDisplayedDate = null;
         let longPressTimer = null;
         let socket = null;
+        
+        // Три сценария: 'new_user' (новый), 'old_with_tag' (зареган с тегом), 'old_no_tag' (зареган БЕЗ тега)
+        let userStatusType = 'new_user';
+        let registrationStep = 'check_name'; 
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -241,9 +300,20 @@
             localStorage.removeItem('semejka_user');
             if (socket) { socket.close(); socket = null; }
             currentUser = null; lastDisplayedDate = null;
+            registrationStep = 'check_name';
+            userStatusType = 'new_user';
+            
+            statusBadge.className = 'status-badge';
+            statusBadge.style.display = 'none';
+            usernameWrapper.classList.remove('show');
+            
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
+            usernameInput.value = '';
+            usernameInput.disabled = false;
+            nameInput.disabled = false;
+            joinBtn.textContent = 'Проверить имя';
             resetTextarea();
         }
 
@@ -255,7 +325,7 @@
         function addLongPressListeners(msgElement, messageId) {
             const bubble = msgElement.querySelector('.bubble');
             if (!bubble) return;
-            const startPress = (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
+            const startPress = (e) => { if (!e.target.closest('a') && !e.target.closest('.mention')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
             const cancelPress = () => { clearTimeout(longPressTimer); };
             bubble.addEventListener('mousedown', startPress);
             bubble.addEventListener('mouseup', cancelPress);
@@ -291,10 +361,20 @@
 
         function linkify(text) {
             const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-            return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            let processed = text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            
+            const mentionRegex = /(@[a-zA-Z0-9_]+)/g;
+            processed = processed.replace(mentionRegex, (mention) => `<span class="mention" onclick="insertMention('${mention} ')">${mention}</span>`);
+            
+            return processed;
         }
 
-        // ЖЕЛЕЗНЫЙ РЕНДЕР: Блокирует любые повторные сообщения с одинаковым ID (устраняет дубли на экране)
+        window.insertMention = function(mentionText) {
+            msgInput.value += mentionText;
+            msgInput.focus();
+            autoResize();
+        };
+
         function renderMessage(msg, animate = false) {
             if (!msg.id || document.getElementById('msg-' + msg.id)) return;
             
@@ -310,7 +390,15 @@
 
             let html = '';
             if (msg.user_id !== currentUser?.id) {
-                html += `<div class="name" data-username="${escapeHtml(msg.user_name || '')}">${escapeHtml(msg.user_name || '')}</div>`;
+                let displayName = msg.user_name || '';
+                let searchTag = '';
+                if (displayName.includes('||')) {
+                    const parts = displayName.split('||');
+                    displayName = parts[0];
+                    searchTag = parts[1];
+                }
+                
+                html += `<div class="name" onclick="insertMention('${searchTag ? searchTag : '@' + displayName} ')" title="Упомянуть пользователя">${escapeHtml(displayName)} <span style="font-size:11px; font-weight:normal; opacity:0.6;">${escapeHtml(searchTag)}</span></div>`;
             }
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
             html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
@@ -335,8 +423,10 @@
                 
                 data.forEach(msg => renderMessage(msg, false));
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return data; 
             } catch (e) { 
                 console.error('Ошибка загрузки истории сообщений:', e); 
+                return [];
             } finally { 
                 loadingSpinner.classList.remove('active'); 
             }
@@ -344,14 +434,12 @@
 
         function connectWebSocket() {
             if (socket) { socket.close(); }
-            
             socket = new WebSocket(WS_URL);
 
             socket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
-                        // Отрисовываем сообщение, только если его еще нет на экране
                         renderMessage(data.payload, true);
                     }
                 } catch (e) { console.error("Ошибка парсинга сокета:", e); }
@@ -362,7 +450,6 @@
             };
         }
 
-        // Чистая отправка БЕЗ локального «пре-рендера» (устраняет дублирование полностью)
         async function sendMessage(text) {
             const cleanText = text.trim();
             if (!currentUser || !cleanText) return;
@@ -371,17 +458,18 @@
             sendBtn.disabled = true;
             resetTextarea();
 
+            const compositeName = currentUser.username ? `${currentUser.name}||${currentUser.username}` : currentUser.name;
+
             try {
                 await fetch(`${API_URL}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: currentUser.id,
-                        user_name: currentUser.name,
+                        user_name: compositeName,
                         text: cleanText
                     })
                 });
-                // Сообщение вернется обратно через WebSocket и выведется ровно ОДИН раз для всех
             } catch (err) { 
                 console.error('Ошибка отправки сообщения:', err); 
                 alert('Не удалось отправить сообщение. Проверьте сеть.');
@@ -399,34 +487,175 @@
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
 
-        const savedUser = localStorage.getItem('semejka_user');
-        if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
+        nameInput.addEventListener('input', () => {
+            if (registrationStep === 'final_join') {
+                registrationStep = 'check_name';
+                joinBtn.textContent = 'Проверить имя';
+                statusBadge.style.display = 'none';
+                usernameWrapper.classList.remove('show');
+            }
+        });
 
-        // ИСПРАВЛЕНО: Сначала гарантированно загружаем историю, а сокеты подключаем следом вот так, чтобы экран не оставался пустым при перезагрузке страницы
+        const savedUser = localStorage.getItem('semejka_user');
+        if (savedUser) { 
+            try { 
+                const parsed = JSON.parse(savedUser);
+                nameInput.value = parsed.name || ''; 
+                usernameInput.value = parsed.username || '';
+            } catch(e) {} 
+        }
+
+        // КЛЮЧЕВАЯ ОБНОВЛЕННАЯ ЛОГИКА ДЛЯ МИГРАЦИИ СТАРЫХ ПОЛЬЗОВАТЕЛЕЙ
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             if (!name) return;
-            joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
-            try {
-                const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                if (!response.ok) throw new Error('Ошибка авторизации');
-                const user = await response.json();
+            if (registrationStep === 'check_name') {
+                joinBtn.disabled = true; joinBtn.textContent = 'Проверка...';
+                statusBadge.style.display = 'none';
 
-                currentUser = user;
-                localStorage.setItem('semejka_user', JSON.stringify(user));
+                try {
+                    // Делаем скрытый вызов к бэкенду для проверки, создавалось ли когда-то такое имя
+                    const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
+                    if (!response.ok) throw new Error('Ошибка связи с сервером');
+                    const user = await response.json();
 
-                regScreen.classList.remove('active');
-                chatScreen.classList.add('active');
-                loadingSpinner.classList.add('active');
+                    // Подтягиваем историю сообщений, чтобы понять, есть ли у этого человека тег
+                    const messagesHistory = await loadMessages();
 
-                // Порядок действий изменен для стабильности истории
-                await loadMessages();
-                connectWebSocket();
-            } catch (err) { 
-                alert('Ошибка входа: ' + err.message); 
-            } finally { 
-                joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
+                    let existingUsername = '';
+                    let hasMessagesInHistory = false;
+
+                    for (let msg of messagesHistory) {
+                        if (msg.user_id === user.id) {
+                            hasMessagesInHistory = true;
+                            if (msg.user_name && msg.user_name.includes('||')) {
+                                existingUsername = msg.user_name.split('||')[1];
+                                break;
+                            }
+                        }
+                    }
+
+                    // ОПРЕДЕЛЯЕМ ТИП КЛИЕНТА
+                    if (hasMessagesInHistory && existingUsername) {
+                        // Вариант А: Старый пользователь, у которого юзернейм УЖЕ сохранен
+                        userStatusType = 'old_with_tag';
+                        usernameInput.value = existingUsername;
+                        usernameInput.disabled = true; 
+                        usernameWrapper.classList.add('show');
+                        
+                        statusBadge.textContent = `С возвращением! Ваш тег: ${existingUsername}`;
+                        statusBadge.className = 'status-badge success';
+                        statusBadge.style.display = 'inline-block';
+                        
+                        registrationStep = 'final_join';
+                        joinBtn.textContent = `Войти как ${name}`;
+
+                    } else if (hasMessagesInHistory && !existingUsername) {
+                        // Вариант Б (Твой запрос!): Пользователь старый, сообщения есть, а тега НЕТ!
+                        userStatusType = 'old_no_tag';
+                        usernameInput.value = '';
+                        usernameInput.disabled = false; // Разрешаем создать тег!
+                        usernameWrapper.classList.add('show');
+                        
+                        statusBadge.textContent = 'С возвращением! Мы запустили систему юзернеймов. Пожалуйста, придумайте себе уникальный тег для входа:';
+                        statusBadge.className = 'status-badge warning';
+                        statusBadge.style.display = 'inline-block';
+                        
+                        registrationStep = 'final_join';
+                        joinBtn.textContent = 'Сохранить тег и войти';
+
+                    } else {
+                        // Вариант В: Абсолютно новый профиль
+                        userStatusType = 'new_user';
+                        usernameInput.value = '';
+                        usernameInput.disabled = false;
+                        usernameWrapper.classList.add('show');
+                        
+                        statusBadge.textContent = 'Новое имя! Придумайте уникальный юзернейм:';
+                        statusBadge.className = 'status-badge info';
+                        statusBadge.style.display = 'inline-block';
+                        
+                        registrationStep = 'final_join';
+                        joinBtn.textContent = 'Создать аккаунт';
+                    }
+                } catch (err) {
+                    alert('Ошибка проверки имени: ' + err.message);
+                } g{
+                    joinBtn.disabled = false;
+                }
+
+            } else if (registrationStep === 'final_join') {
+                let username = usernameInput.value.trim();
+                
+                if (!username) {
+                    alert('Пожалуйста, укажите ваш юзернейм!');
+                    return;
+                }
+
+                if (!username.startsWith('@')) {
+                    username = '@' + username;
+                }
+
+                if (username.length < 3) {
+                    alert('Юзернейм слишком короткий!');
+                    return;
+                }
+
+                joinBtn.disabled = true; joinBtn.textContent = 'Проверка тега...';
+
+                try {
+                    // Сканируем историю, чтобы проверить, не занят ли этот юзернейм кем-то другим
+                    const history = await loadMessages();
+                    let isUsernameTaken = false;
+
+                    for (let msg of history) {
+                        if (msg.user_name && msg.user_name.includes('||')) {
+                            const parts = msg.user_name.split('||');
+                            const takenUsername = parts[1] ? parts[1].trim() : '';
+                            const takenName = parts[0] ? parts[0].trim() : '';
+                            
+                            // Если юзернейм совпадает, но Имя другое — значит тег занят
+                            if (takenUsername.toLowerCase() === username.toLowerCase() && takenName.toLowerCase() !== name.toLowerCase()) {
+                                isUsernameTaken = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Если тег занят и это НЕ наш старый сохраненный тег — выдаем ошибку
+                    if (isUsernameTaken && userStatusType !== 'old_with_tag') {
+                        statusBadge.textContent = `Юзернейм ${username} уже занят другим членом семьи!`;
+                        statusBadge.className = 'status-badge error';
+                        joinBtn.disabled = false; 
+                        joinBtn.textContent = userStatusType === 'old_no_tag' ? 'Сохранить тег и войти' : 'Создать аккаунт';
+                        return;
+                    }
+
+                    // Проверка пройдена успешно — авторизуем юзера
+                    const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
+                    if (!response.ok) throw new Error('Ошибка авторизации');
+                    const user = await response.json();
+
+                    currentUser = {
+                        id: user.id,
+                        name: user.name,
+                        username: username
+                    };
+                    
+                    localStorage.setItem('semejka_user', JSON.stringify(currentUser));
+
+                    regScreen.classList.remove('active');
+                    chatScreen.classList.add('active');
+                    loadingSpinner.classList.add('active');
+
+                    await loadMessages();
+                    connectWebSocket();
+                } catch (err) { 
+                    alert('Ошибка входа: ' + err.message); 
+                } finally { 
+                    joinBtn.disabled = false; 
+                }
             }
         });
 
