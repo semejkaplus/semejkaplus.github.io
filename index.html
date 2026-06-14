@@ -1,17 +1,10 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>SEMEJKA PLUS</title>
-
-    <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
-    <link rel="manifest" href="./manifest.json?v=5">
+age.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="SEMEJKA +">
+    <meta name="apple-mobile-web-app-title" content="Семейка+">
     <link rel="apple-touch-icon" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
 
     <style>
@@ -217,7 +210,6 @@
         let lastDisplayedDate = null;
         let longPressTimer = null;
         let socket = null;
-        let swRegistration = null; 
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -295,6 +287,7 @@
             return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
+        // ЖЕЛЕЗНЫЙ РЕНДЕР: Блокирует любые повторные сообщения с одинаковым ID (устраняет дубли на экране)
         function renderMessage(msg, animate = false) {
             if (!msg.id || document.getElementById('msg-' + msg.id)) return;
             
@@ -321,26 +314,6 @@
             
             if (animate) div.classList.add('animate-in');
             addLongPressListeners(div, msg.id);
-
-            if (animate && msg.user_id !== currentUser?.id && document.hidden) {
-                triggerInAppNotification(msg.user_name || 'Семья', msg.text || '');
-            }
-        }
-
-        function triggerInAppNotification(title, body) {
-            if (Notification.permission === 'granted' && swRegistration && swRegistration.active) {
-                swRegistration.active.postMessage({
-                    type: 'SHOW_NOTIFICATION',
-                    title: title,
-                    body: body
-                });
-            }
-        }
-
-        async function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                await Notification.requestPermission();
-            }
         }
 
         async function loadMessages() {
@@ -371,6 +344,7 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
+                        // Отрисовываем сообщение, только если его еще нет на экране
                         renderMessage(data.payload, true);
                     }
                 } catch (e) { console.error("Ошибка парсинга сокета:", e); }
@@ -381,6 +355,7 @@
             };
         }
 
+        // Чистая отправка БЕЗ локального «пре-рендера» (устраняет дублирование полностью)
         async function sendMessage(text) {
             const cleanText = text.trim();
             if (!currentUser || !cleanText) return;
@@ -399,6 +374,7 @@
                         text: cleanText
                     })
                 });
+                // Сообщение вернется обратно через WebSocket и выведется ровно ОДИН раз для всех
             } catch (err) { 
                 console.error('Ошибка отправки сообщения:', err); 
                 alert('Не удалось отправить сообщение. Проверьте сеть.');
@@ -419,6 +395,7 @@
         const savedUser = localStorage.getItem('semejka_user');
         if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
 
+        // ИСПРАВЛЕНО: Сначала гарантированно загружаем историю, а сокеты подключаем следом, чтобы экран не оставался пустым при перезагрузке страницы
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             if (!name) return;
@@ -432,12 +409,11 @@
                 currentUser = user;
                 localStorage.setItem('semejka_user', JSON.stringify(user));
 
-                await requestNotificationPermission();
-
                 regScreen.classList.remove('active');
                 chatScreen.classList.add('active');
                 loadingSpinner.classList.add('active');
 
+                // Порядок действий изменен для стабильности истории
                 await loadMessages();
                 connectWebSocket();
             } catch (err) { 
@@ -457,18 +433,6 @@
         }
         function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
         function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Хвост ?v=5 гарантирует, что браузер сразу скачает актуальный воркер, минуя кэш GitHub Pages
-                navigator.serviceWorker.register('./service-worker.js?v=5')
-                    .then(reg => {
-                        console.log('PWA Service Worker запущен!', reg.scope);
-                        swRegistration = reg; 
-                    })
-                    .catch(err => console.error('Ошибка запуска Service Worker:', err));
-            });
-        }
     </script>
 </body>
 </html>
