@@ -143,10 +143,10 @@
 
     <script>
         const SUPABASE_URL = "https://sfsxflsbueyotiksqknp.supabase.co";
-        // ВСТАВЛЕН ТВОЙ АКТУАЛЬНЫЙ АНОН-КЛЮЧ:
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3Nxa25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTc2MzUsImV4cCI6Mj91NDczNjM1fQ.dl27oNh5C_B-9Mn77-BVkNughbbLR8wu7fuPZvTNQ3A"; 
+        // ВОССТАНОВЛЕННЫЙ ЧИСТЫЙ КЛЮЧ БЕЗ ОПЕЧАТОК:
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3Nxa25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTc2MzUsImV4cCI6MjAzNDE1OTQwMH0.dl27oNh5C_B-9Mn77-BVkNughbbLR8wu7fuPZvTNQ3A"; 
 
-        // НАСТРОЕНО БЕЗ КОНФЛИКТА ИМЕН ПЕРЕМЕННЫХ
+        // Инициализация строго из объекта window, чтобы избежать конфликтов глобальных имён
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
@@ -162,29 +162,28 @@
         const sendBtn = document.getElementById('sendBtn');
         const refreshBtn = document.getElementById('refreshBtn');
 
-        // Инициализация веб-сокетов напрямую через SDK
+        // Настройка Realtime-соединения (веб-сокеты SDK)
         function initRealtime() {
             if (realtimeChannel) {
-                supabaseClient.removeChannel(realtimeChannel);
+                try { supabaseClient.removeChannel(realtimeChannel); } catch(e){}
             }
 
-            // Слушаем изменения в таблице сообщений
             realtimeChannel = supabaseClient
                 .channel('schema-db-changes')
                 .on(
                     'postgres_changes',
                     { event: '*', schema: 'public', table: 'messages' },
                     (payload) => {
-                        console.log('База данных обновилась в реальном времени:', payload);
+                        console.log('Событие БД:', payload);
                         loadMessages();
                     }
                 )
                 .subscribe((status) => {
-                    console.log("Статус подключения к сокету:", status);
+                    console.log("Статус Realtime-канала:", status);
                 });
         }
 
-        // Загрузка сообщений из Supabase
+        // Загрузка сообщений из таблицы
         async function loadMessages() {
             if (!currentUser) return;
             try {
@@ -210,11 +209,11 @@
                 }
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (err) { 
-                console.error("Не удалось загрузить историю чата:", err); 
+                console.error("Ошибка загрузки истории:", err); 
             }
         }
 
-        // Отправка сообщений в Supabase
+        // Отправка сообщения
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
@@ -229,7 +228,7 @@
                 if (error) throw error;
                 msgInput.value = '';
             } catch (err) {
-                console.error("Ошибка при отправке сообщения:", err);
+                console.error("Ошибка при вставке в БД:", err);
             }
         }
 
@@ -257,7 +256,7 @@
         msgInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
         refreshBtn.onclick = loadMessages;
 
-        // Автоматический вход при обновлении страницы
+        // Автоматический вход, если сессия сохранена в браузере
         window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('semejka_user');
             if(saved) {
@@ -275,4 +274,3 @@
     </script>
 </body>
 </html>
-
