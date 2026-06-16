@@ -142,13 +142,12 @@
     </div>
 
     <script>
-        // НАСТРОЙКА НАПРЯМУЮ К SUPABASE (БЕЗ ПРОКСИ)
         const SUPABASE_URL = "https://sfsxflsbueyotiksqknp.supabase.co";
-        // Замени строчку ниже на СВОЙ РЕАЛЬНЫЙ anon_key из панели Supabase!
+        // ВАЖНО: Твой реальный anon-ключ от проекта Supabase
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3NxY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg1NjM0MDAsImV4cCI6MjAzNDE1OTQwMH0.your-actual-key"; 
 
-        // Инициализируем официальный клиент Supabase
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ИСПРАВЛЕНО: Правильный вызов инициализации клиента из CDN-модуля
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let realtimeChannel = null;
@@ -163,29 +162,29 @@
         const sendBtn = document.getElementById('sendBtn');
         const refreshBtn = document.getElementById('refreshBtn');
 
-        // Родной реалтайм от Supabase SDK
+        // Инициализация веб-сокетов напрямую через SDK
         function initRealtime() {
             if (realtimeChannel) {
                 supabase.removeChannel(realtimeChannel);
             }
 
-            // Подписываемся на любые изменения (INSERT, UPDATE) в таблице messages
+            // Слушаем изменения в таблице сообщений
             realtimeChannel = supabase
                 .channel('schema-db-changes')
                 .on(
                     'postgres_changes',
                     { event: '*', schema: 'public', table: 'messages' },
                     (payload) => {
-                        console.log('Данные в базе обновились!', payload);
+                        console.log('База данных обновилась в реальном времени:', payload);
                         loadMessages();
                     }
                 )
                 .subscribe((status) => {
-                    console.log("Статус Realtime-подключения:", status);
+                    console.log("Статус подключения к сокету:", status);
                 });
         }
 
-        // Загрузка сообщений через SDK
+        // Загрузка сообщений из Supabase
         async function loadMessages() {
             if (!currentUser) return;
             try {
@@ -197,23 +196,25 @@
                 if (error) throw error;
 
                 messagesDiv.innerHTML = '';
-                list.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'msg ' + (m.user_id === currentUser.id ? 'sent' : 'received');
-                    div.innerHTML = `
-                        <div class="name">${m.user_name || 'Пользователь'}</div>
-                        <div class="msg-content"><div class="bubble">${m.text}</div></div>
-                        <div class="msg-footer"><div class="time">${new Date(m.created_at).toLocaleTimeString()}</div></div>
-                    `;
-                    messagesDiv.appendChild(div);
-                });
+                if(list) {
+                    list.forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = 'msg ' + (m.user_id === currentUser.id ? 'sent' : 'received');
+                        div.innerHTML = `
+                            <div class="name">${m.user_name || 'Пользователь'}</div>
+                            <div class="msg-content"><div class="bubble">${m.text}</div></div>
+                            <div class="msg-footer"><div class="time">${new Date(m.created_at).toLocaleTimeString()}</div></div>
+                        `;
+                        messagesDiv.appendChild(div);
+                    });
+                }
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (err) { 
-                console.error("Ошибка загрузки сообщений:", err); 
+                console.error("Не удалось загрузить историю чата:", err); 
             }
         }
 
-        // Отправка сообщений через SDK
+        // Отправка сообщений в Supabase
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
@@ -227,10 +228,8 @@
 
                 if (error) throw error;
                 msgInput.value = '';
-                // Нам даже не обязательно вызывать loadMessages() вручную, 
-                // так как сокет Realtime поймает вставку строки и обновит чат сам!
             } catch (err) {
-                console.error("Ошибка отправки:", err);
+                console.error("Ошибка при отправке сообщения:", err);
             }
         }
 
@@ -258,7 +257,7 @@
         msgInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
         refreshBtn.onclick = loadMessages;
 
-        // Автоматический вход
+        // Автоматический вход при обновлении страницы
         window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('semejka_user');
             if(saved) {
