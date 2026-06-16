@@ -14,6 +14,8 @@
     <meta name="apple-mobile-web-app-title" content="Семейка+">
     <link rel="apple-touch-icon" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -140,12 +142,16 @@
     </div>
 
     <script>
-        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
-        const API_URL = `https://${HF_SPACE_DOMAIN}`;
-        const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        
+        // НАСТРОЙКА НАПРЯМУЮ К SUPABASE (БЕЗ ПРОКСИ)
+        const SUPABASE_URL = "https://sfsxflsbueyotiksqknp.supabase.co";
+        // Замени строчку ниже на СВОЙ РЕАЛЬНЫЙ anon_key из панели Supabase!
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3NxY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg1NjM0MDAsImV4cCI6MjAzNDE1OTQwMH0.your-actual-key"; 
+
+        // Инициализируем официальный клиент Supabase
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let currentUser = null;
-        let socket = null;
+        let realtimeChannel = null;
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
@@ -157,63 +163,38 @@
         const sendBtn = document.getElementById('sendBtn');
         const refreshBtn = document.getElementById('refreshBtn');
 
-        // ИЗМЕНЕНО: Новая логика сборки URL сокета с передачей apikey для нового прокси
+        // Родной реалтайм от Supabase SDK
         function initRealtime() {
-            if (socket) { 
-                try { 
-                    socket.onclose = null; // Отключаем старый триггер реконнекта перед ручным закрытием
-                    socket.close(); 
-                } catch(e){} 
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
             }
 
-            const saved = localStorage.getItem('semejka_user');
-            let apikey = "";
-            if (saved) {
-                try { apikey = JSON.parse(saved).apikey || ""; } catch(e){}
-            }
-
-            // Передаем apikey как query-параметр. Новый прокси на httpx перехватит его
-            const wsUrl = `${WS_PROTOCOL}//${HF_SPACE_DOMAIN}/ws?apikey=${encodeURIComponent(apikey)}`;
-            console.log("Попытка подключения к сокету:", wsUrl);
-            
-            socket = new WebSocket(wsUrl);
-
-            socket.onopen = () => { 
-                console.log('Подключено к новому httpx-прокси Realtime!'); 
-            };
-
-            socket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    // Ловим уведомления от Supabase о системных изменениях в БД
-                    if (data.event === "postgres_changes" || data.type === "broadcast") { 
-                        loadMessages(); 
+            // Подписываемся на любые изменения (INSERT, UPDATE) в таблице messages
+            realtimeChannel = supabase
+                .channel('schema-db-changes')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'messages' },
+                    (payload) => {
+                        console.log('Данные в базе обновились!', payload);
+                        loadMessages();
                     }
-                } catch(e) {}
-            };
-
-            socket.onerror = (err) => { 
-                console.error('Ошибка в работе сокета:', err); 
-            };
-
-            socket.onclose = () => { 
-                console.log('Соединение закрыто. Переподключение через 4 секунды...');
-                setTimeout(initRealtime, 4000); 
-            };
+                )
+                .subscribe((status) => {
+                    console.log("Статус Realtime-подключения:", status);
+                });
         }
 
-        // Загрузка сообщений через HTTP-прокси
+        // Загрузка сообщений через SDK
         async function loadMessages() {
             if (!currentUser) return;
             try {
-                const res = await fetch(`${API_URL}/messages?order=created_at.asc`, {
-                    headers: { 
-                        'apikey': currentUser.apikey, 
-                        'Authorization': `Bearer ${currentUser.apikey}` 
-                    }
-                });
-                const list = await res.json();
-                if (!Array.isArray(list)) return;
+                const { data: list, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
 
                 messagesDiv.innerHTML = '';
                 list.forEach(m => {
@@ -228,42 +209,33 @@
                 });
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (err) { 
-                console.error("Ошибка обновления сообщений:", err); 
+                console.error("Ошибка загрузки сообщений:", err); 
             }
         }
 
-        // Отправка нового сообщения в базу данных
+        // Отправка сообщений через SDK
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
 
             try {
-                const res = await fetch(`${API_URL}/messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': currentUser.apikey,
-                        'Authorization': `Bearer ${currentUser.apikey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_name: currentUser.name,
-                        text: text
-                    })
-                });
+                const { error } = await supabase
+                    .from('messages')
+                    .insert([
+                        { user_id: currentUser.id, user_name: currentUser.name, text: text }
+                    ]);
 
-                if (res.ok) {
-                    msgInput.value = '';
-                    await loadMessages(); // Локально обновляем список сразу после отправки
-                }
+                if (error) throw error;
+                msgInput.value = '';
+                // Нам даже не обязательно вызывать loadMessages() вручную, 
+                // так как сокет Realtime поймает вставку строки и обновит чат сам!
             } catch (err) {
-                console.error("Ошибка при отправке:", err);
+                console.error("Ошибка отправки:", err);
             }
         }
 
-        async function handleLogin(name, tag, customKey) {
-            const payload = { id: Date.now(), name: name, tag: tag, apikey: customKey };
+        async function handleLogin(name, tag) {
+            const payload = { id: Date.now(), name: name, tag: tag };
             localStorage.setItem('semejka_user', JSON.stringify(payload));
             currentUser = payload;
             
@@ -277,19 +249,16 @@
         joinBtn.onclick = async () => {
             const name = nameInput.value.trim();
             const tag = usernameInput.value.trim();
-            
-            // Ваш текущий рабочий anon_key от Supabase
-            const defaultKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3NxY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg1NjM0MDAsImV4cCI6MjAzNDE1OTQwMH0.your-key-here"; 
 
             if(!name || !tag) return alert('Пожалуйста, заполните все поля!');
-            await handleLogin(name, tag, defaultKey);
+            await handleLogin(name, tag);
         };
 
         sendBtn.onclick = sendMessage;
         msgInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
         refreshBtn.onclick = loadMessages;
 
-        // Автоматический вход, если пользователь заходил ранее
+        // Автоматический вход
         window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('semejka_user');
             if(saved) {
