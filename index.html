@@ -143,11 +143,11 @@
 
     <script>
         const SUPABASE_URL = "https://sfsxflsbueyotiksqknp.supabase.co";
-        // ВАЖНО: Твой реальный anon-ключ от проекта Supabase
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3NxY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg1NjM0MDAsImV4cCI6MjAzNDE1OTQwMH0.your-actual-key"; 
+        // ВСТАВЛЕН ТВОЙ АКТУАЛЬНЫЙ АНОН-КЛЮЧ:
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3Nxa25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTc2MzUsImV4cCI6Mj91NDczNjM1fQ.dl27oNh5C_B-9Mn77-BVkNughbbLR8wu7fuPZvTNQ3A"; 
 
-        // ИСПРАВЛЕНО: Правильный вызов инициализации клиента из CDN-модуля
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // НАСТРОЕНО БЕЗ КОНФЛИКТА ИМЕН ПЕРЕМЕННЫХ
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let realtimeChannel = null;
@@ -165,11 +165,11 @@
         // Инициализация веб-сокетов напрямую через SDK
         function initRealtime() {
             if (realtimeChannel) {
-                supabase.removeChannel(realtimeChannel);
+                supabaseClient.removeChannel(realtimeChannel);
             }
 
             // Слушаем изменения в таблице сообщений
-            realtimeChannel = supabase
+            realtimeChannel = supabaseClient
                 .channel('schema-db-changes')
                 .on(
                     'postgres_changes',
@@ -188,7 +188,7 @@
         async function loadMessages() {
             if (!currentUser) return;
             try {
-                const { data: list, error } = await supabase
+                const { data: list, error } = await supabaseClient
                     .from('messages')
                     .select('*')
                     .order('created_at', { ascending: true });
@@ -220,7 +220,7 @@
             if (!text || !currentUser) return;
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('messages')
                     .insert([
                         { user_id: currentUser.id, user_name: currentUser.name, text: text }
@@ -275,3 +275,4 @@
     </script>
 </body>
 </html>
+
