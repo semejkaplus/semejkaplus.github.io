@@ -35,9 +35,7 @@
             border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.6);
             text-align: center; border: 1px solid rgba(255,255,255,0.5);
-            transform: scale(0.9); opacity: 0; animation: boxAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        @keyframes boxAppear { to { transform: scale(1); opacity: 1; } }
 
         .logo-glass-container { width: 100%; max-width: 320px; margin: 0 auto 20px auto; user-select: none; }
         .logo-glass-container svg { width: 100%; height: auto; display: block; }
@@ -159,16 +157,11 @@
     </div>
 
     <script>
-        // АДРЕС ТВОЕГО НОВОГО DOCKER-ПРОКСИ С HUGGING FACE
+        // ИЗМЕНЁН ТОЛЬКО АДРЕС НОВОГО ПРОКСИ
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-proxy.hf.space'; 
         
-        // Настройка путей под REST API и WebSockets в Supabase через прокси
-        const API_URL = `https://${HF_SPACE_DOMAIN}/rest/v1`;
-        
-        // Твой оригинальный восстановленный anon-ключ
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3hmbHNidWV5b3Rpa3Nxa25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTc2MzUsImV4cCI6MjA5NTQ3MzYzNX0.dl27oNh5C_B-9Mn77-BVkNughbbLR8wu7fuPZvTNQ3A";
-        
-        const WS_URL = `wss://${HF_SPACE_DOMAIN}/realtime/v1/websocket?apikey=${SUPABASE_KEY}`;
+        const API_URL = `https://${HF_SPACE_DOMAIN}/api`;
+        const WS_URL = `wss://${HF_SPACE_DOMAIN}/ws`;
 
         let currentUser = null;
         let ws = null;
@@ -194,16 +187,10 @@
             });
         }
 
-        // Загрузка сообщений из Supabase через прокси
         async function loadMessages() {
             try {
-                const response = await fetch(`${API_URL}/messages?select=*&order=created_at.asc`, {
-                    headers: {
-                        "apikey": SUPABASE_KEY,
-                        "Authorization": `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-                if (!response.ok) throw new Error('Ошибка при загрузке истории сообщений');
+                const response = await fetch(`${API_URL}/messages`);
+                if (!response.ok) throw new Error('Ошибка сети');
                 const data = await response.json();
                 
                 const children = Array.from(messagesDiv.children);
@@ -212,42 +199,26 @@
                 
                 data.forEach(msg => renderMessage(msg, false));
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } catch (e) { 
-                console.error(e); 
-            } finally { 
-                loadingSpinner.classList.remove('active'); 
-            }
+            } catch (e) { console.error(e); } finally { loadingSpinner.classList.remove('active'); }
         }
 
-        // Подключение Realtime через веб-сокет прокси
         function connectWebSocket() {
             if (ws) { ws.close(); }
             ws = new WebSocket(WS_URL);
 
-            ws.onopen = () => {
-                console.log('Подключено к Realtime прокси');
-                // Подписываемся на изменения в таблице messages
-                ws.send(JSON.stringify({
-                    topic: "realtime:public:messages",
-                    event: "phx_join",
-                    payload: {},
-                    ref: "1"
-                }));
-            };
-
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
-                // При любом обновлении (вставка или удаление) перезагружаем чат
-                if (msg.event === "postgres_changes") {
-                    loadMessages();
+                if (msg.type === 'new_message') {
+                    renderMessage(msg.data, false);
+                } else if (msg.type === 'delete_message') {
+                    const el = document.getElementById('msg-' + msg.id);
+                    if (el) el.remove();
                 }
             };
 
             ws.onclose = () => { setTimeout(connectWebSocket, 3000); };
-            ws.onerror = (err) => { console.error('Ошибка WebSocket:', err); ws.close(); };
         }
 
-        // Отправка сообщений в Supabase
         async function sendMessage(text) {
             const cleanText = text.trim();
             if (!currentUser || !cleanText) return;
@@ -265,12 +236,7 @@
             try {
                 const response = await fetch(`${API_URL}/messages`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Prefer': 'return=representation'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: currentUser.id,
                         user_name: currentUser.name,
@@ -278,9 +244,8 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('Не удалось отправить сообщение');
-                const resData = await response.json();
-                const realMsg = resData[0];
+                if (!response.ok) throw new Error('Не удалось отправить');
+                const realMsg = await response.json();
 
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
                 if (createdEl && realMsg) {
@@ -289,35 +254,16 @@
                     if (statusIcon) statusIcon.textContent = '✓';
                     addLongPressListeners(createdEl, realMsg.id);
                 }
-            } catch (err) { 
-                console.error(err); 
-                const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
-                if (createdEl) {
-                    const statusIcon = createdEl.querySelector('.status-icon');
-                    if (statusIcon) statusIcon.textContent = '⚠';
-                }
-            } finally { 
-                sendBtn.disabled = false; 
-                msgInput.focus(); 
-            }
+            } catch (err) { console.error(err); } finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
-        // Удаление сообщения
         async function deleteMessageFromServer(id) {
             try {
-                const response = await fetch(`${API_URL}/messages?id=eq.${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        "apikey": SUPABASE_KEY,
-                        "Authorization": `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-                if (!response.ok) throw new Error('Не удалось удалить запись');
+                const response = await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Не удалось удалить');
                 const el = document.getElementById('msg-' + id);
                 if (el) el.remove();
-            } catch (err) { 
-                console.error(err); 
-            }
+            } catch (err) { console.error(err); }
         }
 
         function renderMessage(msg, isLocalOptimistic) {
@@ -347,9 +293,7 @@
             `;
 
             messagesDiv.appendChild(div);
-            if (!isLocalOptimistic) {
-                addLongPressListeners(div, msg.id);
-            }
+            if (!isLocalOptimistic) { addLongPressListeners(div, msg.id); }
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
@@ -362,9 +306,7 @@
             };
             const cancel = () => {
                 clearTimeout(pressTimer);
-                if (!contextMenu.classList.contains('active')) {
-                    element.classList.remove('context-active');
-                }
+                if (!contextMenu.classList.contains('active')) { element.classList.remove('context-active'); }
             };
             element.addEventListener('mousedown', start);
             element.addEventListener('touchstart', start, { passive: true });
@@ -377,17 +319,10 @@
         function showContextMenu(e, messageId, element) {
             activeMenuMessageId = messageId;
             activeMenuElement = element;
-            
-            let clientX = 0, clientY = 0;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX; clientY = e.clientY;
-            }
-
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
             contextMenu.style.left = `${Math.min(clientX, window.innerWidth - 180)}px`;
             contextMenu.style.top = `${Math.min(clientY, window.innerHeight - 80)}px`;
-            
             contextMenu.classList.add('active');
             contextOverlay.classList.add('active');
             if(e.cancelable) e.preventDefault();
@@ -396,55 +331,60 @@
         function hideContextMenu() {
             contextMenu.classList.remove('active');
             contextOverlay.classList.remove('active');
-            if (activeMenuElement) {
-                activeMenuElement.classList.remove('context-active');
-                activeMenuElement = null;
-            }
+            if (activeMenuElement) { activeMenuElement.classList.remove('context-active'); activeMenuElement = null; }
             activeMenuMessageId = null;
         }
 
         contextOverlay.onclick = hideContextMenu;
         ctxDelete.onclick = async () => {
             if (activeMenuMessageId) {
-                const idToDelete = activeMenuMessageId;
-                hideContextMenu();
-                await deleteMessageFromServer(idToDelete);
+                const id = activeMenuMessageId; hideContextMenu(); await deleteMessageFromServer(id);
             }
         };
 
         function logout() {
-            localStorage.removeItem('semejka_user');
-            currentUser = null;
-            chatScreen.classList.remove('active');
-            regScreen.classList.add('active');
+            localStorage.removeItem('semejka_user'); currentUser = null;
+            chatScreen.classList.remove('active'); regScreen.classList.add('active');
             if (ws) ws.close();
         }
 
-        joinBtn.addEventListener('click', () => {
+        joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             if (!name) return;
-            
-            currentUser = { id: Date.now().toString(), name: name };
-            localStorage.setItem('semejka_user', JSON.stringify(currentUser));
+            joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
-            loadingSpinner.classList.add('active');
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                if (!response.ok) throw new Error('Ошибка регистрации');
+                const user = await response.json();
 
-            loadMessages();
-            connectWebSocket();
+                currentUser = user;
+                localStorage.setItem('semejka_user', JSON.stringify(user));
+
+                regScreen.classList.remove('active');
+                chatScreen.classList.add('active');
+                loadingSpinner.classList.add('active');
+
+                await loadMessages();
+                connectWebSocket();
+            } catch (err) { 
+                alert('Ошибка входа: ' + err.message); 
+            } finally { 
+                joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
+            }
         });
 
         msgInput.addEventListener('input', () => {
-            msgInput.style.height = 'auto';
-            msgInput.style.height = msgInput.scrollHeight + 'px';
+            msgInput.style.height = 'auto'; msgInput.style.height = msgInput.scrollHeight + 'px';
             sendBtn.disabled = !msgInput.value.trim();
         });
 
         function resetTextarea() {
-            msgInput.value = '';
-            msgInput.style.height = '40px';
-            sendBtn.disabled = true;
+            msgInput.value = ''; msgInput.style.height = '40px'; sendBtn.disabled = true;
         }
 
         sendBtn.onclick = () => sendMessage(msgInput.value);
