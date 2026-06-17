@@ -198,11 +198,10 @@
     </div>
 
     <script>
-        // ВНИМАНИЕ: Здесь прописана точная правильная ссылка на твой прокси-сервер!
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-proxy.hf.space'; 
         
-        // Добавляем шлюзы /--/ для прохождения через систему проксирования Hugging Face
-        const API_URL = `https://${HF_SPACE_DOMAIN}/--/api`;
+        // Базовый шлюз для Hugging Face
+        const BASE_URL = `https://${HF_SPACE_DOMAIN}/--`;
         const WS_URL = `wss://${HF_SPACE_DOMAIN}/--/ws`;
 
         const regScreen = document.getElementById('regScreen');
@@ -318,34 +317,38 @@
 
         async function loadMessages() {
             try {
-                const response = await fetch(`${API_URL}/messages`);
-                if (!response.ok) throw new Error('Ошибка сети');
+                // Пытаемся стянуть историю с /api/messages
+                let response = await fetch(`${BASE_URL}/api/messages`);
+                if (!response.ok) {
+                    // Если прокси ждет чистый путь, стучимся на /messages
+                    response = await fetch(`${BASE_URL}/messages`);
+                }
+                if (!response.ok) throw new Error('Ошибка сети при загрузке чата');
                 const data = await response.json();
-                
-                const children = Array.from(messagesDiv.children);
-                children.forEach(c => { if (c !== loadingSpinner) c.remove(); });
-                lastDisplayedDate = null;
-                
-                data.forEach(msg => renderMessage(msg, false));
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                renderLoadedMessages(data);
             } catch (e) { 
-                console.error('Ошибка загрузки истории сообщений:', e); 
+                console.error('Ошибка истории:', e); 
             } finally { 
                 loadingSpinner.classList.remove('active'); 
             }
         }
 
+        function renderLoadedMessages(data) {
+            const children = Array.from(messagesDiv.children);
+            children.forEach(c => { if (c !== loadingSpinner) c.remove(); });
+            lastDisplayedDate = null;
+            data.forEach(msg => renderMessage(msg, false));
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
         function connectWebSocket() {
             if (socket) { socket.close(); }
-            
             socket = new WebSocket(WS_URL);
-
             socket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
                         const msg = data.payload;
-                        
                         const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
                         if (localTempElement) {
                             localTempElement.id = 'msg-' + msg.id;
@@ -356,10 +359,7 @@
                     }
                 } catch (e) { console.error("Ошибка парсинга сокета:", e); }
             };
-
-            socket.onclose = () => {
-                setTimeout(connectWebSocket, 3000);
-            };
+            socket.onclose = () => { setTimeout(connectWebSocket, 3000); };
         }
 
         async function sendMessage(text) {
@@ -376,20 +376,19 @@
             renderMessage(localPayload, true);
             resetTextarea();
 
-            try {
-                const response = await fetch(`${API_URL}/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        user_name: currentUser.name,
-                        text: cleanText
-                    })
-                });
+            const bodyData = JSON.stringify({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText });
 
+            try {
+                let response = await fetch(`${BASE_URL}/api/messages`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyData
+                });
+                if (!response.ok) {
+                    response = await fetch(`${BASE_URL}/messages`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyData
+                    });
+                }
                 if (!response.ok) throw new Error('Не удалось сохранить');
                 const realMsg = await response.json();
-
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
                 if (createdEl && realMsg) {
                     createdEl.id = 'msg-' + realMsg.id;
@@ -398,16 +397,11 @@
             } catch (err) { 
                 console.error('Ошибка отправки сообщения:', err); 
             } finally { 
-                sendBtn.disabled = false; 
-                msgInput.focus(); 
+                sendBtn.disabled = false; msgInput.focus(); 
             }
         }
 
-        refreshBtn.addEventListener('click', async () => {
-            loadingSpinner.classList.add('active');
-            await loadMessages();
-        });
-
+        refreshBtn.addEventListener('click', async () => { loadingSpinner.classList.add('active'); await loadMessages(); });
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
         sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
 
@@ -420,8 +414,15 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                if (!response.ok) throw new Error('Ошибка авторизации');
+                // Авто-подбор эндпоинта: сначала пробуем с префиксом /api/users
+                let response = await fetch(`${BASE_URL}/api/users?name=${encodeURIComponent(name)}`);
+                
+                // Если прокси вернул 404 (путь не найден), пробуем прямой путь без /api
+                if (response.status === 404) {
+                    response = await fetch(`${BASE_URL}/users?name=${encodeURIComponent(name)}`);
+                }
+                
+                if (!response.ok) throw new Error('Код ошибки от прокси: ' + response.status);
                 const user = await response.json();
 
                 currentUser = user;
@@ -434,7 +435,7 @@
                 await loadMessages();
                 connectWebSocket();
             } catch (err) { 
-                alert('Ошибка входа: ' + err.message); 
+                alert('Ошибка входа: ' + err.message + '\nПопробуйте обновить страницу.'); 
             } finally { 
                 joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
             }
