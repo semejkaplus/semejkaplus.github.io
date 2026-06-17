@@ -135,6 +135,7 @@
         .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
+            .emoji-panel { max-width: calc(100vw - 30px); }
             .messages { padding: 5px 10px; gap: 10px; margin-top: 50px; }
             .bubble { font-size: 15px; padding: 10px 14px; }
             .msg { max-width: 85%; }
@@ -197,12 +198,9 @@
     </div>
 
     <script>
-        // =====================================================================
-        // СТРОГАЯ НАСТРОЙКА ПРЯМОГО ДОСТУПА ЧЕРЕЗ ОФИЦИАЛЬНЫЙ ШЛЮЗ (/--/)
-        // =====================================================================
+        // Подключение к твоему настроенному серверу на Hugging Face Spaces через прямой прокси-шлюз /--/
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
         
-        // Префикс /--/ заставляет Hugging Face отдавать чистый API-ответ вместо веб-интерфейса Space
         const API_URL = `https://${HF_SPACE_DOMAIN}/--/api`;
         const WS_URL = `wss://${HF_SPACE_DOMAIN}/--/ws`;
 
@@ -336,6 +334,7 @@
             }
         }
 
+        // Подключение WebSocket напрямую к серверу Hugging Face с автоматическим реконнектом
         function connectWebSocket() {
             if (socket) { socket.close(); }
             
@@ -346,11 +345,14 @@
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
                         const msg = data.payload;
+                        
+                        // Связываем временный ID оптимистичной отправки с реальным ID из БД
                         const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
                         if (localTempElement) {
                             localTempElement.id = 'msg-' + msg.id;
                             addLongPressListeners(localTempElement, msg.id);
                         } else {
+                            // Сообщение от собеседника отрисовывается без дублирования
                             renderMessage(msg, true);
                         }
                     }
@@ -358,6 +360,7 @@
             };
 
             socket.onclose = () => {
+                // При обрыве сети пытается переподключиться каждые 3 секунды
                 setTimeout(connectWebSocket, 3000);
             };
         }
@@ -370,6 +373,7 @@
             sendBtn.disabled = true;
             const tempTimestamp = Date.now().toString();
             
+            // Оптимистичный интерфейс: мгновенный локальный рендер
             const localPayload = {
                 id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
             };
@@ -377,6 +381,7 @@
             resetTextarea();
 
             try {
+                // Отправка запроса на бэкенд сервера Hugging Face
                 const response = await fetch(`${API_URL}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -390,6 +395,7 @@
                 if (!response.ok) throw new Error('Не удалось сохранить');
                 const realMsg = await response.json();
 
+                // Обновляем временный ID блока на постоянный числовой ID
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
                 if (createdEl && realMsg) {
                     createdEl.id = 'msg-' + realMsg.id;
@@ -420,6 +426,7 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
+                // Поиск или регистрация через API
                 const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                 if (!response.ok) throw new Error('Ошибка авторизации');
                 const user = await response.json();
