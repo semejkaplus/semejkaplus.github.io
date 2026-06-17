@@ -199,7 +199,7 @@
 
     <script>
         // Подключение к твоему настроенному серверу на Hugging Face Spaces
-        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-proxy.hf.space'; 
+        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
         
         const API_URL = `https://${HF_SPACE_DOMAIN}/api`;
         const WS_URL = `wss://${HF_SPACE_DOMAIN}/ws`;
@@ -346,13 +346,15 @@
                     if (data.event === 'shout' && data.payload) {
                         const msg = data.payload;
                         
-                        // Связываем временный ID оптимистичной отправки с реальным ID из БД
-                        const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
-                        if (localTempElement) {
+                        // Ищем оптимистичный локальный блок на экране по временному префиксу его ID
+                        const localTempElement = document.getElementById(msg.id) || document.querySelector(`[id^="msg-brc-${msg.user_id}"]`);
+                        
+                        if (localTempElement && msg.user_id === currentUser?.id) {
+                            // Меняем временный ID на настоящий, который прислала база Mongo
                             localTempElement.id = 'msg-' + msg.id;
                             addLongPressListeners(localTempElement, msg.id);
-                        } else {
-                            // Сообщение от собеседника отрисовывается без дублирования
+                        } else if (msg.user_id !== currentUser?.id) {
+                            // Если это сообщение от другого члена семьи — просто берем и рисуем его
                             renderMessage(msg, true);
                         }
                     }
