@@ -198,7 +198,7 @@
     </div>
 
     <script>
-        // Подключение к твоему настроенному серверу на Hugging Face Spaces через прямой прокси-шлюз /--/
+        // Использование прямого шлюза проксирования /--/
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
         
         const API_URL = `https://${HF_SPACE_DOMAIN}/--/api`;
@@ -334,7 +334,6 @@
             }
         }
 
-        // Подключение WebSocket напрямую к серверу Hugging Face с автоматическим реконнектом
         function connectWebSocket() {
             if (socket) { socket.close(); }
             
@@ -346,13 +345,11 @@
                     if (data.event === 'shout' && data.payload) {
                         const msg = data.payload;
                         
-                        // Связываем временный ID оптимистичной отправки с реальным ID из БД
                         const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
                         if (localTempElement) {
                             localTempElement.id = 'msg-' + msg.id;
                             addLongPressListeners(localTempElement, msg.id);
                         } else {
-                            // Сообщение от собеседника отрисовывается без дублирования
                             renderMessage(msg, true);
                         }
                     }
@@ -360,7 +357,6 @@
             };
 
             socket.onclose = () => {
-                // При обрыве сети пытается переподключиться каждые 3 секунды
                 setTimeout(connectWebSocket, 3000);
             };
         }
@@ -373,7 +369,6 @@
             sendBtn.disabled = true;
             const tempTimestamp = Date.now().toString();
             
-            // Оптимистичный интерфейс: мгновенный локальный рендер
             const localPayload = {
                 id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
             };
@@ -381,7 +376,6 @@
             resetTextarea();
 
             try {
-                // Отправка запроса на бэкенд сервера Hugging Face
                 const response = await fetch(`${API_URL}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -395,7 +389,6 @@
                 if (!response.ok) throw new Error('Не удалось сохранить');
                 const realMsg = await response.json();
 
-                // Обновляем временный ID блока на постоянный числовой ID
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
                 if (createdEl && realMsg) {
                     createdEl.id = 'msg-' + realMsg.id;
@@ -426,7 +419,6 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                // Поиск или регистрация через API
                 const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                 if (!response.ok) throw new Error('Ошибка авторизации');
                 const user = await response.json();
@@ -449,14 +441,14 @@
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
         function insertDateSeparator(dateString) {
             const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep);
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
         }
-        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
+        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); } 
+        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
     </script>
 </body>
 </html>
