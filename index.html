@@ -103,23 +103,6 @@
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
-        .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
-        .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
-        .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
-
-        .emoji-panel {
-            display: none; position: absolute; bottom: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 6px; gap: 6px; z-index: 9999; margin-bottom: 8px; max-width: calc(100vw - 30px); flex-direction: column; align-items: stretch; width: max-content;
-        }
-        .sent .emoji-panel { left: auto; right: 0; transform: none; }
-        .received .emoji-panel { left: 0; right: auto; transform: none; }
-        .emoji-panel.open { display: flex; }
-
-        .quick-emojis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
-        .emoji-option { font-size: 18px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
-        .emoji-option:hover { transform: scale(1.25); }
-
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); width: calc(100% - 20px); max-width: 800px;
         }
@@ -135,7 +118,6 @@
         .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
-            .emoji-panel { max-width: calc(100vw - 30px); }
             .messages { padding: 5px 10px; gap: 10px; margin-top: 50px; }
             .bubble { font-size: 15px; padding: 10px 14px; }
             .msg { max-width: 85%; }
@@ -198,11 +180,14 @@
     </div>
 
     <script>
-        // Подключение к твоему настроенному серверу на Hugging Face Spaces
+        // =====================================================================
+        // НАСТРОЙКА ПРЯМЫХ ПУТЕЙ К HUGGING FACE (БЕЗ ПРОКСИ!)
+        // =====================================================================
         const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
         
-        const API_URL = `https://${HF_SPACE_DOMAIN}/api`;
-        const WS_URL = `wss://${HF_SPACE_DOMAIN}/ws`;
+        // Префикс /--/ открывает прямой шлюз со стороны Hugging Face наружу
+        const API_URL = `https://${HF_SPACE_DOMAIN}/--/api`;
+        const WS_URL = `wss://${HF_SPACE_DOMAIN}/--/ws`;
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
@@ -216,8 +201,6 @@
 
         let currentUser = null;
         let lastDisplayedDate = null;
-        let reactionsCache = {};
-        let longPressTimer = null;
         let socket = null;
 
         function autoResize() {
@@ -242,54 +225,12 @@
         function logout() {
             localStorage.removeItem('semejka_user');
             if (socket) { socket.close(); socket = null; }
-            currentUser = null; lastDisplayedDate = null; reactionsCache = {};
+            currentUser = null; lastDisplayedDate = null;
             regScreen.classList.add('active');
             chatScreen.classList.remove('active');
             nameInput.value = '';
             resetTextarea();
         }
-
-        const EMOJI_LIST = [
-            { emoji: '👍' }, { emoji: '❤️' }, { emoji: '😊' }, { emoji: '😢' }, 
-            { emoji: '🎉' }, { emoji: '🔥' }, { emoji: '😡' }, { emoji: '😂' }
-        ];
-
-        function addLongPressListeners(msgElement, messageId) {
-            const bubble = msgElement.querySelector('.bubble');
-            if (!bubble) return;
-            const startPress = (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
-            const cancelPress = () => { clearTimeout(longPressTimer); };
-            bubble.addEventListener('mousedown', startPress);
-            bubble.addEventListener('mouseup', cancelPress);
-            bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: true });
-            bubble.addEventListener('touchend', cancelPress);
-        }
-
-        function showEmojiPanel(messageId) {
-            const msgEl = document.getElementById('msg-' + messageId);
-            if (!msgEl) return;
-            document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            let panel = msgEl.querySelector('.emoji-panel');
-            if (!panel) {
-                panel = document.createElement('div'); panel.className = 'emoji-panel';
-                const quickContainer = document.createElement('div'); quickContainer.className = 'quick-emojis';
-                EMOJI_LIST.forEach(item => {
-                    const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
-                    span.onclick = (e) => { e.stopPropagation(); panel.classList.remove('open'); alert('Реакции временно на доработке'); };
-                    quickContainer.appendChild(span);
-                });
-                panel.appendChild(quickContainer);
-                msgEl.appendChild(panel);
-            }
-            panel.classList.add('open');
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.emoji-panel') && !e.target.closest('.bubble')) {
-                document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            }
-        });
 
         function linkify(text) {
             const urlRegex = /(https?:\/\/[^\s<]+)/gi;
@@ -312,7 +253,6 @@
             div.innerHTML = html; messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             if (animate) div.classList.add('animate-in');
-            addLongPressListeners(div, msg.id);
         }
 
         async function loadMessages() {
@@ -334,7 +274,6 @@
             }
         }
 
-        // Подключение WebSocket напрямую к серверу Hugging Face с автоматическим реконнектом
         function connectWebSocket() {
             if (socket) { socket.close(); }
             
@@ -345,24 +284,17 @@
                     const data = JSON.parse(event.data);
                     if (data.event === 'shout' && data.payload) {
                         const msg = data.payload;
-                        
-                        // Ищем оптимистичный локальный блок на экране по временному префиксу его ID
-                        const localTempElement = document.getElementById(msg.id) || document.querySelector(`[id^="msg-brc-${msg.user_id}"]`);
-                        
-                        if (localTempElement && msg.user_id === currentUser?.id) {
-                            // Меняем временный ID на настоящий, который прислала база Mongo
+                        const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
+                        if (localTempElement) {
                             localTempElement.id = 'msg-' + msg.id;
-                            addLongPressListeners(localTempElement, msg.id);
-                        } else if (msg.user_id !== currentUser?.id) {
-                            // Если это сообщение от другого члена семьи — просто берем и рисуем его
+                        } else {
                             renderMessage(msg, true);
                         }
                     }
-                } catch (e) { console.error("Ошибка парсинга сокета:", e); }
+                } catch (e) { console.error("Ошибка сокета:", e); }
             };
 
             socket.onclose = () => {
-                // При обрыве сети пытается переподключиться каждые 3 секунды вот так
                 setTimeout(connectWebSocket, 3000);
             };
         }
@@ -375,7 +307,6 @@
             sendBtn.disabled = true;
             const tempTimestamp = Date.now().toString();
             
-            // Оптимистичный интерфейс: мгновенный локальный рендер
             const localPayload = {
                 id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
             };
@@ -383,7 +314,6 @@
             resetTextarea();
 
             try {
-                // Отправка запроса на бэкенд сервера Hugging Face
                 const response = await fetch(`${API_URL}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -397,11 +327,9 @@
                 if (!response.ok) throw new Error('Не удалось сохранить');
                 const realMsg = await response.json();
 
-                // Обновляем временный ID блока на постоянный числовой ID
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
                 if (createdEl && realMsg) {
                     createdEl.id = 'msg-' + realMsg.id;
-                    addLongPressListeners(createdEl, realMsg.id);
                 }
             } catch (err) { 
                 console.error('Ошибка отправки сообщения:', err); 
@@ -428,7 +356,6 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                // Поиск или регистрация через API
                 const response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
                 if (!response.ok) throw new Error('Ошибка авторизации');
                 const user = await response.json();
