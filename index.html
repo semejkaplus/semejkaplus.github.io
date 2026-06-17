@@ -198,10 +198,10 @@
     </div>
 
     <script>
-        // Домен твоего сервера Hugging Face Spaces
-        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-plus-chat.hf.space'; 
+        // ВНИМАНИЕ: Здесь прописана точная правильная ссылка на твой прокси-сервер!
+        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-proxy.hf.space'; 
         
-        // ВНИМАНИЕ: Сюда строго добавлены префиксы /--/ для прохождения сквозь защиту Hugging Face
+        // Добавляем шлюзы /--/ для прохождения через систему проксирования Hugging Face
         const API_URL = `https://${HF_SPACE_DOMAIN}/--/api`;
         const WS_URL = `wss://${HF_SPACE_DOMAIN}/--/ws`;
 
@@ -234,7 +234,6 @@
         }
         msgInput.addEventListener('input', autoResize);
 
-        // Функция очистки текстового поля
         function resetTextarea() {
             msgInput.value = '';
             msgInput.style.height = 'auto';
@@ -435,22 +434,22 @@
                 await loadMessages();
                 connectWebSocket();
             } catch (err) { 
-                alert('Ошибка входа: ' + err.message);
+                alert('Ошибка входа: ' + err.message); 
             } finally { 
-                joinBtn.disabled = false; joinBtn.textContent = 'Войти';
+                joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
             }
         });
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
         function insertDateSeparator(dateString) {
             const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep);
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
         }
-        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
+        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); } 
+        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
     </script>
 </body>
 </html>
