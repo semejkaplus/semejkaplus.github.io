@@ -96,7 +96,7 @@
         .msg.sent { align-items: flex-end; }
         .msg.received { align-items: flex-start; }
 
-        /* Строка-контейнер для баббла и бокового меню */
+        /* Строка-контейнер для баббла и бового меню реакций */
         .msg-row {
             display: flex;
             align-items: center;
@@ -123,14 +123,25 @@
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
         
-        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; width: 100%; }
-        .sent .msg-footer { flex-direction: row-reverse; }
-        .received .msg-footer { flex-direction: row; }
+        /* ФУТЕР И ВРЕМЯ */
+        .msg-footer { 
+            display: flex; 
+            flex-direction: column; 
+            margin-top: 4px; 
+            width: 100%; 
+        }
+        .sent .msg-footer { align-items: flex-end; }
+        .received .msg-footer { align-items: flex-start; }
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* ИНДИКАТОРЫ РЕАКЦИЙ ПОД ВРЕМЕНЕМ */
-        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; width: 100%; }
+        /* ИНДИКАТОРЫ РЕАКЦИЙ СТРОГО ПОД ВРЕМЕНЕМ */
+        .reactions-wrapper { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 4px; 
+            margin-top: 5px; 
+        }
         .sent .reactions-wrapper { justify-content: flex-end; }
         .received .reactions-wrapper { justify-content: flex-start; }
 
@@ -620,9 +631,6 @@
                     </div>
                     <div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div>
                 </div>
-            `;
-            // Контейнер .reactions-wrapper теперь расположен строго под временем в .msg-footer
-            html += `
                 <div class="msg-footer">
                     <div class="time">${formatTime(timestamp)}</div>
                     <div class="reactions-wrapper"></div>
