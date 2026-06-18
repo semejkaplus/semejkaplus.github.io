@@ -198,11 +198,10 @@
     </div>
 
     <script>
-        const HF_SPACE_DOMAIN = 'mrkricalo-semejka-proxy.hf.space'; 
-        
-        // Базовый шлюз для Hugging Face
-        const BASE_URL = `https://${HF_SPACE_DOMAIN}/--`;
-        const WS_URL = `wss://${HF_SPACE_DOMAIN}/--/ws`;
+        // Твоя новая рабочая ссылка от Render (без слэша на конце)
+        const BASE_URL = "https://semejka-backend.onrender.com"; 
+        const API_URL = `${BASE_URL}/api`;
+        const WS_URL = `${BASE_URL.replace("https://", "wss://")}/ws`;
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
@@ -317,12 +316,7 @@
 
         async function loadMessages() {
             try {
-                // Пытаемся стянуть историю с /api/messages
-                let response = await fetch(`${BASE_URL}/api/messages`);
-                if (!response.ok) {
-                    // Если прокси ждет чистый путь, стучимся на /messages
-                    response = await fetch(`${BASE_URL}/messages`);
-                }
+                let response = await fetch(`${API_URL}/messages`);
                 if (!response.ok) throw new Error('Ошибка сети при загрузке чата');
                 const data = await response.json();
                 renderLoadedMessages(data);
@@ -379,14 +373,9 @@
             const bodyData = JSON.stringify({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText });
 
             try {
-                let response = await fetch(`${BASE_URL}/api/messages`, {
+                let response = await fetch(`${API_URL}/messages`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyData
                 });
-                if (!response.ok) {
-                    response = await fetch(`${BASE_URL}/messages`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyData
-                    });
-                }
                 if (!response.ok) throw new Error('Не удалось сохранить');
                 const realMsg = await response.json();
                 const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
@@ -414,15 +403,8 @@
             joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
             try {
-                // Авто-подбор эндпоинта: сначала пробуем с префиксом /api/users
-                let response = await fetch(`${BASE_URL}/api/users?name=${encodeURIComponent(name)}`);
-                
-                // Если прокси вернул 404 (путь не найден), пробуем прямой путь без /api
-                if (response.status === 404) {
-                    response = await fetch(`${BASE_URL}/users?name=${encodeURIComponent(name)}`);
-                }
-                
-                if (!response.ok) throw new Error('Код ошибки от прокси: ' + response.status);
+                let response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
+                if (!response.ok) throw new Error('Код ошибки сервера: ' + response.status);
                 const user = await response.json();
 
                 currentUser = user;
@@ -435,7 +417,7 @@
                 await loadMessages();
                 connectWebSocket();
             } catch (err) { 
-                alert('Ошибка входа: ' + err.message + '\nПопробуйте обновить страницу.'); 
+                alert('Ошибка входа: ' + err.message + '\nПопробуйте ещё раз.'); 
             } finally { 
                 joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
             }
