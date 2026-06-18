@@ -43,12 +43,20 @@
         }
         .logo-glass-container svg { width: 100%; height: auto; display: block; }
 
-        p { color: #635857; margin-bottom: 35px; font-size: 17px; font-weight: 600; opacity: 0.85; }
-        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 20px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
+        p { color: #635857; margin-bottom: 25px; font-size: 17px; font-weight: 600; opacity: 0.85; }
+        input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 15px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .error-msg { color: #D04A42; font-size: 14px; font-weight: 600; margin-bottom: 15px; display: none; text-align: left; padding-left: 15px; }
+        
+        .welcome-back { display: none; flex-direction: column; gap: 15px; width: 100%; }
+        .welcome-text { color: #3A3A4A; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+        .change-user-btn { background: none; border: none; color: #6C63FF; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-top: 10px; box-shadow: none; }
+        .change-user-btn:hover { transform: none; box-shadow: none; color: #4A42D0; }
+
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
-        button:disabled { background: #B0B0B0; box-shadow: none; transform: none; }
+        button:disabled { background: #B0B0B0; box-shadow: none; transform: none; cursor: not-allowed; }
 
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
@@ -147,9 +155,21 @@
                     </g>
                 </svg>
             </div>
-            <p>Семейный чат для самых близких</p>
-            <input type="text" id="nameInput" placeholder="Ваше имя">
-            <button id="joinBtn">Войти</button>
+            <p id="regSubtitle">Семейный чат для самых близких</p>
+            
+            <div id="freshForm">
+                <input type="text" id="nameInput" placeholder="Ваше имя">
+                <input type="text" id="usernameInput" placeholder="Придумайте юзернейм (например, ivan99)">
+                <div class="error-msg" id="errorMsg">Юзернейм уже занят!</div>
+                <button id="joinBtn">Создать аккаунт</button>
+            </div>
+
+            <div id="fastForm" class="welcome-back">
+                <div class="welcome-text" id="welcomeText">Привет, Александр!</div>
+                <p style="margin-bottom:10px;">Войти как <span id="savedUsernameLabel" style="color:#6C63FF;">@alex</span>?</p>
+                <button id="fastJoinBtn">Войти в чат</button>
+                <button class="change-user-btn" id="changeUserBtn">Сменить аккаунт</button>
+            </div>
         </div>
     </div>
 
@@ -170,9 +190,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Твой личный конфиг Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAlt7Q4ZjhSM9M3gytNk1UA6XHPROtz7eQ",
             authDomain: "semejka-plus.firebaseapp.com",
@@ -183,21 +202,46 @@
             measurementId: "G-NBG9WYCM1J"
         };
 
-        // Инициализируем Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const nameInput = document.getElementById('nameInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const errorMsg = document.getElementById('errorMsg');
         const joinBtn = document.getElementById('joinBtn');
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
+        const freshForm = document.getElementById('freshForm');
+        const fastForm = document.getElementById('fastForm');
+        const welcomeText = document.getElementById('welcomeText');
+        const savedUsernameLabel = document.getElementById('savedUsernameLabel');
+        const fastJoinBtn = document.getElementById('fastJoinBtn');
+        const changeUserBtn = document.getElementById('changeUserBtn');
+
         let currentUser = null;
         let lastDisplayedDate = null;
+
+        // Проверяем, заходил ли кто-то с этого устройства раньше
+        function checkSavedUser() {
+            const savedName = localStorage.getItem('semejka_name');
+            const savedUsername = localStorage.getItem('semejka_username');
+            
+            if (savedName && savedUsername) {
+                freshForm.style.display = 'none';
+                fastForm.style.display = 'flex';
+                welcomeText.textContent = `Привет, ${savedName}!`;
+                savedUsernameLabel.textContent = `@${savedUsername}`;
+            } else {
+                freshForm.style.display = 'block';
+                fastForm.style.display = 'none';
+            }
+        }
+        checkSavedUser();
 
         function autoResize() {
             msgInput.style.height = 'auto';
@@ -235,7 +279,7 @@
 
             let html = '';
             if (msg.user_id !== currentUser?.id) {
-                html += `<div class="name">${escapeHtml(msg.user_name || '')}</div>`;
+                html += `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             }
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
             html += `<div class="msg-footer"><div class="time">${formatTime(timestamp)}</div></div>`;
@@ -245,7 +289,6 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // Подписка на сообщения в реальном времени
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
@@ -293,28 +336,71 @@
         });
         sendBtn.addEventListener('click', sendMessage);
 
-        joinBtn.addEventListener('click', () => {
+        // Первая регистрация с проверкой юзернейма
+        joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
-            if (!name) return;
+            let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-            localStorage.setItem('semejka_username', name);
-
-            let userId = localStorage.getItem('semejka_uid');
-            if (!userId) {
-                userId = 'user_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('semejka_uid', userId);
+            if (!name || !username) {
+                alert('Пожалуйста, заполните оба поля. Юзернейм может содержать только английские буквы и цифры.');
+                return;
             }
 
-            currentUser = { id: userId, name: name };
-            
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
+            joinBtn.disabled = true;
+            errorMsg.style.display = 'none';
 
-            startLiveChat();
+            try {
+                // Проверяем в базе данных Firestore, занят ли юзернейм
+                const uQuery = query(collection(db, "users"), where("username", "==", username));
+                const querySnapshot = await getDocs(uQuery);
+
+                if (!querySnapshot.empty) {
+                    errorMsg.style.display = 'block';
+                    joinBtn.disabled = false;
+                    return;
+                }
+
+                // Если юзернейм свободен — регистрируем
+                await addDoc(collection(db, "users"), {
+                    name: name,
+                    username: username,
+                    created_at: serverTimestamp()
+                });
+
+                // Сохраняем на устройстве
+                localStorage.setItem('semejka_name', name);
+                localStorage.setItem('semejka_username', username);
+
+                currentUser = { id: username, name: name };
+                enterChat();
+
+            } catch (err) {
+                console.error("Ошибка при регистрации:", err);
+                joinBtn.disabled = false;
+            }
         });
 
-        const savedName = localStorage.getItem('semejka_username');
-        if (savedName) nameInput.value = savedName;
+        // Быстрый автоматический вход по кнопке
+        fastJoinBtn.addEventListener('click', () => {
+            const name = localStorage.getItem('semejka_name');
+            const username = localStorage.getItem('semejka_username');
+            
+            currentUser = { id: username, name: name };
+            enterChat();
+        });
+
+        // Кнопка сброса текущего аккаунта на устройстве
+        changeUserBtn.addEventListener('click', () => {
+            localStorage.removeItem('semejka_name');
+            localStorage.removeItem('semejka_username');
+            checkSavedUser();
+        });
+
+        function enterChat() {
+            regScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+            startLiveChat();
+        }
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
