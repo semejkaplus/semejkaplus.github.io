@@ -165,8 +165,8 @@
             </div>
 
             <div id="fastForm" class="welcome-back">
-                <div class="welcome-text" id="welcomeText">Привет, Александр!</div>
-                <p style="margin-bottom:10px;">Войти как <span id="savedUsernameLabel" style="color:#6C63FF;">@alex</span>?</p>
+                <div class="welcome-text" id="welcomeText">Привет!</div>
+                <p style="margin-bottom:10px;">Войти как <span id="savedUsernameLabel" style="color:#6C63FF;">@username</span>?</p>
                 <button id="fastJoinBtn">Войти в чат</button>
                 <button class="change-user-btn" id="changeUserBtn">Сменить аккаунт</button>
             </div>
@@ -226,7 +226,17 @@
         let currentUser = null;
         let lastDisplayedDate = null;
 
-        // Проверяем, заходил ли кто-то с этого устройства раньше
+        // ЖЕСТКАЯ ОЧИСТКА И МИГРАЦИЯ СТАРОГО МУСОРА НА УРОВНЕ КОДА
+        function handleDataMigration() {
+            // Если остался старый сгенерированный uid (вида user_***), но нет нового юзернейма
+            if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
+                localStorage.removeItem('semejka_uid');
+                localStorage.removeItem('semejka_username');
+                localStorage.removeItem('semejka_name');
+            }
+        }
+        handleDataMigration();
+
         function checkSavedUser() {
             const savedName = localStorage.getItem('semejka_name');
             const savedUsername = localStorage.getItem('semejka_username');
@@ -336,7 +346,6 @@
         });
         sendBtn.addEventListener('click', sendMessage);
 
-        // Первая регистрация с проверкой юзернейма
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -350,7 +359,6 @@
             errorMsg.style.display = 'none';
 
             try {
-                // Проверяем в базе данных Firestore, занят ли юзернейм
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
                 const querySnapshot = await getDocs(uQuery);
 
@@ -360,14 +368,12 @@
                     return;
                 }
 
-                // Если юзернейм свободен — регистрируем
                 await addDoc(collection(db, "users"), {
                     name: name,
                     username: username,
                     created_at: serverTimestamp()
                 });
 
-                // Сохраняем на устройстве
                 localStorage.setItem('semejka_name', name);
                 localStorage.setItem('semejka_username', username);
 
@@ -380,7 +386,6 @@
             }
         });
 
-        // Быстрый автоматический вход по кнопке
         fastJoinBtn.addEventListener('click', () => {
             const name = localStorage.getItem('semejka_name');
             const username = localStorage.getItem('semejka_username');
@@ -389,7 +394,6 @@
             enterChat();
         });
 
-        // Кнопка сброса текущего аккаунта на устройстве
         changeUserBtn.addEventListener('click', () => {
             localStorage.removeItem('semejka_name');
             localStorage.removeItem('semejka_username');
