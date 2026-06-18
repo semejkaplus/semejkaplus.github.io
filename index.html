@@ -52,7 +52,6 @@
         .welcome-back, .login-existing { display: none; flex-direction: column; gap: 15px; width: 100%; }
         .welcome-text { color: #3A3A4A; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
         
-        /* КНОПКИ ПЕРЕКЛЮЧЕНИЯ РЕЖИМОВ (Стилизованы под дизайн) */
         .link-btn { 
             width: 100%;
             padding: 14px; 
@@ -91,11 +90,11 @@
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
+        /* СООБЩЕНИЯ И ЖЕСТЫ */
+        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; touch-action: pan-x pan-y; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-        .msg.animate-in { animation: fadeInUp 0.3s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.swiped-up { transform: translateY(-10px); }
 
         .msg-content { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
         .sent .msg-content { flex-direction: row-reverse; }
@@ -105,17 +104,62 @@
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             color: #3A3A4A; max-width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
+            cursor: pointer; user-select: none; -webkit-user-select: none;
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
 
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
-        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; width: 100%; }
+        
+        .msg-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 4px; width: 100%; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+
+        /* НОВЫЙ ДИЗАЙН БЛОКА РЕАКЦИЙ ПОД СООБЩЕНИЕМ */
+        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+        .reaction-badge {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.8);
+            padding: 4px 10px; border-radius: 14px; font-size: 14px; display: flex; align-items: center; gap: 5px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none;
+        }
+        .reaction-badge:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
+        .reaction-badge.active {
+            background: rgba(108, 99, 255, 0.15);
+            border-color: rgba(108, 99, 255, 0.4);
+            box-shadow: 0 3px 10px rgba(108,99,255,0.15);
+        }
+        .reaction-count { font-size: 12px; font-weight: 700; color: #4A4A5A; }
+        .reaction-badge.active .reaction-count { color: #6C63FF; }
+
+        /* СТЕКЛЯННОЕ МОДАЛЬНОЕ МЕНЮ РЕАКЦИЙ */
+        .reaction-picker-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 9999; display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.2s ease;
+        }
+        .reaction-picker-overlay.active { display: flex; opacity: 1; }
+        
+        .reaction-picker-box {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 20px 25px; border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
+            display: flex; gap: 14px; transform: scale(0.85); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .reaction-picker-overlay.active .reaction-picker-box { transform: scale(1); }
+        
+        .picker-emoji {
+            font-size: 30px; cursor: pointer; transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none; -webkit-user-select: none; padding: 4px;
+        }
+        .picker-emoji:hover { transform: scale(1.3) translateY(-4px); }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
@@ -217,9 +261,20 @@
         </div>
     </div>
 
+    <div class="reaction-picker-overlay" id="reactionPickerOverlay">
+        <div class="reaction-picker-box" id="reactionPickerBox">
+            <span class="picker-emoji" data-emoji="❤️">❤️</span>
+            <span class="picker-emoji" data-emoji="👍">👍</span>
+            <span class="picker-emoji" data-emoji="😂">😂</span>
+            <span class="picker-emoji" data-emoji="😮">😮</span>
+            <span class="picker-emoji" data-emoji="🔥">🔥</span>
+            <span class="picker-emoji" data-emoji="💩">💩</span>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAlt7Q4ZjhSM9M3gytNk1UA6XHPROtz7eQ",
@@ -261,8 +316,13 @@
         const fastJoinBtn = document.getElementById('fastJoinBtn');
         const changeUserBtn = document.getElementById('changeUserBtn');
 
+        // Элементы реакций
+        const reactionPickerOverlay = document.getElementById('reactionPickerOverlay');
+        const pickerEmojis = document.querySelectorAll('.picker-emoji');
+
         let currentUser = null;
         let lastDisplayedDate = null;
+        let activeReactionMessageId = null; // ID сообщения, для которого открыто меню реакций
 
         function handleDataMigration() {
             if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
@@ -416,8 +476,118 @@
             return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
+        // ОТКРЫТИЕ ОКНА РЕАКЦИЙ
+        function openReactionPicker(msgId, msgElement) {
+            activeReactionMessageId = msgId;
+            reactionPickerOverlay.classList.add('active');
+            msgElement.classList.add('swiped-up');
+        }
+
+        // ЗАКРЫТИЕ ОКНА РЕАКЦИЙ
+        function closeReactionPicker() {
+            reactionPickerOverlay.classList.remove('active');
+            document.querySelectorAll('.msg').forEach(el => el.classList.remove('swiped-up'));
+            activeReactionMessageId = null;
+        }
+
+        reactionPickerOverlay.addEventListener('click', (e) => {
+            if (e.target === reactionPickerOverlay) closeReactionPicker();
+        });
+
+        // ОТПРАВКА ИЛИ ПЕРЕКЛЮЧЕНИЕ РЕАКЦИИ В FIREBASE
+        async function toggleReaction(msgId, emoji) {
+            if (!currentUser) return;
+            const msgRef = doc(db, "messages", msgId);
+            
+            // Находим сам элемент в DOM, чтобы вытащить текущие данные реакций
+            const msgDiv = document.getElementById('msg-' + msgId);
+            if (!msgDiv) return;
+            
+            let currentReactions = JSON.parse(msgDiv.getAttribute('data-reactions') || '{}');
+            
+            if (!currentReactions[emoji]) {
+                currentReactions[emoji] = [];
+            }
+            
+            const userIndex = currentReactions[emoji].indexOf(currentUser.id);
+            if (userIndex > -1) {
+                // Если реакция уже стоит от нас — убираем её
+                currentReactions[emoji].splice(userIndex, 1);
+                if (currentReactions[emoji].length === 0) delete currentReactions[emoji];
+            } else {
+                // Убираем этот юзерid из всех остальных эмодзи этого сообщения (один юзер — одна реакция на сообщение)
+                for (let e in currentReactions) {
+                    const idx = currentReactions[e].indexOf(currentUser.id);
+                    if (idx > -1) {
+                        currentReactions[e].splice(idx, 1);
+                        if (currentReactions[e].length === 0) delete currentReactions[e];
+                    }
+                }
+                // Ставим новую
+                currentReactions[emoji].push(currentUser.id);
+            }
+            
+            try {
+                await updateDoc(msgRef, { reactions: currentReactions });
+            } catch (err) {
+                console.error("Ошибка обновления реакции: ", err);
+            }
+        }
+
+        pickerEmojis.forEach(emojiEl => {
+            emojiEl.addEventListener('click', async () => {
+                const emoji = emojiEl.getAttribute('data-emoji');
+                if (activeReactionMessageId && emoji) {
+                    await toggleReaction(activeReactionMessageId, emoji);
+                    closeReactionPicker();
+                }
+            });
+        });
+
+        // ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ РЕАКЦИЙ В ДИЗАЙНЕ
+        function updateReactionsUI(msgId, reactions) {
+            const msgDiv = document.getElementById('msg-' + msgId);
+            if (!msgDiv) return;
+
+            msgDiv.setAttribute('data-reactions', JSON.stringify(reactions || {}));
+            
+            let wrapper = msgDiv.querySelector('.reactions-wrapper');
+            if (!wrapper) {
+                wrapper = document.createElement('div');
+                wrapper.className = 'reactions-wrapper';
+                msgDiv.querySelector('.msg-footer').appendChild(wrapper);
+            }
+            
+            wrapper.innerHTML = '';
+            
+            for (let emoji in reactions) {
+                const userList = reactions[emoji] || [];
+                if (userList.length === 0) continue;
+                
+                const isMyReaction = userList.includes(currentUser?.id);
+                
+                const badge = document.createElement('div');
+                badge.className = `reaction-badge ${isMyReaction ? 'active' : ''}`;
+                badge.innerHTML = `<span>${emoji}</span><span class="reaction-count">${userList.length}</span>`;
+                
+                badge.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // Чтобы не срабатывал клик по сообщению
+                    await toggleReaction(msgId, emoji);
+                });
+                
+                wrapper.appendChild(badge);
+            }
+        }
+
+        // РЕНДЕР СООБЩЕНИЯ
         function renderMessage(msg) {
-            if (document.getElementById('msg-' + msg.id)) return;
+            let msgDiv = document.getElementById('msg-' + msg.id);
+            
+            if (msgDiv) {
+                // Если сообщение уже есть в списке — обновляем только блок его реакций
+                updateReactionsUI(msg.id, msg.reactions);
+                return;
+            }
             
             const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
             const msgDate = timestamp.toLocaleDateString('ru-RU');
@@ -429,7 +599,7 @@
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id; 
-            div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+            div.className = 'msg animate-in ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
 
             let html = '';
             if (msg.user_id !== currentUser?.id) {
@@ -441,6 +611,39 @@
             div.innerHTML = html; 
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Навешиваем логику реакций на «баббл» сообщения
+            const bubbleElement = div.querySelector('.bubble');
+
+            // Резервный вариант для ПК (обычный клик открывает меню)
+            bubbleElement.addEventListener('click', () => {
+                openReactionPicker(msg.id, div);
+            });
+
+            // РЕАЛИЗАЦИЯ СВАЙПА ВВЕРХ ДЛЯ МОБИЛОК (Touch Events)
+            let startY = 0;
+            let startX = 0;
+            
+            bubbleElement.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+
+            bubbleElement.addEventListener('touchend', (e) => {
+                const endY = e.changedTouches[0].clientY;
+                const endX = e.changedTouches[0].clientX;
+                
+                const diffY = startY - endY; // Положительное значение значит движение вверх
+                const diffX = Math.abs(startX - endX);
+
+                // Если свайпнули вверх более чем на 40 пикселей и движение было преимущественно вертикальным
+                if (diffY > 40 && diffY > diffX) {
+                    openReactionPicker(msg.id, div);
+                }
+            }, { passive: true });
+
+            // Отрисовываем начальные реакции, если они есть
+            updateReactionsUI(msg.id, msg.reactions);
         }
 
         function startLiveChat() {
@@ -450,8 +653,8 @@
             onSnapshot(q, (snapshot) => {
                 loadingSpinner.classList.remove('active');
                 snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const data = change.doc.data();
+                    const data = change.doc.data();
+                    if (change.type === "added" || change.type === "modified") {
                         renderMessage({ id: change.doc.id, ...data });
                     }
                 });
@@ -472,6 +675,7 @@
                     user_id: currentUser.id,
                     user_name: currentUser.name,
                     text: text,
+                    reactions: {},
                     created_at: serverTimestamp()
                 });
             } catch (err) {
