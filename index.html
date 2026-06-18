@@ -52,8 +52,28 @@
         .welcome-back, .login-existing { display: none; flex-direction: column; gap: 15px; width: 100%; }
         .welcome-text { color: #3A3A4A; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
         
-        .link-btn { background: none; border: none; color: #6C63FF; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-top: 12px; display: inline-block; }
-        .link-btn:hover { color: #4A42D0; }
+        /* КНОПКИ ПЕРЕКЛЮЧЕНИЯ РЕЖИМОВ (Стилизованы под дизайн) */
+        .link-btn { 
+            width: 100%;
+            padding: 14px; 
+            background: rgba(255, 255, 255, 0.4); 
+            border: 2px solid #6C63FF; 
+            color: #6C63FF; 
+            font-size: 16px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border-radius: 25px;
+            margin-top: 12px; 
+            display: inline-block;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(108,99,255,0.1);
+        }
+        .link-btn:hover { 
+            background: #6C63FF;
+            color: white;
+            box-shadow: 0 8px 15px rgba(108,99,255,0.2);
+            transform: translateY(-1px);
+        }
 
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
@@ -214,7 +234,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Элементы экранов
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const messagesDiv = document.getElementById('messages');
@@ -222,25 +241,21 @@
         const sendBtn = document.getElementById('sendBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        // Элементы форм
         const freshForm = document.getElementById('freshForm');
         const loginForm = document.getElementById('loginForm');
         const fastForm = document.getElementById('fastForm');
 
-        // Поля и кнопки регистрации
         const nameInput = document.getElementById('nameInput');
         const usernameInput = document.getElementById('usernameInput');
         const errorMsg = document.getElementById('errorMsg');
         const joinBtn = document.getElementById('joinBtn');
         const toLoginBtn = document.getElementById('toLoginBtn');
 
-        // Поля и кнопки ручного входа
         const loginUsernameInput = document.getElementById('loginUsernameInput');
         const loginErrorMsg = document.getElementById('loginErrorMsg');
         const loginBtn = document.getElementById('loginBtn');
         const toRegisterBtn = document.getElementById('toRegisterBtn');
 
-        // Элементы быстрого входа
         const welcomeText = document.getElementById('welcomeText');
         const savedUsernameLabel = document.getElementById('savedUsernameLabel');
         const fastJoinBtn = document.getElementById('fastJoinBtn');
@@ -249,7 +264,6 @@
         let currentUser = null;
         let lastDisplayedDate = null;
 
-        // Миграция старых сессий
         function handleDataMigration() {
             if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
                 localStorage.removeItem('semejka_uid');
@@ -259,7 +273,6 @@
         }
         handleDataMigration();
 
-        // Определение активного состояния при загрузке
         function checkSavedUser() {
             const savedName = localStorage.getItem('semejka_name');
             const savedUsername = localStorage.getItem('semejka_username');
@@ -278,7 +291,6 @@
         }
         checkSavedUser();
 
-        // Навигация между формами входа/регистрации
         toLoginBtn.addEventListener('click', () => {
             freshForm.style.display = 'none';
             loginForm.style.display = 'flex';
@@ -294,20 +306,18 @@
             usernameInput.value = '';
         });
 
-        // Сброс аккаунта
         changeUserBtn.addEventListener('click', () => {
             localStorage.removeItem('semejka_name');
             localStorage.removeItem('semejka_username');
             checkSavedUser();
         });
 
-        // 1. ЛОГИКА РЕГИСТРАЦИИ НОВОГО ПОЛЬЗОВАТЕЛЯ
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
             if (!name || !username) {
-                alert('Пожалуйста, заполните оба поля. Юзернейм может содержать только английские буквы, цифры и нижнее подчеркивание.');
+                alert('Пожалуйста, заполните оба поля.');
                 return;
             }
 
@@ -342,7 +352,6 @@
             }
         });
 
-        // 2. ЛОГИКА РУЧНОГО ВХОДА ПО СУЩЕСТВУЮЩЕМУ ЮЗЕРНЕЙМУ
         loginBtn.addEventListener('click', async () => {
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
@@ -364,7 +373,6 @@
                     return;
                 }
 
-                // Извлекаем имя найденного пользователя
                 let foundName = '';
                 querySnapshot.forEach((doc) => {
                     foundName = doc.data().name;
@@ -382,16 +390,13 @@
             }
         });
 
-        // 3. БЫСТРЫЙ ВХОД (ЗАПОМНЕННЫЙ ЮЗЕР)
         fastJoinBtn.addEventListener('click', () => {
             const name = localStorage.getItem('semejka_name');
             const username = localStorage.getItem('semejka_username');
-            
             currentUser = { id: username, name: name };
             enterChat();
         });
 
-        // РАБОТА С ЧАТОМ
         function autoResize() {
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
