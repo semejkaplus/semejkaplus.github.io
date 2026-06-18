@@ -90,24 +90,31 @@
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        /* СООБЩЕНИЯ И ЖЕСТЫ */
-        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; touch-action: pan-x pan-y; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* СООБЩЕНИЯ */
+        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; touch-action: pan-x pan-y; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
-        .msg.swiped-up { transform: translateY(-10px); }
 
         .msg-content { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
 
+        /* ОБЛАЧКО С ТРАНЗИШЕНОМ ДЛЯ СВАЙПА И ТЕНИ */
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             color: #3A3A4A; max-width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
             cursor: pointer; user-select: none; -webkit-user-select: none;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
+
+        /* ЭФФЕКТ СВАЙПА ВНИЗ НА БАББЛЕ: небольшое смещение + малозаметная мягкая тень */
+        .bubble.swiped-down { 
+            transform: translateY(8px); 
+            box-shadow: 0 12px 24px rgba(0,0,0,0.18), 0 4px 8px rgba(0,0,0,0.06);
+        }
 
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
@@ -116,9 +123,10 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
+        /* Трекер времени изолирован, он не двигается вместе с бабблом */
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* НОВЫЙ ДИЗАЙН БЛОКА РЕАКЦИЙ ПОД СООБЩЕНИЕМ */
+        /* РЕАКЦИИ */
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
         .reaction-badge {
             background: rgba(255, 255, 255, 0.6);
@@ -136,7 +144,7 @@
         .reaction-count { font-size: 12px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
-        /* СТЕКЛЯННОЕ МОДАЛЬНОЕ МЕНЮ РЕАКЦИЙ */
+        /* МЕНЮ РЕАКЦИЙ */
         .reaction-picker-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -316,13 +324,12 @@
         const fastJoinBtn = document.getElementById('fastJoinBtn');
         const changeUserBtn = document.getElementById('changeUserBtn');
 
-        // Элементы реакций
         const reactionPickerOverlay = document.getElementById('reactionPickerOverlay');
         const pickerEmojis = document.querySelectorAll('.picker-emoji');
 
         let currentUser = null;
         let lastDisplayedDate = null;
-        let activeReactionMessageId = null; // ID сообщения, для которого открыто меню реакций
+        let activeReactionMessageId = null;
 
         function handleDataMigration() {
             if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
@@ -477,16 +484,16 @@
         }
 
         // ОТКРЫТИЕ ОКНА РЕАКЦИЙ
-        function openReactionPicker(msgId, msgElement) {
+        function openReactionPicker(msgId, bubbleElement) {
             activeReactionMessageId = msgId;
             reactionPickerOverlay.classList.add('active');
-            msgElement.classList.add('swiped-up');
+            bubbleElement.classList.add('swiped-down'); // Смещаем вниз и добавляем тень только облачку
         }
 
         // ЗАКРЫТИЕ ОКНА РЕАКЦИЙ
         function closeReactionPicker() {
             reactionPickerOverlay.classList.remove('active');
-            document.querySelectorAll('.msg').forEach(el => el.classList.remove('swiped-up'));
+            document.querySelectorAll('.bubble').forEach(el => el.classList.remove('swiped-down'));
             activeReactionMessageId = null;
         }
 
@@ -494,12 +501,10 @@
             if (e.target === reactionPickerOverlay) closeReactionPicker();
         });
 
-        // ОТПРАВКА ИЛИ ПЕРЕКЛЮЧЕНИЕ РЕАКЦИИ В FIREBASE
         async function toggleReaction(msgId, emoji) {
             if (!currentUser) return;
             const msgRef = doc(db, "messages", msgId);
             
-            // Находим сам элемент в DOM, чтобы вытащить текущие данные реакций
             const msgDiv = document.getElementById('msg-' + msgId);
             if (!msgDiv) return;
             
@@ -511,11 +516,9 @@
             
             const userIndex = currentReactions[emoji].indexOf(currentUser.id);
             if (userIndex > -1) {
-                // Если реакция уже стоит от нас — убираем её
                 currentReactions[emoji].splice(userIndex, 1);
                 if (currentReactions[emoji].length === 0) delete currentReactions[emoji];
             } else {
-                // Убираем этот юзерid из всех остальных эмодзи этого сообщения (один юзер — одна реакция на сообщение)
                 for (let e in currentReactions) {
                     const idx = currentReactions[e].indexOf(currentUser.id);
                     if (idx > -1) {
@@ -523,7 +526,6 @@
                         if (currentReactions[e].length === 0) delete currentReactions[e];
                     }
                 }
-                // Ставим новую
                 currentReactions[emoji].push(currentUser.id);
             }
             
@@ -544,7 +546,6 @@
             });
         });
 
-        // ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ РЕАКЦИЙ В ДИЗАЙНЕ
         function updateReactionsUI(msgId, reactions) {
             const msgDiv = document.getElementById('msg-' + msgId);
             if (!msgDiv) return;
@@ -571,7 +572,7 @@
                 badge.innerHTML = `<span>${emoji}</span><span class="reaction-count">${userList.length}</span>`;
                 
                 badge.addEventListener('click', async (e) => {
-                    e.stopPropagation(); // Чтобы не срабатывал клик по сообщению
+                    e.stopPropagation();
                     await toggleReaction(msgId, emoji);
                 });
                 
@@ -584,7 +585,6 @@
             let msgDiv = document.getElementById('msg-' + msg.id);
             
             if (msgDiv) {
-                // Если сообщение уже есть в списке — обновляем только блок его реакций
                 updateReactionsUI(msg.id, msg.reactions);
                 return;
             }
@@ -599,7 +599,7 @@
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id; 
-            div.className = 'msg animate-in ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+            div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
 
             let html = '';
             if (msg.user_id !== currentUser?.id) {
@@ -612,15 +612,14 @@
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            // Навешиваем логику реакций на «баббл» сообщения
             const bubbleElement = div.querySelector('.bubble');
 
-            // Резервный вариант для ПК (обычный клик открывает меню)
+            // Резервный клик для ПК
             bubbleElement.addEventListener('click', () => {
-                openReactionPicker(msg.id, div);
+                openReactionPicker(msg.id, bubbleElement);
             });
 
-            // РЕАЛИЗАЦИЯ СВАЙПА ВВЕРХ ДЛЯ МОБИЛОК (Touch Events)
+            // РЕАЛИЗАЦИЯ СВАЙПА ВНИЗ (Touch Events)
             let startY = 0;
             let startX = 0;
             
@@ -633,16 +632,15 @@
                 const endY = e.changedTouches[0].clientY;
                 const endX = e.changedTouches[0].clientX;
                 
-                const diffY = startY - endY; // Положительное значение значит движение вверх
+                const diffY = endY - startY; // Положительное значение означает движение ВНИЗ
                 const diffX = Math.abs(startX - endX);
 
-                // Если свайпнули вверх более чем на 40 пикселей и движение было преимущественно вертикальным
+                // Если свайпнули вниз более чем на 40px и движение преимущественно вертикальное
                 if (diffY > 40 && diffY > diffX) {
-                    openReactionPicker(msg.id, div);
+                    openReactionPicker(msg.id, bubbleElement);
                 }
             }, { passive: true });
 
-            // Отрисовываем начальные реакции, если они есть
             updateReactionsUI(msg.id, msg.reactions);
         }
 
