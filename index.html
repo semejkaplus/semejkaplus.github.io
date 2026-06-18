@@ -49,10 +49,11 @@
         
         .error-msg { color: #D04A42; font-size: 14px; font-weight: 600; margin-bottom: 15px; display: none; text-align: left; padding-left: 15px; }
         
-        .welcome-back { display: none; flex-direction: column; gap: 15px; width: 100%; }
+        .welcome-back, .login-existing { display: none; flex-direction: column; gap: 15px; width: 100%; }
         .welcome-text { color: #3A3A4A; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
-        .change-user-btn { background: none; border: none; color: #6C63FF; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-top: 10px; box-shadow: none; }
-        .change-user-btn:hover { transform: none; box-shadow: none; color: #4A42D0; }
+        
+        .link-btn { background: none; border: none; color: #6C63FF; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-top: 12px; display: inline-block; }
+        .link-btn:hover { color: #4A42D0; }
 
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
@@ -162,13 +163,21 @@
                 <input type="text" id="usernameInput" placeholder="Придумайте юзернейм (например, ivan99)">
                 <div class="error-msg" id="errorMsg">Юзернейм уже занят!</div>
                 <button id="joinBtn">Создать аккаунт</button>
+                <button class="link-btn" id="toLoginBtn">Уже есть юзернейм? Войти</button>
+            </div>
+
+            <div id="loginForm" class="login-existing">
+                <input type="text" id="loginUsernameInput" placeholder="Введите ваш юзернейм">
+                <div class="error-msg" id="loginErrorMsg">Пользователь с таким юзернеймом не найден!</div>
+                <button id="loginBtn">Войти</button>
+                <button class="link-btn" id="toRegisterBtn">Создать новый аккаунт</button>
             </div>
 
             <div id="fastForm" class="welcome-back">
                 <div class="welcome-text" id="welcomeText">Привет!</div>
                 <p style="margin-bottom:10px;">Войти как <span id="savedUsernameLabel" style="color:#6C63FF;">@username</span>?</p>
                 <button id="fastJoinBtn">Войти в чат</button>
-                <button class="change-user-btn" id="changeUserBtn">Сменить аккаунт</button>
+                <button class="link-btn" id="changeUserBtn">Сменить аккаунт</button>
             </div>
         </div>
     </div>
@@ -205,19 +214,33 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Элементы экранов
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
-        const nameInput = document.getElementById('nameInput');
-        const usernameInput = document.getElementById('usernameInput');
-        const errorMsg = document.getElementById('errorMsg');
-        const joinBtn = document.getElementById('joinBtn');
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
+        // Элементы форм
         const freshForm = document.getElementById('freshForm');
+        const loginForm = document.getElementById('loginForm');
         const fastForm = document.getElementById('fastForm');
+
+        // Поля и кнопки регистрации
+        const nameInput = document.getElementById('nameInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const joinBtn = document.getElementById('joinBtn');
+        const toLoginBtn = document.getElementById('toLoginBtn');
+
+        // Поля и кнопки ручного входа
+        const loginUsernameInput = document.getElementById('loginUsernameInput');
+        const loginErrorMsg = document.getElementById('loginErrorMsg');
+        const loginBtn = document.getElementById('loginBtn');
+        const toRegisterBtn = document.getElementById('toRegisterBtn');
+
+        // Элементы быстрого входа
         const welcomeText = document.getElementById('welcomeText');
         const savedUsernameLabel = document.getElementById('savedUsernameLabel');
         const fastJoinBtn = document.getElementById('fastJoinBtn');
@@ -226,9 +249,8 @@
         let currentUser = null;
         let lastDisplayedDate = null;
 
-        // ЖЕСТКАЯ ОЧИСТКА И МИГРАЦИЯ СТАРОГО МУСОРА НА УРОВНЕ КОДА
+        // Миграция старых сессий
         function handleDataMigration() {
-            // Если остался старый сгенерированный uid (вида user_***), но нет нового юзернейма
             if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
                 localStorage.removeItem('semejka_uid');
                 localStorage.removeItem('semejka_username');
@@ -237,22 +259,139 @@
         }
         handleDataMigration();
 
+        // Определение активного состояния при загрузке
         function checkSavedUser() {
             const savedName = localStorage.getItem('semejka_name');
             const savedUsername = localStorage.getItem('semejka_username');
             
             if (savedName && savedUsername) {
                 freshForm.style.display = 'none';
+                loginForm.style.display = 'none';
                 fastForm.style.display = 'flex';
                 welcomeText.textContent = `Привет, ${savedName}!`;
                 savedUsernameLabel.textContent = `@${savedUsername}`;
             } else {
                 freshForm.style.display = 'block';
+                loginForm.style.display = 'none';
                 fastForm.style.display = 'none';
             }
         }
         checkSavedUser();
 
+        // Навигация между формами входа/регистрации
+        toLoginBtn.addEventListener('click', () => {
+            freshForm.style.display = 'none';
+            loginForm.style.display = 'flex';
+            loginErrorMsg.style.display = 'none';
+            loginUsernameInput.value = '';
+        });
+
+        toRegisterBtn.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            freshForm.style.display = 'block';
+            errorMsg.style.display = 'none';
+            nameInput.value = '';
+            usernameInput.value = '';
+        });
+
+        // Сброс аккаунта
+        changeUserBtn.addEventListener('click', () => {
+            localStorage.removeItem('semejka_name');
+            localStorage.removeItem('semejka_username');
+            checkSavedUser();
+        });
+
+        // 1. ЛОГИКА РЕГИСТРАЦИИ НОВОГО ПОЛЬЗОВАТЕЛЯ
+        joinBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+            if (!name || !username) {
+                alert('Пожалуйста, заполните оба поля. Юзернейм может содержать только английские буквы, цифры и нижнее подчеркивание.');
+                return;
+            }
+
+            joinBtn.disabled = true;
+            errorMsg.style.display = 'none';
+
+            try {
+                const uQuery = query(collection(db, "users"), where("username", "==", username));
+                const querySnapshot = await getDocs(uQuery);
+
+                if (!querySnapshot.empty) {
+                    errorMsg.style.display = 'block';
+                    joinBtn.disabled = false;
+                    return;
+                }
+
+                await addDoc(collection(db, "users"), {
+                    name: name,
+                    username: username,
+                    created_at: serverTimestamp()
+                });
+
+                localStorage.setItem('semejka_name', name);
+                localStorage.setItem('semejka_username', username);
+
+                currentUser = { id: username, name: name };
+                enterChat();
+
+            } catch (err) {
+                console.error("Ошибка при регистрации:", err);
+                joinBtn.disabled = false;
+            }
+        });
+
+        // 2. ЛОГИКА РУЧНОГО ВХОДА ПО СУЩЕСТВУЮЩЕМУ ЮЗЕРНЕЙМУ
+        loginBtn.addEventListener('click', async () => {
+            let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+            if (!username) {
+                alert('Пожалуйста, введите юзернейм.');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginErrorMsg.style.display = 'none';
+
+            try {
+                const uQuery = query(collection(db, "users"), where("username", "==", username));
+                const querySnapshot = await getDocs(uQuery);
+
+                if (querySnapshot.empty) {
+                    loginErrorMsg.style.display = 'block';
+                    loginBtn.disabled = false;
+                    return;
+                }
+
+                // Извлекаем имя найденного пользователя
+                let foundName = '';
+                querySnapshot.forEach((doc) => {
+                    foundName = doc.data().name;
+                });
+
+                localStorage.setItem('semejka_name', foundName);
+                localStorage.setItem('semejka_username', username);
+
+                currentUser = { id: username, name: foundName };
+                enterChat();
+
+            } catch (err) {
+                console.error("Ошибка при входе:", err);
+                loginBtn.disabled = false;
+            }
+        });
+
+        // 3. БЫСТРЫЙ ВХОД (ЗАПОМНЕННЫЙ ЮЗЕР)
+        fastJoinBtn.addEventListener('click', () => {
+            const name = localStorage.getItem('semejka_name');
+            const username = localStorage.getItem('semejka_username');
+            
+            currentUser = { id: username, name: name };
+            enterChat();
+        });
+
+        // РАБОТА С ЧАТОМ
         function autoResize() {
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
@@ -345,60 +484,6 @@
             } 
         });
         sendBtn.addEventListener('click', sendMessage);
-
-        joinBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-
-            if (!name || !username) {
-                alert('Пожалуйста, заполните оба поля. Юзернейм может содержать только английские буквы и цифры.');
-                return;
-            }
-
-            joinBtn.disabled = true;
-            errorMsg.style.display = 'none';
-
-            try {
-                const uQuery = query(collection(db, "users"), where("username", "==", username));
-                const querySnapshot = await getDocs(uQuery);
-
-                if (!querySnapshot.empty) {
-                    errorMsg.style.display = 'block';
-                    joinBtn.disabled = false;
-                    return;
-                }
-
-                await addDoc(collection(db, "users"), {
-                    name: name,
-                    username: username,
-                    created_at: serverTimestamp()
-                });
-
-                localStorage.setItem('semejka_name', name);
-                localStorage.setItem('semejka_username', username);
-
-                currentUser = { id: username, name: name };
-                enterChat();
-
-            } catch (err) {
-                console.error("Ошибка при регистрации:", err);
-                joinBtn.disabled = false;
-            }
-        });
-
-        fastJoinBtn.addEventListener('click', () => {
-            const name = localStorage.getItem('semejka_name');
-            const username = localStorage.getItem('semejka_username');
-            
-            currentUser = { id: username, name: name };
-            enterChat();
-        });
-
-        changeUserBtn.addEventListener('click', () => {
-            localStorage.removeItem('semejka_name');
-            localStorage.removeItem('semejka_username');
-            checkSavedUser();
-        });
 
         function enterChat() {
             regScreen.classList.remove('active');
