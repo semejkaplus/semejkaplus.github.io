@@ -123,14 +123,17 @@
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
         
-        .msg-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 4px; width: 100%; }
+        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; width: 100%; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* РЕАКЦИИ ПОД СООБЩЕНИЕМ */
-        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+        /* ИНДИКАТОРЫ РЕАКЦИЙ ПОД ВРЕМЕНЕМ */
+        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; width: 100%; }
+        .sent .reactions-wrapper { justify-content: flex-end; }
+        .received .reactions-wrapper { justify-content: flex-start; }
+
         .reaction-badge {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -166,12 +169,8 @@
             display: flex; transform: translateY(-50%) scale(1); opacity: 1; pointer-events: auto;
         }
         
-        .sent .reaction-picker-popup {
-            right: calc(100% + 12px); left: auto;
-        }
-        .received .reaction-picker-popup {
-            left: calc(100% + 12px); right: auto;
-        }
+        .sent .reaction-picker-popup { right: calc(100% + 12px); left: auto; }
+        .received .reaction-picker-popup { left: calc(100% + 12px); right: auto; }
         
         .picker-emoji {
             font-size: 26px; cursor: pointer; transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.3);
@@ -179,7 +178,6 @@
         }
         .picker-emoji:hover { transform: scale(1.35) translateY(-2px); }
 
-        /* Задний слой */
         .reaction-picker-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             z-index: 90; display: none; background: transparent;
@@ -556,12 +554,8 @@
 
             msgDiv.setAttribute('data-reactions', JSON.stringify(reactions || {}));
             
-            let wrapper = msgDiv.querySelector('.reactions-wrapper');
-            if (!wrapper) {
-                wrapper = document.createElement('div');
-                wrapper.className = 'reactions-wrapper';
-                msgDiv.querySelector('.msg-footer').appendChild(wrapper);
-            }
+            const wrapper = msgDiv.querySelector('.reactions-wrapper');
+            if (!wrapper) return;
             
             wrapper.innerHTML = '';
             
@@ -627,7 +621,13 @@
                     <div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div>
                 </div>
             `;
-            html += `<div class="msg-footer"><div class="time">${formatTime(timestamp)}</div></div>`;
+            // Контейнер .reactions-wrapper теперь расположен строго под временем в .msg-footer
+            html += `
+                <div class="msg-footer">
+                    <div class="time">${formatTime(timestamp)}</div>
+                    <div class="reactions-wrapper"></div>
+                </div>
+            `;
 
             div.innerHTML = html; 
             messagesDiv.appendChild(div);
