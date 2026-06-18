@@ -6,7 +6,6 @@
     <title>SEMEJKA PLUS</title>
 
     <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
-    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6C63FF">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -54,19 +53,10 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
-        .refresh-btn {
-            position: absolute; top: 15px; right: 15px; z-index: 10;
-            width: 44px; height: 44px; border-radius: 50%;
-            background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.6); font-size: 22px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #3A3A4A;
-        }
-        .refresh-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
-
         .messages {
             flex: 1 1 auto; overflow-y: auto; padding: 10px 20px;
             display: flex; flex-direction: column; gap: 14px;
-            margin: 60px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
+            margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -85,7 +75,7 @@
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            color: #3A3A4A; cursor: pointer; user-select: none; max-width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
+            color: #3A3A4A; max-width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
@@ -103,28 +93,11 @@
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .reactions-container { display: flex; flex-wrap: wrap; gap: 4px; }
-        .sent .reactions-container { justify-content: flex-end; }
-        .reaction-badge { background: rgba(255,255,255,0.85); border-radius: 12px; padding: 2px 6px; font-size: 11px; display: flex; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
-        .reaction-badge:hover { background: rgba(255,255,255,0.95); transform: scale(1.05); }
-        .reaction-badge.active { background: rgba(108,99,255,0.25); border-color: #6C63FF; }
-
-        .emoji-panel {
-            display: none; position: absolute; bottom: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 6px; gap: 6px; z-index: 9999; margin-bottom: 8px; max-width: calc(100vw - 30px); flex-direction: column; align-items: stretch; width: max-content;
-        }
-        .sent .emoji-panel { left: auto; right: 0; transform: none; }
-        .received .emoji-panel { left: 0; right: auto; transform: none; }
-        .emoji-panel.open { display: flex; }
-
-        .quick-emojis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; justify-items: center; }
-        .emoji-option { font-size: 18px; cursor: pointer; transition: transform 0.1s; padding: 4px; }
-        .emoji-option:hover { transform: scale(1.25); }
-
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); width: calc(100% - 20px); max-width: 800px;
         }
         .input-area textarea {
-            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95); outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px; scrollbar-width: none; -ms-overflow-style: none; max-width: 100%; word-wrap: break-word; word-break: break-word;
+            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: rgba(255,255,255,0.95); outline: none; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 200px; max-width: 100%; word-wrap: break-word; word-break: break-word;
         }
         .input-area textarea::-webkit-scrollbar { display: none; }
         .input-area textarea:focus { border-color: #6C63FF; background: #FFFFFF; box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 2px 8px rgba(0,0,0,0.1); }
@@ -135,8 +108,7 @@
         .bubble a:hover { color: #4A42D0; }
 
         @media (max-width: 480px) {
-            .emoji-panel { max-width: calc(100vw - 30px); }
-            .messages { padding: 5px 10px; gap: 10px; margin-top: 50px; }
+            .messages { padding: 5px 10px; gap: 10px; }
             .bubble { font-size: 15px; padding: 10px 14px; }
             .msg { max-width: 85%; }
         }
@@ -182,7 +154,6 @@
     </div>
 
     <div id="chatScreen" class="screen">
-        <button class="refresh-btn" id="refreshBtn" title="Обновить чат">🔄</button>
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
@@ -197,11 +168,24 @@
         </div>
     </div>
 
-    <script>
-        // Твоя новая рабочая ссылка от Render (без слэша на конце)
-        const BASE_URL = "https://semejka-backend.onrender.com"; 
-        const API_URL = `${BASE_URL}/api`;
-        const WS_URL = `${BASE_URL.replace("https://", "wss://")}/ws`;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Твой личный конфиг Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlt7Q4ZjhSM9M3gytNk1UA6XHPROtz7eQ",
+            authDomain: "semejka-plus.firebaseapp.com",
+            projectId: "semejka-plus",
+            storageBucket: "semejka-plus.firebasestorage.app",
+            messagingSenderId: "400648498300",
+            appId: "1:400648498300:web:b4fe58d33a2d66d5c72df9",
+            measurementId: "G-NBG9WYCM1J"
+        };
+
+        // Инициализируем Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
@@ -210,25 +194,16 @@
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
-        const refreshBtn = document.getElementById('refreshBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
         let currentUser = null;
         let lastDisplayedDate = null;
-        let reactionsCache = {};
-        let longPressTimer = null;
-        let socket = null;
 
         function autoResize() {
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
-            if (scrollHeight > 200) {
-                msgInput.style.height = '200px';
-                msgInput.style.overflowY = 'auto';
-            } else {
-                msgInput.style.height = scrollHeight + 'px';
-                msgInput.style.overflowY = 'hidden';
-            }
+            msgInput.style.height = (scrollHeight > 200 ? 200 : scrollHeight) + 'px';
+            msgInput.style.overflowY = scrollHeight > 200 ? 'auto' : 'hidden';
         }
         msgInput.addEventListener('input', autoResize);
 
@@ -238,201 +213,128 @@
             msgInput.style.overflowY = 'hidden';
         }
 
-        function logout() {
-            localStorage.removeItem('semejka_user');
-            if (socket) { socket.close(); socket = null; }
-            currentUser = null; lastDisplayedDate = null; reactionsCache = {};
-            regScreen.classList.add('active');
-            chatScreen.classList.remove('active');
-            nameInput.value = '';
-            resetTextarea();
-        }
-
-        const EMOJI_LIST = [
-            { emoji: '👍' }, { emoji: '❤️' }, { emoji: '😊' }, { emoji: '😢' }, 
-            { emoji: '🎉' }, { emoji: '🔥' }, { emoji: '😡' }, { emoji: '😂' }
-        ];
-
-        function addLongPressListeners(msgElement, messageId) {
-            const bubble = msgElement.querySelector('.bubble');
-            if (!bubble) return;
-            const startPress = (e) => { if (!e.target.closest('a')) longPressTimer = setTimeout(() => showEmojiPanel(messageId), 300); };
-            const cancelPress = () => { clearTimeout(longPressTimer); };
-            bubble.addEventListener('mousedown', startPress);
-            bubble.addEventListener('mouseup', cancelPress);
-            bubble.addEventListener('mouseleave', cancelPress);
-            bubble.addEventListener('touchstart', startPress, { passive: true });
-            bubble.addEventListener('touchend', cancelPress);
-        }
-
-        function showEmojiPanel(messageId) {
-            const msgEl = document.getElementById('msg-' + messageId);
-            if (!msgEl) return;
-            document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            let panel = msgEl.querySelector('.emoji-panel');
-            if (!panel) {
-                panel = document.createElement('div'); panel.className = 'emoji-panel';
-                const quickContainer = document.createElement('div'); quickContainer.className = 'quick-emojis';
-                EMOJI_LIST.forEach(item => {
-                    const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = item.emoji;
-                    span.onclick = (e) => { e.stopPropagation(); panel.classList.remove('open'); alert('Реакции временно на доработке'); };
-                    quickContainer.appendChild(span);
-                });
-                panel.appendChild(quickContainer);
-                msgEl.appendChild(panel);
-            }
-            panel.classList.add('open');
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.emoji-panel') && !e.target.closest('.bubble')) {
-                document.querySelectorAll('.emoji-panel.open').forEach(p => p.classList.remove('open'));
-            }
-        });
-
         function linkify(text) {
             const urlRegex = /(https?:\/\/[^\s<]+)/gi;
             return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
-        function renderMessage(msg, animate = false) {
+        function renderMessage(msg) {
             if (document.getElementById('msg-' + msg.id)) return;
-            const msgDate = new Date(msg.created_at || Date.now()).toLocaleDateString('ru-RU');
-            if (msgDate !== lastDisplayedDate) { insertDateSeparator(msg.created_at || new Date().toISOString()); lastDisplayedDate = msgDate; }
+            
+            const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
+            const msgDate = timestamp.toLocaleDateString('ru-RU');
+            
+            if (msgDate !== lastDisplayedDate) { 
+                insertDateSeparator(timestamp.toISOString()); 
+                lastDisplayedDate = msgDate; 
+            }
 
             const div = document.createElement('div');
-            div.id = 'msg-' + msg.id; div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+            div.id = 'msg-' + msg.id; 
+            div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
 
             let html = '';
-            if (msg.user_id !== currentUser?.id) html += `<div class="name" data-username="${escapeHtml(msg.user_name || '')}">${escapeHtml(msg.user_name || '')}</div>`;
-            html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
-            html += `<div class="msg-footer"><div class="time">${formatTime(msg.created_at || new Date().toISOString())}</div></div>`;
-
-            div.innerHTML = html; messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            if (animate) div.classList.add('animate-in');
-            addLongPressListeners(div, msg.id);
-        }
-
-        async function loadMessages() {
-            try {
-                let response = await fetch(`${API_URL}/messages`);
-                if (!response.ok) throw new Error('Ошибка сети при загрузке чата');
-                const data = await response.json();
-                renderLoadedMessages(data);
-            } catch (e) { 
-                console.error('Ошибка истории:', e); 
-            } finally { 
-                loadingSpinner.classList.remove('active'); 
+            if (msg.user_id !== currentUser?.id) {
+                html += `<div class="name">${escapeHtml(msg.user_name || '')}</div>`;
             }
-        }
+            html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
+            html += `<div class="msg-footer"><div class="time">${formatTime(timestamp)}</div></div>`;
 
-        function renderLoadedMessages(data) {
-            const children = Array.from(messagesDiv.children);
-            children.forEach(c => { if (c !== loadingSpinner) c.remove(); });
-            lastDisplayedDate = null;
-            data.forEach(msg => renderMessage(msg, false));
+            div.innerHTML = html; 
+            messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        function connectWebSocket() {
-            if (socket) { socket.close(); }
-            socket = new WebSocket(WS_URL);
-            socket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.event === 'shout' && data.payload) {
-                        const msg = data.payload;
-                        const localTempElement = document.getElementById('msg-brc-' + msg.created_at);
-                        if (localTempElement) {
-                            localTempElement.id = 'msg-' + msg.id;
-                            addLongPressListeners(localTempElement, msg.id);
-                        } else {
-                            renderMessage(msg, true);
-                        }
+        // Подписка на сообщения в реальном времени
+        function startLiveChat() {
+            loadingSpinner.classList.add('active');
+            const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
+            
+            onSnapshot(q, (snapshot) => {
+                loadingSpinner.classList.remove('active');
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        renderMessage({ id: change.doc.id, ...data });
                     }
-                } catch (e) { console.error("Ошибка парсинга сокета:", e); }
-            };
-            socket.onclose = () => { setTimeout(connectWebSocket, 3000); };
+                });
+            }, (error) => {
+                console.error("Ошибка получения данных: ", error);
+            });
         }
 
-        async function sendMessage(text) {
-            const cleanText = text.trim();
-            if (!currentUser || !cleanText) return;
-            if (cleanText === '@exit') { logout(); return; }
+        async function sendMessage() {
+            const text = msgInput.value.trim();
+            if (!currentUser || !text) return;
 
             sendBtn.disabled = true;
-            const tempTimestamp = Date.now().toString();
-            
-            const localPayload = {
-                id: 'brc-' + tempTimestamp, user_id: currentUser.id, user_name: currentUser.name, text: cleanText, created_at: new Date().toISOString()
-            };
-            renderMessage(localPayload, true);
             resetTextarea();
 
-            const bodyData = JSON.stringify({ user_id: currentUser.id, user_name: currentUser.name, text: cleanText });
-
             try {
-                let response = await fetch(`${API_URL}/messages`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyData
+                await addDoc(collection(db, "messages"), {
+                    user_id: currentUser.id,
+                    user_name: currentUser.name,
+                    text: text,
+                    created_at: serverTimestamp()
                 });
-                if (!response.ok) throw new Error('Не удалось сохранить');
-                const realMsg = await response.json();
-                const createdEl = document.getElementById('msg-brc-' + tempTimestamp);
-                if (createdEl && realMsg) {
-                    createdEl.id = 'msg-' + realMsg.id;
-                    addLongPressListeners(createdEl, realMsg.id);
-                }
-            } catch (err) { 
-                console.error('Ошибка отправки сообщения:', err); 
-            } finally { 
-                sendBtn.disabled = false; msgInput.focus(); 
+            } catch (err) {
+                console.error('Ошибка сохранения сообщения:', err);
+            } finally {
+                sendBtn.disabled = false; 
+                msgInput.focus();
             }
         }
 
-        refreshBtn.addEventListener('click', async () => { loadingSpinner.classList.add('active'); await loadMessages(); });
-        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(msgInput.value); } });
-        sendBtn.addEventListener('click', async () => { await sendMessage(msgInput.value); });
+        msgInput.addEventListener('keypress', async (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                await sendMessage(); 
+            } 
+        });
+        sendBtn.addEventListener('click', sendMessage);
 
-        const savedUser = localStorage.getItem('semejka_user');
-        if (savedUser) { try { nameInput.value = JSON.parse(savedUser).name || ''; } catch(e) {} }
-
-        joinBtn.addEventListener('click', async () => {
+        joinBtn.addEventListener('click', () => {
             const name = nameInput.value.trim();
             if (!name) return;
-            joinBtn.disabled = true; joinBtn.textContent = 'Вход...';
 
-            try {
-                let response = await fetch(`${API_URL}/users?name=${encodeURIComponent(name)}`);
-                if (!response.ok) throw new Error('Код ошибки сервера: ' + response.status);
-                const user = await response.json();
+            localStorage.setItem('semejka_username', name);
 
-                currentUser = user;
-                localStorage.setItem('semejka_user', JSON.stringify(user));
-
-                regScreen.classList.remove('active');
-                chatScreen.classList.add('active');
-                loadingSpinner.classList.add('active');
-
-                await loadMessages();
-                connectWebSocket();
-            } catch (err) { 
-                alert('Ошибка входа: ' + err.message + '\nПопробуйте ещё раз.'); 
-            } finally { 
-                joinBtn.disabled = false; joinBtn.textContent = 'Войти'; 
+            let userId = localStorage.getItem('semejka_uid');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('semejka_uid', userId);
             }
+
+            currentUser = { id: userId, name: name };
+            
+            regScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+
+            startLiveChat();
         });
+
+        const savedName = localStorage.getItem('semejka_username');
+        if (savedName) nameInput.value = savedName;
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
+            const d = new Date(dateStr); 
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
         function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
+            const sep = document.createElement('div'); 
+            sep.className = 'date-separator';
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; 
+            messagesDiv.appendChild(sep); 
         }
-        function formatTime(ts) { const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); } 
-        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
+        function formatTime(dateObj) { 
+            return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); 
+        } 
+        function escapeHtml(text) { 
+            const el = document.createElement('div'); 
+            el.textContent = text; 
+            return el.innerHTML; 
+        } 
     </script>
 </body>
 </html>
