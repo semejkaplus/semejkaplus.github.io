@@ -91,7 +91,7 @@
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
         /* СООБЩЕНИЯ */
-        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; touch-action: pan-x pan-y; }
+        .msg { max-width: 75%; display: flex; flex-direction: column; position: relative; }
         .msg.sent { align-self: flex-end; align-items: flex-end; }
         .msg.received { align-self: flex-start; align-items: flex-start; }
 
@@ -99,21 +99,20 @@
         .sent .msg-content { flex-direction: row-reverse; }
         .received .msg-content { flex-direction: row; }
 
-        /* ОБЛАЧКО С ТРАНЗИШЕНОМ ДЛЯ СВАЙПА И ТЕНИ */
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             color: #3A3A4A; max-width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
             cursor: pointer; user-select: none; -webkit-user-select: none;
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
 
-        /* ЭФФЕКТ СВАЙПА ВНИЗ НА БАББЛЕ: небольшое смещение + малозаметная мягкая тень */
+        /* ЭФФЕКТ СВАЙПА ВНИЗ НА БАББЛЕ */
         .bubble.swiped-down { 
             transform: translateY(8px); 
-            box-shadow: 0 12px 24px rgba(0,0,0,0.18), 0 4px 8px rgba(0,0,0,0.06);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.05);
         }
 
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
@@ -123,7 +122,6 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        /* Трекер времени изолирован, он не двигается вместе с бабблом */
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
         /* РЕАКЦИИ */
@@ -325,11 +323,19 @@
         const changeUserBtn = document.getElementById('changeUserBtn');
 
         const reactionPickerOverlay = document.getElementById('reactionPickerOverlay');
+        const reactionPickerBox = document.getElementById('reactionPickerBox');
         const pickerEmojis = document.querySelectorAll('.picker-emoji');
 
         let currentUser = null;
         let lastDisplayedDate = null;
         let activeReactionMessageId = null;
+
+        // Предзагрузка сессии, чтобы гарантировать правильное определение сторон до рендера сообщений
+        const savedName = localStorage.getItem('semejka_name');
+        const savedUsername = localStorage.getItem('semejka_username');
+        if (savedName && savedUsername) {
+            currentUser = { id: savedUsername, name: savedName };
+        }
 
         function handleDataMigration() {
             if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
@@ -341,15 +347,12 @@
         handleDataMigration();
 
         function checkSavedUser() {
-            const savedName = localStorage.getItem('semejka_name');
-            const savedUsername = localStorage.getItem('semejka_username');
-            
-            if (savedName && savedUsername) {
+            if (currentUser) {
                 freshForm.style.display = 'none';
                 loginForm.style.display = 'none';
                 fastForm.style.display = 'flex';
-                welcomeText.textContent = `Привет, ${savedName}!`;
-                savedUsernameLabel.textContent = `@${savedUsername}`;
+                welcomeText.textContent = `Привет, ${currentUser.name}!`;
+                savedUsernameLabel.textContent = `@${currentUser.id}`;
             } else {
                 freshForm.style.display = 'block';
                 loginForm.style.display = 'none';
@@ -376,6 +379,7 @@
         changeUserBtn.addEventListener('click', () => {
             localStorage.removeItem('semejka_name');
             localStorage.removeItem('semejka_username');
+            currentUser = null;
             checkSavedUser();
         });
 
@@ -458,9 +462,6 @@
         });
 
         fastJoinBtn.addEventListener('click', () => {
-            const name = localStorage.getItem('semejka_name');
-            const username = localStorage.getItem('semejka_username');
-            currentUser = { id: username, name: name };
             enterChat();
         });
 
@@ -487,7 +488,7 @@
         function openReactionPicker(msgId, bubbleElement) {
             activeReactionMessageId = msgId;
             reactionPickerOverlay.classList.add('active');
-            bubbleElement.classList.add('swiped-down'); // Смещаем вниз и добавляем тень только облачку
+            bubbleElement.classList.add('swiped-down');
         }
 
         // ЗАКРЫТИЕ ОКНА РЕАКЦИЙ
@@ -498,7 +499,7 @@
         }
 
         reactionPickerOverlay.addEventListener('click', (e) => {
-            if (e.target === reactionPickerOverlay) closeReactionPicker();
+            if (e.target === reactionPickerOverlay || e.target === reactionPickerBox) closeReactionPicker();
         });
 
         async function toggleReaction(msgId, emoji) {
@@ -583,8 +584,14 @@
         // РЕНДЕР СООБЩЕНИЯ
         function renderMessage(msg) {
             let msgDiv = document.getElementById('msg-' + msg.id);
+            const isMyMsg = (msg.user_id === currentUser?.id);
             
             if (msgDiv) {
+                // ИСПРАВЛЕНИЕ БАГА СТОРОН: Принудительно проверяем и обновляем классы стороны при изменениях
+                const correctSideClass = isMyMsg ? 'sent' : 'received';
+                if (!msgDiv.classList.contains(correctSideClass)) {
+                    msgDiv.className = 'msg ' + correctSideClass;
+                }
                 updateReactionsUI(msg.id, msg.reactions);
                 return;
             }
@@ -599,10 +606,10 @@
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id; 
-            div.className = 'msg ' + (msg.user_id === currentUser?.id ? 'sent' : 'received');
+            div.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
 
             let html = '';
-            if (msg.user_id !== currentUser?.id) {
+            if (!isMyMsg) {
                 html += `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             }
             html += `<div class="msg-content"><div class="bubble">${linkify(escapeHtml(msg.text || ''))}</div></div>`;
@@ -614,29 +621,43 @@
 
             const bubbleElement = div.querySelector('.bubble');
 
-            // Резервный клик для ПК
-            bubbleElement.addEventListener('click', () => {
+            // ПК Клик
+            bubbleElement.addEventListener('click', (e) => {
+                // Если кликнули по ссылке, игнорируем вызов меню реакций
+                if (e.target.tagName === 'A') return;
                 openReactionPicker(msg.id, bubbleElement);
             });
 
-            // РЕАЛИЗАЦИЯ СВАЙПА ВНИЗ (Touch Events)
+            // ИСПРАВЛЕНИЕ СВАЙПОВ: Добавляем трекинг вертикального скролла контейнера чата
             let startY = 0;
             let startX = 0;
+            let isScrolling = false;
             
             bubbleElement.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
                 startX = e.touches[0].clientX;
+                isScrolling = false;
+            }, { passive: true });
+
+            // Отслеживаем движение: если юзер скроллит весь чат, жест свайпа блокируется
+            bubbleElement.addEventListener('touchmove', (e) => {
+                const moveY = e.touches[0].clientY;
+                const moveX = e.touches[0].clientX;
+                if (Math.abs(moveY - startY) < Math.abs(moveX - startX)) {
+                    isScrolling = true; // Скроллинг вбок или обычное движение
+                }
             }, { passive: true });
 
             bubbleElement.addEventListener('touchend', (e) => {
+                if (isScrolling) return;
+
                 const endY = e.changedTouches[0].clientY;
                 const endX = e.changedTouches[0].clientX;
                 
-                const diffY = endY - startY; // Положительное значение означает движение ВНИЗ
+                const diffY = endY - startY; 
                 const diffX = Math.abs(startX - endX);
 
-                // Если свайпнули вниз более чем на 40px и движение преимущественно вертикальное
-                if (diffY > 40 && diffY > diffX) {
+                if (diffY > 35 && diffY > diffX) {
                     openReactionPicker(msg.id, bubbleElement);
                 }
             }, { passive: true });
