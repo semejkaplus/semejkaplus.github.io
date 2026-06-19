@@ -149,7 +149,6 @@
             will-change: opacity, visibility;
             transition: opacity 0.24s ease, visibility 0.24s ease;
         }
-        /* Размытие включается только в самом конце анимации, чтобы не лагать */
         .reaction-modal-overlay.active { 
             opacity: 1; 
             visibility: visible;
@@ -177,33 +176,36 @@
         }
         .picker-emoji:hover { transform: scale(1.25) translateY(-2px); }
 
-        /* ИНДИКАТОР ПЕЧАТАНИЯ (КАК В WHATSAPP) */
+        /* МАКСИМАЛЬНО ОПТИМИЗИРОВАННЫЙ ИНДИКАТОР ПЕЧАТАНИЯ: СЕМЕЙНЫЕ ИСКОРКИ */
         .typing-indicator-container {
-            display: none; align-items: center; gap: 8px;
-            padding: 10px 16px; margin: 4px 0 10px 0;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.7);
+            display: none; align-items: center; gap: 10px;
+            padding: 10px 18px; margin: 4px 0 10px 0;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 22px; border: 1px solid rgba(255,255,255,0.8);
             align-self: flex-start; max-width: 85%;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transform: translate3d(0, 0, 0);
+            will-change: transform, opacity;
             animation: fadeInIndicator 0.2s ease-out forwards;
         }
-        @keyframes fadeInIndicator { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInIndicator { from { opacity: 0; transform: translate3d(0, 6px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
 
         .typing-text { font-size: 14px; font-weight: 600; color: #5A5A6A; }
         
-        .typing-bubbles { display: flex; align-items: center; gap: 4px; height: 14px; }
-        .typing-dot {
-            width: 7px; height: 7px; background-color: #6C63FF; border-radius: 50%; opacity: 0.4;
-            animation: whatsappDot 1.4s infinite ease-in-out;
+        .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
+        .typing-sparkle {
+            font-size: 12px; color: #6C63FF; opacity: 0.3;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0) scale(0.6);
+            animation: familySparkle 1.2s infinite ease-in-out;
         }
-        .typing-dot:nth-child(1) { animation-delay: 0s; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        .typing-sparkle:nth-child(1) { animation-delay: 0s; }
+        .typing-sparkle:nth-child(2) { animation-delay: 0.2s; }
+        .typing-sparkle:nth-child(3) { animation-delay: 0.4s; }
 
-        @keyframes whatsappDot {
-            0%, 100% { transform: translateY(0); opacity: 0.4; }
-            50% { transform: translateY(-5px); opacity: 1; }
+        @keyframes familySparkle {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg); opacity: 0.3; }
+            50% { transform: translate3d(0, -2px, 0) scale(1.2) rotate(90deg); opacity: 1; }
         }
 
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
@@ -301,12 +303,12 @@
         </div>
         
         <div class="typing-indicator-container" id="typingIndicator">
-            <div class="typing-bubbles">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
+            <div class="typing-sparkles">
+                <div class="typing-sparkle">✦</div>
+                <div class="typing-sparkle">✦</div>
+                <div class="typing-sparkle">✦</div>
             </div>
-            <div class="typing-text" id="typingText">Мама пишет...</div>
+            <div class="typing-text" id="typingText">Кто-то пишет...</div>
         </div>
 
         <div class="input-area">
@@ -516,7 +518,7 @@
             enterChat();
         });
 
-        // ОТСЛЕЖИВАНИЕ ПЕЧАТАНИЯ
+        // СИНХРОННЫЙ СТАТУС ПЕЧАТАНИЯ
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try {
@@ -533,7 +535,8 @@
         msgInput.addEventListener('input', () => {
             autoResize();
             
-            if (!isTypingLocal && msgInput.value.trim().length > 0) {
+            // Срабатывает мгновенно при вводе любого символа
+            if (!isTypingLocal && msgInput.value.length > 0) {
                 isTypingLocal = true;
                 updateTypingStatus(true);
             }
@@ -544,7 +547,7 @@
                     isTypingLocal = false;
                     updateTypingStatus(false);
                 }
-            }, 2500); // Считаем, что перестал писать, если пауза 2.5 секунды
+            }, 2500); // Сброс анимации через 2.5 сек затишья
         });
 
         function autoResize() {
@@ -742,7 +745,7 @@
 
                 if (isSwipeTracking && diffY > 0) {
                     currentTranslateY = Math.min(diffY * 0.45, 45); 
-                    bubbleElement.style.transform = `translateY(${currentTranslateY}px)`;
+                    bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
                     const shadowAlpha = Math.min(0.12 + (currentTranslateY / 250), 0.25);
                     bubbleElement.style.boxShadow = `0 ${4 + currentTranslateY/2}px ${14 + currentTranslateY}px rgba(0,0,0,${shadowAlpha})`;
                 }
@@ -765,13 +768,13 @@
             updateReactionsUI(msg.id, msg.reactions);
         }
 
-        // ОТСЛЕЖИВАНИЕ СТАТУСОВ ПЕЧАТАНИЯ ИЗ СЕТИ
+        // МОМЕНТАЛЬНОЕ СЛУШАНИЕ СЕТЕВОГО СТАТУСА ПЕЧАТАНИЯ
         function listenTypingStatus() {
             onSnapshot(collection(db, "status"), (snapshot) => {
                 let typers = [];
                 snapshot.forEach((doc) => {
-                    // Показываем индикатор только если пишет КТО-ТО ДРУГОЙ
-                    if (doc.id !== currentUser?.id && doc.data().is_typing === true) {
+                    // Оставлено только условие проверки флага. Твой индикатор тоже отобразится!
+                    if (doc.data().is_typing === true) {
                         typers.push(doc.data().name);
                     }
                 });
