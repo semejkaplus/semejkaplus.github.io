@@ -15,10 +15,18 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* ИСПРАВЛЕНИЕ: Запрещаем системный баунс и прокрутку экрана */
+        html, body {
+            height: 100dvh; height: 100vh; 
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: auto;
+        }
+        
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
-            height: 100dvh; height: 100vh; overflow: hidden;
         }
         .screen { display: none; height: 100%; width: 100%; }
         .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -160,6 +168,9 @@
             display: flex; flex-direction: column; gap: 14px;
             margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
             position: relative;
+            /* Разрешаем скролл внутри ленты сообщений */
+            overscroll-behavior-y: contain; 
+            -webkit-overflow-scrolling: touch;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -194,7 +205,6 @@
         }
         .reply-in-bubble .reply-owner { font-weight: 700; color: #6C63FF; font-size: 12px; margin-bottom: 2px; }
 
-        /* ИСПРАВЛЕННЫЙ ФУТЕР ДЛЯ РАЗМЕЩЕНИЯ РЕАКЦИЙ СБОКУ ОТ ВРЕМЕНИ */
         .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
@@ -399,8 +409,8 @@
                     <p>Теперь поставленные эмодзи отображаются на одной линии с индикатором времени.</p>
                 </div>
                 <div class="news-card">
-                    <h4>👌 Умный свайп вниз</h4>
-                    <p>Тяните облачко плавно вниз — добавлена динамичная упругая анимация перед открытием меню!</p>
+                    <h4>👌 Без багов прокрутки</h4>
+                    <p>Исправлено поведение страницы при активационном свайпе сообщений вниз.</p>
                 </div>
             </div>
         </div>
@@ -857,7 +867,6 @@
             let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
             
-            // РЕАКЦИИ НА ОДНОЙ ЛИНИИ СО ВРЕМЕНЕМ ВНУТРИ MSG-FOOTER
             html += `
                 <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
                 <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
@@ -881,6 +890,7 @@
             let currentTranslateX = 0, currentTranslateY = 0;
             let swipeDirection = null;
 
+            // ИСПРАВЛЕНИЕ: Передаем { passive: false }, чтобы e.preventDefault() мог остановить нативный скролл страницы
             bubbleElement.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -910,13 +920,15 @@
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
                 }
 
-                // ДИНАМИЧНЫЙ СВАЙП ВНИЗ (Динамичное и легкое натяжение)
+                // ДИНАМИЧНЫЙ СВАЙП ВНИЗ 
                 if (swipeDirection === 'vertical' && diffY > 0) {
-                    // Используем логарифмическое сопротивление для упругого эффекта растяжения
+                    // ИСПРАВЛЕНИЕ БАГА: Блокируем стандартное поведение браузера (тянуть экран вниз), если пользователь делает активационный жест
+                    if (e.cancelable) e.preventDefault();
+                    
                     currentTranslateY = Math.min(diffY * 0.55, 65);
                     bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
                 }
-            }, { passive: true });
+            }, { passive: false }); // Важно! passive: false
 
             bubbleElement.addEventListener('touchend', () => {
                 bubbleElement.classList.add('releasing');
@@ -927,7 +939,6 @@
                 if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
                     initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
                 } 
-                // Легкий порог срабатывания для плавного открытия
                 else if (swipeDirection === 'vertical' && currentTranslateY >= 30) {
                     openReactionPicker(msg.id);
                 }
