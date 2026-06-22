@@ -16,7 +16,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* ИСПРАВЛЕНИЕ: Запрещаем системный баунс и прокрутку экрана */
         html, body {
             height: 100dvh; height: 100vh; 
             overflow: hidden;
@@ -168,7 +167,6 @@
             display: flex; flex-direction: column; gap: 14px;
             margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
             position: relative;
-            /* Разрешаем скролл внутри ленты сообщений */
             overscroll-behavior-y: contain; 
             -webkit-overflow-scrolling: touch;
         }
@@ -189,7 +187,7 @@
         }
         .bubble:active { transform: scale(0.98); }
         .bubble.releasing {
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
@@ -222,22 +220,32 @@
         .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
+        /* ОПТИМИЗИРОВАНО: Легкое модальное окно без backdrop-filter */
         .reaction-modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 999; 
-            display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden;
-            will-change: opacity, visibility; transition: opacity 0.22s ease, visibility 0.22s ease;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0, 0, 0, 0.45); /* Более темный слой взамен размытия */
+            z-index: 999; 
+            display: flex; align-items: center; justify-content: center; 
+            opacity: 0; visibility: hidden;
+            will-change: opacity; 
+            transition: opacity 0.16s ease-out, visibility 0.16s ease-out;
         }
-        .reaction-modal-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .reaction-modal-overlay.active { opacity: 1; visibility: visible; }
 
+        /* ОПТИМИЗИРОВАНО: contain: strict и легкий transform без вылетов за края */
         .reaction-modal-box {
-            background: rgb(245, 245, 250); border: 1px solid rgba(255, 255, 255, 0.8); padding: 18px 24px; border-radius: 30px;
-            box-shadow: 0 20px 45px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
-            transform: scale(0.85); will-change: transform; transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
+            transform: translate3d(0, 10px, 0) scale(0.95); 
+            will-change: transform; 
+            contain: strict; /* Изолирует рендеринг элемента от остальной страницы */
+            width: 310px; height: 70px; /* Фиксированные размеры ускоряют отрисовку */
+            transition: transform 0.16s ease-out;
         }
-        .reaction-modal-overlay.active .reaction-modal-box { transform: scale(1); }
+        .reaction-modal-overlay.active .reaction-modal-box { transform: translate3d(0, 0, 0) scale(1); }
         .emojis-row { display: flex; gap: 12px; }
         .picker-emoji { font-size: 24px; cursor: pointer; transition: transform 0.1s; user-select: none; }
-        .picker-emoji:active { transform: scale(1.25); }
+        .picker-emoji:active { transform: scale(1.2); }
 
         .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
         .typing-indicator-container {
@@ -265,7 +273,7 @@
             background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px;
             border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none;
             align-items: center; gap: 12px; position: relative; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
-            animation: slideUpReply 0.18s ease-out forwards;
+            animation: slideUpReply 0.15s ease-out forwards;
         }
         @keyframes slideUpReply { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
         .reply-bar-accent { width: 3px; height: 36px; background: #6C63FF; border-radius: 2px; flex-shrink: 0; }
@@ -736,6 +744,7 @@
 
         function openReactionPicker(msgId) {
             activeReactionMessageId = msgId;
+            // ОПТИМИЗИРОВАНО: Используем requestAnimationFrame для синхронизации вызова с частотой экрана без микродерганий
             requestAnimationFrame(() => {
                 reactionModalOverlay.classList.add('active');
             });
@@ -822,11 +831,9 @@
             if (!wrapper) return;
             
             wrapper.innerHTML = '';
-            let hasReactions = false;
             for (let emoji in reactions) {
                 const userList = reactions[emoji] || [];
                 if (userList.length === 0) continue;
-                hasReactions = true;
                 const isMyReaction = userList.includes(currentUser?.id);
                 
                 const badge = document.createElement('div');
@@ -890,7 +897,6 @@
             let currentTranslateX = 0, currentTranslateY = 0;
             let swipeDirection = null;
 
-            // ИСПРАВЛЕНИЕ: Передаем { passive: false }, чтобы e.preventDefault() мог остановить нативный скролл страницы
             bubbleElement.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -912,23 +918,20 @@
                     }
                 }
 
-                // Свайп вправо (Ответ)
                 if (swipeDirection === 'horizontal' && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
+                    // ОПТИМИЗИРОВАНО: translate3d заставляет старые GPU обрабатывать слой отдельно
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
                     iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
                 }
 
-                // ДИНАМИЧНЫЙ СВАЙП ВНИЗ 
                 if (swipeDirection === 'vertical' && diffY > 0) {
-                    // ИСПРАВЛЕНИЕ БАГА: Блокируем стандартное поведение браузера (тянуть экран вниз), если пользователь делает активационный жест
                     if (e.cancelable) e.preventDefault();
-                    
                     currentTranslateY = Math.min(diffY * 0.55, 65);
                     bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
                 }
-            }, { passive: false }); // Важно! passive: false
+            }, { passive: false });
 
             bubbleElement.addEventListener('touchend', () => {
                 bubbleElement.classList.add('releasing');
