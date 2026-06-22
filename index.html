@@ -81,7 +81,6 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
-        /* УМЕНЬШЕННАЯ ПАНЕЛЬ ИКОНОК */
         .control-capsule {
             position: absolute; top: 16px; right: 16px;
             width: 54px; height: 110px;
@@ -100,13 +99,11 @@
         .capsule-btn:hover { background: rgba(0,0,0,0.02); }
         .capsule-divider { height: 1px; width: 100%; background: #231F20; opacity: 0.15; }
 
-        /* НАКЛОН ЗВЕЗДЫ НА 15 ГРАДУСОВ ВЛЕВО */
         .star-icon-svg {
             transform: rotate(-15deg);
             transform-origin: center;
         }
 
-        /* ЭФФЕКТ РАЗМЫТИЯ ФОНА ПРИ ОТКРЫТИИ ОКОН */
         .side-panel-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.25);
@@ -119,7 +116,6 @@
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
-        /* ИСПРАВЛЕНО: ОКНА ТЕПЕРЬ ПО ЦЕНТРУ ЭКРАНА С РОВНЫМИ ОТСТУПАМИ */
         .side-panel {
             position: fixed; 
             top: 50%; left: 20px; right: 20px;
@@ -149,14 +145,12 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        /* УЧАСТНИКИ */
         .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; }
         .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
         .member-info { display: flex; flex-direction: column; min-width: 0; }
         .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* О НОВИНКАХ */
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
         .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
@@ -171,7 +165,6 @@
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        /* ОБЛАКА СООБЩЕНИЙ */
         .msg { max-width: 100%; display: flex; flex-direction: column; margin-bottom: 2px; position: relative; }
         .msg.sent { align-items: flex-end; }
         .msg.received { align-items: flex-start; }
@@ -207,7 +200,6 @@
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* РЕАКЦИИ */
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; width: fit-content; }
         .sent .reactions-wrapper { justify-content: flex-end; }
         .received .reactions-wrapper { justify-content: flex-start; }
@@ -221,7 +213,6 @@
         .reaction-count { font-size: 12px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
-        /* ВСПЛЫВАЮЩЕЕ МЕНЮ РЕАКЦИЙ */
         .reaction-modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 999; 
             display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden;
@@ -241,7 +232,6 @@
         .menu-action-btn { background: none; box-shadow: none; color: #6C63FF; font-size: 16px; font-weight: 600; padding: 6px 20px; width: auto; border-radius: 15px; }
         .menu-action-btn:hover { background: rgba(108, 99, 255, 0.1); transform: none; box-shadow: none; }
 
-        /* ИНДИКАТОР ПЕЧАТАНИЯ */
         .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
         .typing-indicator-container {
             display: none; align-items: center; gap: 10px; padding: 8px 18px; position: absolute; bottom: 8px;
@@ -263,7 +253,6 @@
             50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; }
         }
 
-        /* КНОПКА ОТВЕТА */
         .reply-bar {
             display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto;
             background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px;
@@ -284,7 +273,6 @@
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* НИЖНЯЯ ПАНЕЛЬ */
         .input-area {
             background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
         }
@@ -410,16 +398,16 @@
             </div>
             <div class="panel-content">
                 <div class="news-card">
-                    <h4>✨ Умные ответы</h4>
-                    <p>Свайпни сообщение вправо, чтобы ответить. Имя переведётся в нужный падеж автоматически!</p>
+                    <h4>✨ Реакции свайпом вниз</h4>
+                    <p>Потяните сообщение вниз, чтобы открыть панель быстрых эмодзи и реакций!</p>
                 </div>
                 <div class="news-card">
                     <h4>🎨 Капсула управления</h4>
                     <p>Добавлена новая боковая панель с быстрыми окнами и красивым эффектом размытия.</p>
                 </div>
                 <div class="news-card">
-                    <h4>🚀 Аппаратная анимация</h4>
-                    <p>Все эффекты переведены на GPU для максимального сбережения батареи телефона.</p>
+                    <h4>🚀 Разделение жестов</h4>
+                    <p>Свайп вправо — для цитирования, свайп вниз — для реакций. Без конфликтов!</p>
                 </div>
             </div>
         </div>
@@ -871,7 +859,6 @@
             const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
             const msgDate = timestamp.toLocaleDateString('ru-RU');
             
-            // ИСПРАВЛЕН БАГ: Строгая валидация, чтобы разделитель дат отрисовывался один раз
             if (msgDate !== lastDisplayedDate) { 
                 const existingSeparator = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(sep => sep.textContent.trim() === formatDateSeparator(timestamp.toISOString()));
                 if (!existingSeparator) {
@@ -902,35 +889,74 @@
             
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
-                // ИСПРАВЛЕНО: Плавный скролл к последнему сообщению без рывков
                 div.scrollIntoView({ behavior: 'smooth', block: 'end' });
             });
 
             const bubbleElement = div.querySelector('.bubble');
             const iconElement = div.querySelector('.swipe-reply-icon');
 
-            bubbleElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A') openReactionPicker(msg.id); });
+            // ИСПРАВЛЕННЫЙ ТРЕКИНГ ЖЕСТОВ БЕЗ КОНФЛИКТОВ С СКРОЛЛОМ И ДРУГ ДРУГОМ
+            let startX = 0, startY = 0;
+            let currentTranslateX = 0, currentTranslateY = 0;
+            let swipeDirection = null; // 'horizontal', 'vertical' или null
 
-            let startX = 0, currentTranslateX = 0, isSwipeTracking = false;
-            bubbleElement.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; isSwipeTracking = false; bubbleElement.classList.remove('releasing'); }, { passive: true });
+            bubbleElement.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                swipeDirection = null;
+                currentTranslateX = 0;
+                currentTranslateY = 0;
+                bubbleElement.classList.remove('releasing');
+            }, { passive: true });
+
             bubbleElement.addEventListener('touchmove', (e) => {
                 const diffX = e.touches[0].clientX - startX;
-                if (!isSwipeTracking && diffX > 8) isSwipeTracking = true;
-                if (isSwipeTracking && diffX > 0) {
+                const diffY = e.touches[0].clientY - startY;
+
+                // Определяем направление намерения свайпа при первом заметном сдвиге
+                if (!swipeDirection) {
+                    if (Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)) {
+                        swipeDirection = 'horizontal';
+                    } else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
+                        swipeDirection = 'vertical';
+                    }
+                }
+
+                // Обработка горизонтального свайпа (Ответ)
+                if (swipeDirection === 'horizontal' && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
                     iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
                 }
+
+                // Обработка вертикального свайпа вниз (Реакции)
+                if (swipeDirection === 'vertical' && diffY > 0) {
+                    currentTranslateY = Math.min(diffY * 0.4, 45);
+                    bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
+                }
             }, { passive: true });
+
             bubbleElement.addEventListener('touchend', () => {
                 bubbleElement.classList.add('releasing');
                 bubbleElement.style.transform = '';
                 iconElement.style.opacity = 0;
                 iconElement.style.transform = '';
-                if (isSwipeTracking && currentTranslateX >= 40) initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
-                isSwipeTracking = false;
+
+                if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
+                    initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
+                } 
+                else if (swipeDirection === 'vertical' && currentTranslateY >= 25) {
+                    openReactionPicker(msg.id);
+                }
+
+                swipeDirection = null;
             }, { passive: true });
+
+            // Оставляем также клик на случай десктопных пользователей
+            bubbleElement.addEventListener('click', (e) => { 
+                if (e.target.tagName !== 'A' && window.innerWidth > 768) openReactionPicker(msg.id); 
+            });
 
             updateReactionsUI(msg.id, msg.reactions);
         }
