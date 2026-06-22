@@ -81,15 +81,14 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
-        /* ВЕРТИКАЛЬНАЯ ДВОЙНАЯ ПАНЕЛЬ ИКОНОК В СТИЛЕ РЕФЕРЕНСА */
+        /* ПАНЕЛЬ ИКОНОК НА ОСНОВЕ ПРИСЛАННОГО ФОТО */
         .control-capsule {
             position: absolute; top: 20px; right: 20px;
-            width: 54px; height: 108px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 27px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            width: 76px; height: 148px;
+            background: #FFFDF9;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 38px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             display: flex; flex-direction: column; z-index: 100; overflow: hidden;
         }
         .capsule-btn {
@@ -97,11 +96,17 @@
             cursor: pointer; background: none; border: none; border-radius: 0; padding: 0; box-shadow: none;
             transition: background 0.15s ease, transform 0.1s ease;
         }
-        .capsule-btn:active { transform: scale(0.92); }
-        .capsule-btn:hover { background: rgba(0,0,0,0.03); }
-        .capsule-divider { height: 1px; width: 70%; background: rgba(0, 0, 0, 0.1); margin: 0 auto; }
+        .capsule-btn:active { transform: scale(0.94); }
+        .capsule-btn:hover { background: rgba(0,0,0,0.02); }
+        .capsule-divider { height: 1.5px; width: 100%; background: #231F20; opacity: 1; }
 
-        /* ЭФФЕКТ РАЗМЫТИЯ ВСЕГО ЗАДНЕГО ПЛАНА (ОБЩИЙ ОВЕРЛЕЙ ДЛЯ ШТОРК) */
+        /* НАКЛОН ЗВЕЗДЫ НА 15 ГРАДУСОВ ВЛЕВО */
+        .star-icon-svg {
+            transform: rotate(-15deg);
+            transform-origin: center;
+        }
+
+        /* ЭФФЕКТ РАЗМЫТИЯ ФОНА ПРИ ОТКРЫТИИ ОКОН */
         .side-panel-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.15);
@@ -114,7 +119,7 @@
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
-        /* КРАСИВЫЕ БЕЛЫЕ ОКНА-ШТОРКИ С КРУТЫМИ СГЛАЖЕННЫМИ УГЛАМИ */
+        /* БОКОВЫЕ ОКНА-ШТОРКИ */
         .side-panel {
             position: fixed; top: 20px; bottom: 20px; right: -360px;
             width: 320px; background: white; border-radius: 35px;
@@ -135,15 +140,14 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        /* СТИЛИ СПИСКА УЧАСТНИКОВ */
+        /* УЧАСТНИКИ */
         .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; }
         .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
         .member-info { display: flex; flex-direction: column; }
         .member-name { font-weight: 600; color: #3A3A4A; }
         .member-status { font-size: 12px; color: #9A9A9A; }
-        .member-status.online { color: #27AE60; font-weight: 600; }
 
-        /* НОВОСТНЫЕ КАРТОЧКИ */
+        /* О НОВИНКАХ */
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
         .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
@@ -158,7 +162,7 @@
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        /* СООБЩЕНИЯ */
+        /* ОБЛАКА СООБЩЕНИЙ */
         .msg { max-width: 100%; display: flex; flex-direction: column; margin-bottom: 2px; position: relative; }
         .msg.sent { align-items: flex-end; }
         .msg.received { align-items: flex-start; }
@@ -183,22 +187,10 @@
         .reply-in-bubble {
             background: rgba(108, 99, 255, 0.08);
             border-left: 3px solid #6C63FF;
-            padding: 4px 10px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #4A4A5A;
-            max-height: 60px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            padding: 4px 10px; margin-bottom: 8px; border-radius: 6px; font-size: 14px; color: #4A4A5A;
+            max-height: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .reply-in-bubble .reply-owner {
-            font-weight: 700;
-            color: #6C63FF;
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
+        .reply-in-bubble .reply-owner { font-weight: 700; color: #6C63FF; font-size: 12px; margin-bottom: 2px; }
 
         .msg-footer { display: flex; flex-direction: column; margin-top: 4px; width: 100%; }
         .sent .msg-footer { align-items: flex-end; }
@@ -206,52 +198,33 @@
 
         .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
 
-        /* ИНДИКАТОРЫ РЕАКЦИЙ ПОД ВРЕМЕНЕМ */
+        /* РЕАКЦИИ */
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; width: fit-content; }
         .sent .reactions-wrapper { justify-content: flex-end; }
         .received .reactions-wrapper { justify-content: flex-start; }
 
         .reaction-badge {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.8);
-            padding: 4px 10px; border-radius: 14px; font-size: 14px; display: flex; align-items: center; gap: 5px;
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 14px; font-size: 14px; display: flex; align-items: center; gap: 5px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none;
         }
         .reaction-badge:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
-        .reaction-badge.active {
-            background: rgba(108, 99, 255, 0.15);
-            border-color: rgba(108, 99, 255, 0.4);
-            box-shadow: 0 3px 10px rgba(108,99,255,0.15);
-        }
+        .reaction-badge.active { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.4); box-shadow: 0 3px 10px rgba(108,99,255,0.15); }
         .reaction-count { font-size: 12px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
-        /* МЕНЮ РЕАКЦИЙ И ДЕЙСТВИЙ */
+        /* ВСПЛЫВАЮЩЕЕ МЕНЮ РЕАКЦИЙ */
         .reaction-modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 999; 
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden;
-            will-change: opacity, visibility;
-            transition: opacity 0.24s ease, visibility 0.24s ease;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 999; 
+            display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden;
+            will-change: opacity, visibility; transition: opacity 0.24s ease, visibility 0.24s ease;
         }
-        .reaction-modal-overlay.active { 
-            opacity: 1; 
-            visibility: visible;
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        }
+        .reaction-modal-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
         .reaction-modal-box {
-            background: rgb(245, 245, 250);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            padding: 16px 24px; border-radius: 30px;
-            box-shadow: 0 20px 45px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
-            transform: scale(0.85); 
-            will-change: transform;
-            transition: transform 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            background: rgb(245, 245, 250); border: 1px solid rgba(255, 255, 255, 0.8); padding: 16px 24px; border-radius: 30px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
+            transform: scale(0.85); will-change: transform; transition: transform 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.2);
         }
         .reaction-modal-overlay.active .reaction-modal-box { transform: scale(1); }
         .emojis-row { display: flex; gap: 12px; }
@@ -260,23 +233,15 @@
         .menu-action-btn { background: none; box-shadow: none; color: #6C63FF; font-size: 16px; font-weight: 600; padding: 6px 20px; width: auto; border-radius: 15px; }
         .menu-action-btn:hover { background: rgba(108, 99, 255, 0.1); transform: none; box-shadow: none; }
 
-        /* ИНДИКАТОР ПЕЧАТАНИЯ НАД ПОЛЕМ ВВОДА */
-        .typing-container-wrapper {
-            width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10;
-        }
-
+        /* ОТОБРАЖЕНИЕ ПЕЧАТАНИЯ */
+        .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
         .typing-indicator-container {
             display: none; align-items: center; gap: 10px; padding: 8px 18px; position: absolute; bottom: 8px;
             background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.25); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            transform: translate3d(0, 0, 0); will-change: transform, opacity;
-            animation: fadeInIndicator 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+            transform: translate3d(0, 0, 0); will-change: transform, opacity; animation: fadeInIndicator 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
         }
-        @keyframes fadeInIndicator { 
-            from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); } 
-            to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } 
-        }
-
+        @keyframes fadeInIndicator { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         .typing-text { font-size: 13px; font-weight: 600; color: #4A4A5A; }
         .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
         .typing-sparkle {
@@ -286,24 +251,21 @@
         .typing-sparkle:nth-child(1) { animation-delay: 0s; }
         .typing-sparkle:nth-child(2) { animation-delay: 0.2s; }
         .typing-sparkle:nth-child(3) { animation-delay: 0.4s; }
-
         @keyframes familySparkle {
             0%, 100% { transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg); opacity: 0.3; }
             50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; }
         }
 
-        /* ПЛАШКА ОТВЕТА В СТИЛЕ ТЕЛЕГРАМ */
+        /* КНОПКА ОТВЕТА НА ПАНЕЛИ ВВОДА */
         .reply-bar {
             display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto;
             background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px;
             border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none;
-            align-items: center; gap: 12px; position: relative; z-index: 10;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
+            align-items: center; gap: 12px; position: relative; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
             animation: slideUpReply 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
         }
         @keyframes slideUpReply { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
-
         .reply-bar-accent { width: 3px; height: 36px; background: #6C63FF; border-radius: 2px; flex-shrink: 0; }
         .reply-bar-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .reply-bar-title { font-size: 13px; font-weight: 700; color: #6C63FF; margin-bottom: 2px; }
@@ -316,6 +278,7 @@
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* НИЖНЯЯ ПАНЕЛЬ */
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
         }
@@ -342,10 +305,9 @@
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
             .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
-            .reaction-modal-box { padding: 12px 16px; gap: 10px; }
-            .picker-emoji { font-size: 28px; }
             .side-panel { width: 280px; right: -320px; }
             .side-panel.active { transform: translate3d(-300px, 0, 0); }
+            .control-capsule { width: 64px; height: 124px; top: 15px; right: 15px; }
         }
     </style>
 </head>
@@ -411,17 +373,25 @@
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
             <button class="capsule-btn" id="newsBtn" title="О новинках">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF8A3D" stroke="#1A1A1A" stroke-width="2" stroke-linejoin="round"/>
+                <svg class="star-icon-svg" width="46" height="46" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFBA42"/>
+                            <stop offset="40%" stop-color="#FF781F"/>
+                            <stop offset="100%" stop-color="#D64500"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M32 6L40.2 22.6L58.5 25.3L45.2 38.3L48.4 56.6L32 48L15.6 56.6L18.8 38.3L5.5 25.3L23.8 22.6L32 6Z" fill="url(#starGrad)" stroke="#522613" stroke-width="3.5" stroke-linejoin="round"/>
                 </svg>
             </button>
+            
             <div class="capsule-divider"></div>
+            
             <button class="capsule-btn" id="membersBtn" title="Участники">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="9" cy="7" r="4" fill="#6C63FF" stroke="#1A1A1A" stroke-width="2.5"/>
-                    <path d="M23 21V19C22.9993 18.1137 22.691 17.2544 22.1251 16.5667C21.5592 15.8789 20.7687 15.3992 19.88 15.21" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M16 3.13C16.8899 3.31792 17.6837 3.80025 18.2519 4.49221C18.82 5.18417 19.1283 6.04781 19.1283 6.94C19.1283 7.83219 18.82 8.69583 18.2519 9.38779C17.6837 10.0798 16.8899 10.5621 16 10.75" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                <svg width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M49.5 22.5 C53.2 27.8, 54.2 34.8, 52.1 41.2 C49.1 50.4, 39.3 55.4, 30.1 52.4 C20.9 49.4, 15.9 39.6, 18.9 30.4 C21.9 21.2, 31.7 16.2, 40.9 19.2" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                    <circle cx="34" cy="31" r="7.5" fill="#231F20"/>
+                    <path d="M21.5 47 C21.5 41, 26.5 37.5, 34 37.5 C41.5 37.5, 46.5 41, 46.5 47" fill="#231F20" stroke="#231F20" stroke-width="1.5" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
@@ -454,8 +424,7 @@
                 <div class="panel-title">Участники</div>
                 <button class="panel-close" id="closeMembersBtn">&times;</button>
             </div>
-            <div class="panel-content" id="membersContainer">
-                </div>
+            <div class="panel-content" id="membersContainer"></div>
         </div>
 
         <div class="messages" id="messages">
@@ -479,8 +448,8 @@
         <div class="reply-bar" id="replyBar">
             <div class="reply-bar-accent"></div>
             <div class="reply-bar-content">
-                <div class="reply-bar-title" id="replyBarTitle">Вы отвечаете Макару</div>
-                <div class="reply-bar-text" id="replyBarText">Текст цитируемого сообщения...</div>
+                <div class="reply-bar-title" id="replyBarTitle">Вы отвечаете...</div>
+                <div class="reply-bar-text" id="replyBarText">Текст...</div>
             </div>
             <div class="reply-bar-close" id="replyBarClose">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -566,7 +535,6 @@
         const inputArea = document.getElementById('inputArea');
         const menuReplyBtn = document.getElementById('menuReplyBtn');
 
-        // ЭЛЕМЕНТЫ ПАНЕЛИ УПРАВЛЕНИЯ И ШТОРК
         const newsBtn = document.getElementById('newsBtn');
         const membersBtn = document.getElementById('membersBtn');
         const sidePanelOverlay = document.getElementById('sidePanelOverlay');
@@ -590,15 +558,6 @@
             currentUser = { id: savedUsername, name: savedName };
         }
 
-        function handleDataMigration() {
-            if (localStorage.getItem('semejka_uid') && !localStorage.getItem('semejka_username')) {
-                localStorage.removeItem('semejka_uid');
-                localStorage.removeItem('semejka_username');
-                localStorage.removeItem('semejka_name');
-            }
-        }
-        handleDataMigration();
-
         function checkSavedUser() {
             if (currentUser) {
                 freshForm.style.display = 'none';
@@ -617,14 +576,12 @@
         toLoginBtn.addEventListener('click', () => {
             freshForm.style.display = 'none';
             loginForm.style.display = 'flex';
-            loginErrorMsg.style.display = 'none';
             loginUsernameInput.value = '';
         });
 
         toRegisterBtn.addEventListener('click', () => {
             loginForm.style.display = 'none';
             freshForm.style.display = 'block';
-            errorMsg.style.display = 'none';
             nameInput.value = '';
             usernameInput.value = '';
         });
@@ -636,13 +593,10 @@
             checkSavedUser();
         });
 
-        // КЛИКИ ПО БОКОВЫМ ПАНЕЛЯМ С КРАСИВЫМ РАЗМЫТИЕМ
         function openPanel(panel) {
             sidePanelOverlay.classList.add('active');
             panel.classList.add('active');
-            if(panel === membersPanel) {
-                loadMembersList();
-            }
+            if(panel === membersPanel) loadMembersList();
         }
 
         function closeAllPanels() {
@@ -657,7 +611,6 @@
         closeNewsBtn.addEventListener('click', closeAllPanels);
         closeMembersBtn.addEventListener('click', closeAllPanels);
 
-        // ПОЛУЧЕНИЕ СПИСКА УЧАСТНИКОВ ИЗ БАЗЫ
         async function loadMembersList() {
             try {
                 membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
@@ -680,104 +633,61 @@
                     membersContainer.appendChild(item);
                 });
             } catch(e) {
-                console.error("Ошибка участников: ", e);
-                membersContainer.innerHTML = '<div style="color:red;">Не удалось загрузить</div>';
+                console.error(e);
             }
         }
 
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-
-            if (!name || !username) {
-                alert('Пожалуйста, заполните оба поля.');
-                return;
-            }
+            if (!name || !username) return;
 
             joinBtn.disabled = true;
-            errorMsg.style.display = 'none';
-
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
                 const querySnapshot = await getDocs(uQuery);
-
                 if (!querySnapshot.empty) {
                     errorMsg.style.display = 'block';
                     joinBtn.disabled = false;
                     return;
                 }
-
-                await addDoc(collection(db, "users"), {
-                    name: name,
-                    username: username,
-                    created_at: serverTimestamp()
-                });
-
+                await addDoc(collection(db, "users"), { name: name, username: username, created_at: serverTimestamp() });
                 localStorage.setItem('semejka_name', name);
                 localStorage.setItem('semejka_username', username);
-
                 currentUser = { id: username, name: name };
                 enterChat();
-
-            } catch (err) {
-                console.error("Ошибка при регистрации:", err);
-                joinBtn.disabled = false;
-            }
+            } catch (err) { joinBtn.disabled = false; }
         });
 
         loginBtn.addEventListener('click', async () => {
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-
-            if (!username) {
-                alert('Пожалуйста, введите юзернейм.');
-                return;
-            }
+            if (!username) return;
 
             loginBtn.disabled = true;
-            loginErrorMsg.style.display = 'none';
-
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
                 const querySnapshot = await getDocs(uQuery);
-
                 if (querySnapshot.empty) {
                     loginErrorMsg.style.display = 'block';
                     loginBtn.disabled = false;
                     return;
                 }
-
                 let foundName = '';
-                querySnapshot.forEach((doc) => {
-                    foundName = doc.data().name;
-                });
-
+                querySnapshot.forEach(doc => foundName = doc.data().name);
                 localStorage.setItem('semejka_name', foundName);
                 localStorage.setItem('semejka_username', username);
-
                 currentUser = { id: username, name: foundName };
                 enterChat();
-
-            } catch (err) {
-                console.error("Ошибка при входе:", err);
-                loginBtn.disabled = false;
-            }
+            } catch (err) { loginBtn.disabled = false; }
         });
 
-        fastJoinBtn.addEventListener('click', () => {
-            enterChat();
-        });
+        fastJoinBtn.addEventListener('click', () => enterChat());
 
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try {
-                await setDoc(doc(db, "status", currentUser.id), {
-                    name: currentUser.name,
-                    is_typing: typing,
-                    last_active: serverTimestamp()
-                }, { merge: true });
-            } catch (e) {
-                console.error("Ошибка статуса печатания: ", e);
-            }
+                await setDoc(doc(db, "status", currentUser.id), { name: currentUser.name, is_typing: typing, last_active: serverTimestamp() }, { merge: true });
+            } catch (e) {}
         }
 
         function renderTypingUI() {
@@ -797,27 +707,18 @@
                 if (!isTypingLocal) {
                     isTypingLocal = true;
                     updateTypingStatus(true);
-                    if (!currentTypersList.includes(currentUser.name)) {
-                        currentTypersList.push(currentUser.name);
-                        renderTypingUI();
-                    }
                 }
             } else {
                 if (isTypingLocal) {
                     isTypingLocal = false;
                     updateTypingStatus(false);
-                    currentTypersList = currentTypersList.filter(name => name !== currentUser.name);
-                    renderTypingUI();
                 }
             }
-
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 if (isTypingLocal) {
                     isTypingLocal = false;
                     updateTypingStatus(false);
-                    currentTypersList = currentTypersList.filter(name => name !== currentUser.name);
-                    renderTypingUI();
                 }
             }, 2500); 
         });
@@ -826,24 +727,19 @@
             msgInput.style.height = 'auto';
             const scrollHeight = msgInput.scrollHeight;
             msgInput.style.height = (scrollHeight > 200 ? 200 : scrollHeight) + 'px';
-            msgInput.style.overflowY = scrollHeight > 200 ? 'auto' : 'hidden';
         }
 
         function resetTextarea() {
             msgInput.value = '';
             msgInput.style.height = 'auto';
-            msgInput.style.overflowY = 'hidden';
             if (isTypingLocal) {
                 isTypingLocal = false;
                 updateTypingStatus(false);
-                currentTypersList = currentTypersList.filter(name => name !== currentUser.name);
-                renderTypingUI();
             }
         }
 
         function linkify(text) {
-            const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-            return text.replace(urlRegex, (url) => `<a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
         function openReactionPicker(msgId) {
@@ -856,16 +752,13 @@
             activeReactionMessageId = null;
         }
 
-        reactionModalOverlay.addEventListener('click', (e) => {
-            if (e.target === reactionModalOverlay) closeReactionPicker();
-        });
+        reactionModalOverlay.addEventListener('click', (e) => { if (e.target === reactionModalOverlay) closeReactionPicker(); });
 
         reactionModalOverlay.querySelectorAll('.picker-emoji').forEach(emojiEl => {
             emojiEl.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (activeReactionMessageId) {
-                    const emoji = emojiEl.getAttribute('data-emoji');
-                    await toggleReaction(activeReactionMessageId, emoji);
+                    await toggleReaction(activeReactionMessageId, emojiEl.getAttribute('data-emoji'));
                     closeReactionPicker();
                 }
             });
@@ -876,14 +769,10 @@
             let lower = name.toLowerCase();
             if (lower === "мама") return "Маме";
             if (lower === "папа") return "Папе";
-            if (/^[а-яё]+$/i.test(name) && !/[аяоеиыь]$/i.test(name)) {
-                return name + "у";
-            }
+            if (/^[а-яё]+$/i.test(name) && !/[аяоеиыь]$/i.test(name)) return name + "у";
             if (name.endsWith("ия")) return name.slice(0, -2) + "ии";
-            if (name.endsWith("я")) return name.slice(0, -1) + "е";
-            if (name.endsWith("а")) return name.slice(0, -1) + "е";
-            if (name.endsWith("й")) return name.slice(0, -1) + "ю";
-            if (name.endsWith("ь")) return name.slice(0, -1) + "ю";
+            if (name.endsWith("я") || name.endsWith("а")) return name.slice(0, -1) + "е";
+            if (name.endsWith("й") || name.endsWith("ь")) return name.slice(0, -1) + "ю";
             return name;
         }
 
@@ -903,15 +792,10 @@
         }
 
         replyBarClose.addEventListener('click', cancelReply);
-
         menuReplyBtn.addEventListener('click', () => {
             if (activeReactionMessageId) {
                 const msgDiv = document.getElementById('msg-' + activeReactionMessageId);
-                if (msgDiv) {
-                    const name = msgDiv.getAttribute('data-sender-name');
-                    const text = msgDiv.getAttribute('data-text');
-                    initiateReply(activeReactionMessageId, name, text);
-                }
+                if (msgDiv) initiateReply(activeReactionMessageId, msgDiv.getAttribute('data-sender-name'), msgDiv.getAttribute('data-text'));
             }
             closeReactionPicker();
         });
@@ -939,12 +823,7 @@
                 }
                 currentReactions[emoji].push(currentUser.id);
             }
-            
-            try {
-                await updateDoc(msgRef, { reactions: currentReactions });
-            } catch (err) {
-                console.error("Ошибка обновления реакции: ", err);
-            }
+            try { await updateDoc(msgRef, { reactions: currentReactions }); } catch (err) {}
         }
 
         function updateReactionsUI(msgId, reactions) {
@@ -960,19 +839,13 @@
             for (let emoji in reactions) {
                 const userList = reactions[emoji] || [];
                 if (userList.length === 0) continue;
-                
                 hasReactions = true;
                 const isMyReaction = userList.includes(currentUser?.id);
                 
                 const badge = document.createElement('div');
                 badge.className = `reaction-badge ${isMyReaction ? 'active' : ''}`;
                 badge.innerHTML = `<span>${emoji}</span><span class="reaction-count">${userList.length}</span>`;
-                
-                badge.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    await toggleReaction(msgId, emoji);
-                });
-                
+                badge.addEventListener('click', async (e) => { e.stopPropagation(); await toggleReaction(msgId, emoji); });
                 wrapper.appendChild(badge);
             }
             wrapper.style.display = hasReactions ? 'flex' : 'none';
@@ -983,10 +856,7 @@
             const isMyMsg = (msg.user_id === currentUser?.id);
             
             if (msgDiv) {
-                const correctSideClass = isMyMsg ? 'sent' : 'received';
-                if (!msgDiv.classList.contains(correctSideClass)) {
-                    msgDiv.className = 'msg ' + correctSideClass;
-                }
+                msgDiv.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
                 updateReactionsUI(msg.id, msg.reactions);
                 return;
             }
@@ -1002,33 +872,15 @@
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id; 
             div.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
-            
             div.setAttribute('data-sender-name', msg.user_name || 'Кто-то');
             div.setAttribute('data-text', msg.text || '');
 
-            let html = '';
-            if (!isMyMsg) {
-                html += `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
-            }
-            
-            let replyHTML = '';
-            if (msg.reply_to) {
-                replyHTML = `
-                    <div class="reply-in-bubble">
-                        <div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div>
-                        <div class="reply-body">${escapeHtml(msg.reply_to.text)}</div>
-                    </div>
-                `;
-            }
+            let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
+            let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
             
             html += `
-                <div class="swipe-reply-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
-                </div>
-                <div class="bubble">
-                    ${replyHTML}
-                    <div class="bubble-text-content">${linkify(escapeHtml(msg.text || ''))}</div>
-                </div>
+                <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
+                <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
                 <div class="msg-footer">
                     <div class="time">${formatTime(timestamp)}</div>
                     <div class="reactions-wrapper" style="display: none;"></div>
@@ -1040,67 +892,23 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             const bubbleElement = div.querySelector('.bubble');
-            const swipeIcon = div.querySelector('.swipe-reply-icon');
+            bubbleElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A') openReactionPicker(msg.id); });
 
-            bubbleElement.addEventListener('click', (e) => {
-                if (e.target.tagName === 'A') return;
-                openReactionPicker(msg.id);
-            });
-
-            let startY = 0;
-            let startX = 0;
-            let currentTranslateX = 0;
-            let isScrolling = false;
-            let isSwipeTracking = false;
-            let triggerFired = false;
-            
-            bubbleElement.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                startX = e.touches[0].clientX;
-                isScrolling = false;
-                isSwipeTracking = false;
-                triggerFired = false;
-                bubbleElement.classList.remove('releasing');
-            }, { passive: true });
-
+            let startX = 0, currentTranslateX = 0, isSwipeTracking = false;
+            bubbleElement.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; isSwipeTracking = false; bubbleElement.classList.remove('releasing'); }, { passive: true });
             bubbleElement.addEventListener('touchmove', (e) => {
-                const moveY = e.touches[0].clientY;
-                const moveX = e.touches[0].clientX;
-                const diffY = Math.abs(moveY - startY);
-                const diffX = moveX - startX;
-
-                if (!isSwipeTracking && !isScrolling) {
-                    if (diffX > 8 && diffX > diffY) {
-                        isSwipeTracking = true;
-                    } else if (diffY > 10 || Math.abs(diffX) > 10) {
-                        isScrolling = true;
-                    }
-                }
-
+                const diffX = e.touches[0].clientX - startX;
+                if (!isSwipeTracking && diffX > 8) isSwipeTracking = true;
                 if (isSwipeTracking && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 70);
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
-                    if (swipeIcon) {
-                        swipeIcon.style.opacity = Math.min(currentTranslateX / 40, 1);
-                        swipeIcon.style.transform = `translate3d(0, -50, 0) scale(${Math.min(0.6 + currentTranslateX/100, 1)})`;
-                    }
-                    if (currentTranslateX >= 45 && !triggerFired) {
-                        triggerFired = true;
-                        if (navigator.vibrate) navigator.vibrate(12);
-                    }
                 }
             }, { passive: true });
-
-            bubbleElement.addEventListener('touchend', (e) => {
+            bubbleElement.addEventListener('touchend', () => {
                 bubbleElement.classList.add('releasing');
                 bubbleElement.style.transform = '';
-                if (swipeIcon) { swipeIcon.style.opacity = 0; }
-                if (isSwipeTracking && currentTranslateX >= 45) {
-                    initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
-                }
-                currentTranslateX = 0;
+                if (isSwipeTracking && currentTranslateX >= 45) initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
                 isSwipeTracking = false;
-                isScrolling = false;
             }, { passive: true });
 
             updateReactionsUI(msg.id, msg.reactions);
@@ -1109,36 +917,20 @@
         function listenTypingStatus() {
             onSnapshot(collection(db, "status"), (snapshot) => {
                 let networkTypers = [];
-                snapshot.forEach((doc) => {
-                    if (doc.id !== currentUser?.id && doc.data().is_typing === true) {
-                        networkTypers.push(doc.data().name);
-                    }
-                });
-                currentTypersList = [];
-                if (isTypingLocal && currentUser) {
-                    currentTypersList.push(currentUser.name);
-                }
-                currentTypersList = [...currentTypersList, ...networkTypers];
+                snapshot.forEach(doc => { if (doc.id !== currentUser?.id && doc.data().is_typing === true) networkTypers.push(doc.data().name); });
+                currentTypersList = isTypingLocal && currentUser ? [currentUser.name, ...networkTypers] : networkTypers;
                 renderTypingUI();
             });
         }
 
         function startLiveChat() {
             loadingSpinner.classList.add('active');
-            const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
-            
-            onSnapshot(q, (snapshot) => {
+            onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
-                snapshot.docChanges().forEach((change) => {
-                    const data = change.doc.data();
-                    if (change.type === "added" || change.type === "modified") {
-                        renderMessage({ id: change.doc.id, ...data });
-                    }
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added" || change.type === "modified") renderMessage({ id: change.doc.id, ...change.doc.data() });
                 });
-            }, (error) => {
-                console.error("Ошибка сети: ", error);
             });
-
             listenTypingStatus();
         }
 
@@ -1147,68 +939,28 @@
             if (!currentUser || !text) return;
 
             sendBtn.disabled = true;
-            let replyData = null;
-            if (currentReplyTarget) {
-                replyData = {
-                    message_id: currentReplyTarget.id,
-                    name: currentReplyTarget.name,
-                    text: currentReplyTarget.text
-                };
-            }
-
-            cancelReply();
-            resetTextarea();
+            let replyData = currentReplyTarget ? { message_id: currentReplyTarget.id, name: currentReplyTarget.name, text: currentReplyTarget.text } : null;
+            cancelReply(); resetTextarea();
 
             try {
-                await addDoc(collection(db, "messages"), {
-                    user_id: currentUser.id,
-                    user_name: currentUser.name,
-                    text: text,
-                    reactions: {},
-                    reply_to: replyData,
-                    created_at: serverTimestamp()
-                });
-            } catch (err) {
-                console.error('Ошибка сохранения:', err);
-            } finally {
-                sendBtn.disabled = false; 
-                msgInput.focus();
-            }
+                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
+            } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
-        msgInput.addEventListener('keypress', async (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                await sendMessage(); 
-            } 
-        });
+        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
-
-        function enterChat() {
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
-            startLiveChat();
-        }
+        function enterChat() { regScreen.classList.remove('active'); chatScreen.classList.add('active'); startLiveChat(); }
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); 
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
+            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
         function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); 
-            sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; 
-            messagesDiv.appendChild(sep); 
+            const sep = document.createElement('div'); sep.className = 'date-separator';
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
         }
-        function formatTime(dateObj) { 
-            return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); 
-        } 
-        function escapeHtml(text) { 
-            const el = document.createElement('div'); 
-            el.textContent = text; 
-            return el.innerHTML; 
-        } 
+        function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
+        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
     </script>
 </body>
 </html>
