@@ -81,6 +81,73 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
+        /* ВЕРТИКАЛЬНАЯ ДВОЙНАЯ ПАНЕЛЬ ИКОНОК В СТИЛЕ РЕФЕРЕНСА */
+        .control-capsule {
+            position: absolute; top: 20px; right: 20px;
+            width: 54px; height: 108px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 27px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            display: flex; flex-direction: column; z-index: 100; overflow: hidden;
+        }
+        .capsule-btn {
+            flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; background: none; border: none; border-radius: 0; padding: 0; box-shadow: none;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+        .capsule-btn:active { transform: scale(0.92); }
+        .capsule-btn:hover { background: rgba(0,0,0,0.03); }
+        .capsule-divider { height: 1px; width: 70%; background: rgba(0, 0, 0, 0.1); margin: 0 auto; }
+
+        /* ЭФФЕКТ РАЗМЫТИЯ ВСЕГО ЗАДНЕГО ПЛАНА (ОБЩИЙ ОВЕРЛЕЙ ДЛЯ ШТОРК) */
+        .side-panel-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.15);
+            z-index: 150; opacity: 0; visibility: hidden;
+            will-change: opacity, visibility;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .side-panel-overlay.active {
+            opacity: 1; visibility: visible;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* КРАСИВЫЕ БЕЛЫЕ ОКНА-ШТОРКИ С КРУТЫМИ СГЛАЖЕННЫМИ УГЛАМИ */
+        .side-panel {
+            position: fixed; top: 20px; bottom: 20px; right: -360px;
+            width: 320px; background: white; border-radius: 35px;
+            box-shadow: -10px 15px 40px rgba(0,0,0,0.15);
+            z-index: 160; padding: 25px;
+            display: flex; flex-direction: column;
+            transform: translate3d(0, 0, 0); will-change: transform;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .side-panel.active { transform: translate3d(-380px, 0, 0); }
+        
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .panel-title { font-size: 22px; font-weight: 800; color: #2A2A3A; }
+        .panel-close { background: none; border: none; padding: 0; width: 32px; height: 32px; min-height: auto; border-radius: 50%; color: #8A8A9A; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: none; transition: 0.15s; }
+        .panel-close:hover { background: #F0F0F5; color: #333; transform: none; }
+        
+        .panel-content { flex: 1; overflow-y: auto; padding-right: 5px; font-size: 15px; color: #4A4A5A; line-height: 1.6; }
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
+
+        /* СТИЛИ СПИСКА УЧАСТНИКОВ */
+        .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; }
+        .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .member-info { display: flex; flex-direction: column; }
+        .member-name { font-weight: 600; color: #3A3A4A; }
+        .member-status { font-size: 12px; color: #9A9A9A; }
+        .member-status.online { color: #27AE60; font-weight: 600; }
+
+        /* НОВОСТНЫЕ КАРТОЧКИ */
+        .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
+        .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
+        .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
+
         .messages {
             flex: 1 1 auto; overflow-y: auto; padding: 10px 20px 80px 20px;
             display: flex; flex-direction: column; gap: 14px;
@@ -113,7 +180,6 @@
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
         
-        /* ТЕКСТ ОТВЕТА ВНУТРИ БАБЛА СЛУШАТЕЛЯ */
         .reply-in-bubble {
             background: rgba(108, 99, 255, 0.08);
             border-left: 3px solid #6C63FF;
@@ -226,7 +292,7 @@
             50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; }
         }
 
-        /* КЛАССИЧЕСКАЯ ПЛАШКА ОТВЕТА В СТИЛЕ ТЕЛЕГРАМ */
+        /* ПЛАШКА ОТВЕТА В СТИЛЕ ТЕЛЕГРАМ */
         .reply-bar {
             display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto;
             background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -253,7 +319,6 @@
         .input-area {
             background: rgba(255,255,255,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.3); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
         }
-        /* Меняем радиус углов инпута, если сверху прикреплена плашка ответа */
         .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: rgba(108,99,255,0.1); }
 
         .input-area textarea {
@@ -268,7 +333,6 @@
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
         .bubble a:hover { color: #4A42D0; }
 
-        /* Визуальная иконка ответа при свайпе в стиле Telegram */
         .swipe-reply-icon {
             position: absolute; left: -45px; top: 50%; transform: translateY(-50%) scale(0.6);
             opacity: 0; color: #6C63FF; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
@@ -280,6 +344,8 @@
             .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
             .reaction-modal-box { padding: 12px 16px; gap: 10px; }
             .picker-emoji { font-size: 28px; }
+            .side-panel { width: 280px; right: -320px; }
+            .side-panel.active { transform: translate3d(-300px, 0, 0); }
         }
     </style>
 </head>
@@ -343,6 +409,55 @@
     </div>
 
     <div id="chatScreen" class="screen">
+        <div class="control-capsule">
+            <button class="capsule-btn" id="newsBtn" title="О новинках">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF8A3D" stroke="#1A1A1A" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="capsule-divider"></div>
+            <button class="capsule-btn" id="membersBtn" title="Участники">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="9" cy="7" r="4" fill="#6C63FF" stroke="#1A1A1A" stroke-width="2.5"/>
+                    <path d="M23 21V19C22.9993 18.1137 22.691 17.2544 22.1251 16.5667C21.5592 15.8789 20.7687 15.3992 19.88 15.21" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M16 3.13C16.8899 3.31792 17.6837 3.80025 18.2519 4.49221C18.82 5.18417 19.1283 6.04781 19.1283 6.94C19.1283 7.83219 18.82 8.69583 18.2519 9.38779C17.6837 10.0798 16.8899 10.5621 16 10.75" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="side-panel-overlay" id="sidePanelOverlay"></div>
+
+        <div class="side-panel" id="newsPanel">
+            <div class="panel-header">
+                <div class="panel-title">О новинках!</div>
+                <button class="panel-close" id="closeNewsBtn">&times;</button>
+            </div>
+            <div class="panel-content">
+                <div class="news-card">
+                    <h4>✨ Умные ответы</h4>
+                    <p>Свайпни сообщение вправо, чтобы ответить. Имя переведётся в нужный падеж автоматически!</p>
+                </div>
+                <div class="news-card">
+                    <h4>🎨 Капсула управления</h4>
+                    <p>Добавлена новая боковая панель с быстрыми окнами и красивым эффектом размытия.</p>
+                </div>
+                <div class="news-card">
+                    <h4>🚀 Аппаратная анимация</h4>
+                    <p>Все эффекты переведены на GPU для максимального сбережения батареи телефона.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel" id="membersPanel">
+            <div class="panel-header">
+                <div class="panel-title">Участники</div>
+                <button class="panel-close" id="closeMembersBtn">&times;</button>
+            </div>
+            <div class="panel-content" id="membersContainer">
+                </div>
+        </div>
+
         <div class="messages" id="messages">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner-circle"></div>
@@ -444,7 +559,6 @@
         const typingIndicator = document.getElementById('typingIndicator');
         const typingText = document.getElementById('typingText');
         
-        // НОВЫЕ ЭЛЕМЕНТЫ ДЛЯ ОТВЕТОВ
         const replyBar = document.getElementById('replyBar');
         const replyBarTitle = document.getElementById('replyBarTitle');
         const replyBarText = document.getElementById('replyBarText');
@@ -452,14 +566,22 @@
         const inputArea = document.getElementById('inputArea');
         const menuReplyBtn = document.getElementById('menuReplyBtn');
 
+        // ЭЛЕМЕНТЫ ПАНЕЛИ УПРАВЛЕНИЯ И ШТОРК
+        const newsBtn = document.getElementById('newsBtn');
+        const membersBtn = document.getElementById('membersBtn');
+        const sidePanelOverlay = document.getElementById('sidePanelOverlay');
+        const newsPanel = document.getElementById('newsPanel');
+        const membersPanel = document.getElementById('membersPanel');
+        const closeNewsBtn = document.getElementById('closeNewsBtn');
+        const closeMembersBtn = document.getElementById('closeMembersBtn');
+        const membersContainer = document.getElementById('membersContainer');
+
         let currentUser = null;
         let lastDisplayedDate = null;
         let activeReactionMessageId = null;
         let isTypingLocal = false;
         let typingTimeout = null;
         let currentTypersList = [];
-        
-        // Стейт для хранения цитируемого сообщения
         let currentReplyTarget = null;
 
         const savedName = localStorage.getItem('semejka_name');
@@ -513,6 +635,55 @@
             currentUser = null;
             checkSavedUser();
         });
+
+        // КЛИКИ ПО БОКОВЫМ ПАНЕЛЯМ С КРАСИВЫМ РАЗМЫТИЕМ
+        function openPanel(panel) {
+            sidePanelOverlay.classList.add('active');
+            panel.classList.add('active');
+            if(panel === membersPanel) {
+                loadMembersList();
+            }
+        }
+
+        function closeAllPanels() {
+            sidePanelOverlay.classList.remove('active');
+            newsPanel.classList.remove('active');
+            membersPanel.classList.remove('active');
+        }
+
+        newsBtn.addEventListener('click', () => openPanel(newsPanel));
+        membersBtn.addEventListener('click', () => openPanel(membersPanel));
+        sidePanelOverlay.addEventListener('click', closeAllPanels);
+        closeNewsBtn.addEventListener('click', closeAllPanels);
+        closeMembersBtn.addEventListener('click', closeAllPanels);
+
+        // ПОЛУЧЕНИЕ СПИСКА УЧАСТНИКОВ ИЗ БАЗЫ
+        async function loadMembersList() {
+            try {
+                membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                membersContainer.innerHTML = '';
+                
+                usersSnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const initials = data.name ? data.name.substring(0, 2).toUpperCase() : '??';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'member-item';
+                    item.innerHTML = `
+                        <div class="member-avatar">${initials}</div>
+                        <div class="member-info">
+                            <div class="member-name">${escapeHtml(data.name)}</div>
+                            <div class="member-status">@${escapeHtml(data.username)}</div>
+                        </div>
+                    `;
+                    membersContainer.appendChild(item);
+                });
+            } catch(e) {
+                console.error("Ошибка участников: ", e);
+                membersContainer.innerHTML = '<div style="color:red;">Не удалось загрузить</div>';
+            }
+        }
 
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
@@ -700,45 +871,31 @@
             });
         });
 
-        // ФУНКЦИЯ СКЛОНЕНИЯ ИМЕНИ В ДАТЕЛЬНЫЙ ПАДЕЖ (ИЗЮМИНКА)
         function getDativeName(name) {
             if (!name) return "кому-то";
             let lower = name.toLowerCase();
-            
-            // Если это служебное слово "мама" или "папа"
             if (lower === "мама") return "Маме";
             if (lower === "папа") return "Папе";
-            
-            // Мужские имена на согласную (Макар, Иван) -> +а
             if (/^[а-яё]+$/i.test(name) && !/[аяоеиыь]$/i.test(name)) {
                 return name + "у";
             }
-            // Имена на -я (Юлия, Настя) -> -и / -е
             if (name.endsWith("ия")) return name.slice(0, -2) + "ии";
             if (name.endsWith("я")) return name.slice(0, -1) + "е";
-            // Имена на -а (Ольга, Маша, Паша) -> -е
             if (name.endsWith("а")) return name.slice(0, -1) + "е";
-            // Мужские имена на -й (Алексей, Тимофей) -> -ю
             if (name.endsWith("й")) return name.slice(0, -1) + "ю";
-            // Мужские имена на -ь (Игорь) -> -ю
             if (name.endsWith("ь")) return name.slice(0, -1) + "ю";
-            
-            return name; // Если не подошло под правила, возвращаем как есть
+            return name;
         }
 
-        // АКТИВАЦИЯ ИНТЕРФЕЙСА ОТВЕТА (В СТИЛЕ ТЕЛЕГРАМ)
         function initiateReply(msgId, senderName, text) {
             currentReplyTarget = { id: msgId, name: senderName, text: text };
-            
             replyBarTitle.textContent = `Вы отвечаете ${getDativeName(senderName)}`;
             replyBarText.textContent = text;
-            
             replyBar.style.display = 'flex';
             inputArea.classList.add('has-reply');
             msgInput.focus();
         }
 
-        // ОТМЕНА ОТВЕТА
         function cancelReply() {
             currentReplyTarget = null;
             replyBar.style.display = 'none';
@@ -846,7 +1003,6 @@
             div.id = 'msg-' + msg.id; 
             div.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
             
-            // Сохраняем метаданные в атрибуты для функции ответов
             div.setAttribute('data-sender-name', msg.user_name || 'Кто-то');
             div.setAttribute('data-text', msg.text || '');
 
@@ -855,7 +1011,6 @@
                 html += `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             }
             
-            // Отрендерить цитату внутри бабла, если это ответ на другое сообщение
             let replyHTML = '';
             if (msg.reply_to) {
                 replyHTML = `
@@ -892,13 +1047,12 @@
                 openReactionPicker(msg.id);
             });
 
-            // СВАЙП-ОТВЕТ В СТИЛЕ TELEGRAM (УЛУЧШЕННЫЙ)
             let startY = 0;
             let startX = 0;
             let currentTranslateX = 0;
             let isScrolling = false;
             let isSwipeTracking = false;
-            let triggerFired = false; // Предохранитель от многократной вибрации
+            let triggerFired = false;
             
             bubbleElement.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
@@ -913,30 +1067,26 @@
                 const moveY = e.touches[0].clientY;
                 const moveX = e.touches[0].clientX;
                 const diffY = Math.abs(moveY - startY);
-                const diffX = moveX - startX; // Положительный сдвиг — вправо
+                const diffX = moveX - startX;
 
                 if (!isSwipeTracking && !isScrolling) {
                     if (diffX > 8 && diffX > diffY) {
-                        isSwipeTracking = true; // Фиксируем свайп ответа
+                        isSwipeTracking = true;
                     } else if (diffY > 10 || Math.abs(diffX) > 10) {
                         isScrolling = true;
                     }
                 }
 
                 if (isSwipeTracking && diffX > 0) {
-                    currentTranslateX = Math.min(diffX * 0.5, 70); // Ограничиваем ход бабла
+                    currentTranslateX = Math.min(diffX * 0.5, 70);
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
-                    
-                    // Контролируем показ стрелочки ответа
                     if (swipeIcon) {
                         swipeIcon.style.opacity = Math.min(currentTranslateX / 40, 1);
                         swipeIcon.style.transform = `translate3d(0, -50, 0) scale(${Math.min(0.6 + currentTranslateX/100, 1)})`;
                     }
-
-                    // Порог Telegram: когда дотянули до конца, делаем легкий Taptic эффект
                     if (currentTranslateX >= 45 && !triggerFired) {
                         triggerFired = true;
-                        if (navigator.vibrate) navigator.vibrate(12); // Микровибрация
+                        if (navigator.vibrate) navigator.vibrate(12);
                     }
                 }
             }, { passive: true });
@@ -945,11 +1095,9 @@
                 bubbleElement.classList.add('releasing');
                 bubbleElement.style.transform = '';
                 if (swipeIcon) { swipeIcon.style.opacity = 0; }
-
                 if (isSwipeTracking && currentTranslateX >= 45) {
                     initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
                 }
-                
                 currentTranslateX = 0;
                 isSwipeTracking = false;
                 isScrolling = false;
@@ -966,13 +1114,11 @@
                         networkTypers.push(doc.data().name);
                     }
                 });
-
                 currentTypersList = [];
                 if (isTypingLocal && currentUser) {
                     currentTypersList.push(currentUser.name);
                 }
                 currentTypersList = [...currentTypersList, ...networkTypers];
-
                 renderTypingUI();
             });
         }
@@ -990,7 +1136,7 @@
                     }
                 });
             }, (error) => {
-                console.error("Ошибка получения данных: ", error);
+                console.error("Ошибка сети: ", error);
             });
 
             listenTypingStatus();
@@ -1001,8 +1147,6 @@
             if (!currentUser || !text) return;
 
             sendBtn.disabled = true;
-            
-            // Собираем объект ответа, если он активирован
             let replyData = null;
             if (currentReplyTarget) {
                 replyData = {
@@ -1012,7 +1156,7 @@
                 };
             }
 
-            cancelReply(); // Закрываем плашку ответа сразу
+            cancelReply();
             resetTextarea();
 
             try {
@@ -1021,11 +1165,11 @@
                     user_name: currentUser.name,
                     text: text,
                     reactions: {},
-                    reply_to: replyData, // Поле ответа улетает в базу данных
+                    reply_to: replyData,
                     created_at: serverTimestamp()
                 });
             } catch (err) {
-                console.error('Ошибка сохранения сообщения:', err);
+                console.error('Ошибка сохранения:', err);
             } finally {
                 sendBtn.disabled = false; 
                 msgInput.focus();
