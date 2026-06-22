@@ -106,35 +106,43 @@
             transform-origin: center;
         }
 
-        /* ЭФФЕКТ РАЗМЫТИЯ ФОНА ПРИ ОТКРЫТИИ ОКОН (ОПТИМИЗИРОВАНО ДЛЯ СТАРЫХ ТЕЛЕФОНОВ) */
+        /* ЭФФЕКТ РАЗМЫТИЯ ФОНА ПРИ ОТКРЫТИИ ОКОН */
         .side-panel-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.25);
             z-index: 150; opacity: 0; visibility: hidden;
             will-change: opacity, visibility;
-            transition: opacity 0.25s ease, visibility 0.25s ease;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         .side-panel-overlay.active {
             opacity: 1; visibility: visible;
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
-        /* БОКОВЫЕ ОКНА-ШТОРКИ (С АППАРАТНЫМ УСКОРЕНИЕМ) */
+        /* ИСПРАВЛЕНО: ОКНА ТЕПЕРЬ ПО ЦЕНТРУ ЭКРАНА С РОВНЫМИ ОТСТУПАМИ */
         .side-panel {
-            position: fixed; top: 16px; bottom: 16px; right: -340px;
-            width: 300px; background: white; border-radius: 30px;
-            box-shadow: -10px 15px 40px rgba(0,0,0,0.12);
-            z-index: 160; padding: 22px;
+            position: fixed; 
+            top: 50%; left: 20px; right: 20px;
+            max-width: 500px; margin: 0 auto;
+            background: white; border-radius: 32px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+            z-index: 160; padding: 24px;
             display: flex; flex-direction: column;
-            transform: translate3d(0, 0, 0); 
-            will-change: transform;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 80vh;
+            opacity: 0; visibility: hidden;
+            transform: translate3d(0, -45%, 0) scale(0.95);
+            will-change: transform, opacity, visibility;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.2s ease, visibility 0.2s ease;
         }
-        .side-panel.active { transform: translate3d(-356px, 0, 0); }
+        .side-panel.active { 
+            opacity: 1; 
+            visibility: visible; 
+            transform: translate3d(0, -50%, 0) scale(1); 
+        }
         
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
         .panel-title { font-size: 20px; font-weight: 800; color: #2A2A3A; }
-        .panel-close { background: none; border: none; padding: 0; width: 32px; height: 32px; min-height: auto; border-radius: 50%; color: #8A8A9A; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: none; transition: 0.15s; }
+        .panel-close { background: none; border: none; padding: 0; width: 34px; height: 34px; min-height: auto; border-radius: 50%; color: #8A8A9A; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: none; transition: 0.15s; font-size: 22px; }
         .panel-close:hover { background: #F0F0F5; color: #333; transform: none; }
         
         .panel-content { flex: 1; overflow-y: auto; padding-right: 5px; font-size: 15px; color: #4A4A5A; line-height: 1.6; }
@@ -143,10 +151,10 @@
 
         /* УЧАСТНИКИ */
         .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; }
-        .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-        .member-info { display: flex; flex-direction: column; }
-        .member-name { font-weight: 600; color: #3A3A4A; }
-        .member-status { font-size: 12px; color: #9A9A9A; }
+        .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .member-info { display: flex; flex-direction: column; min-width: 0; }
+        .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* О НОВИНКАХ */
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
@@ -302,9 +310,8 @@
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
             .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
-            .side-panel { width: 270px; right: -310px; }
-            .side-panel.active { transform: translate3d(-286px, 0, 0); }
             .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; }
+            .side-panel { left: 16px; right: 16px; padding: 20px; }
         }
     </style>
 </head>
@@ -864,8 +871,12 @@
             const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
             const msgDate = timestamp.toLocaleDateString('ru-RU');
             
+            // ИСПРАВЛЕН БАГ: Строгая валидация, чтобы разделитель дат отрисовывался один раз
             if (msgDate !== lastDisplayedDate) { 
-                insertDateSeparator(timestamp.toISOString()); 
+                const existingSeparator = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(sep => sep.textContent.trim() === formatDateSeparator(timestamp.toISOString()));
+                if (!existingSeparator) {
+                    insertDateSeparator(timestamp.toISOString()); 
+                }
                 lastDisplayedDate = msgDate; 
             }
 
@@ -889,10 +900,10 @@
 
             div.innerHTML = html; 
             
-            // Оптимизация вставки тяжелых элементов в DOM на старых устройствах
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                // ИСПРАВЛЕНО: Плавный скролл к последнему сообщению без рывков
+                div.scrollIntoView({ behavior: 'smooth', block: 'end' });
             });
 
             const bubbleElement = div.querySelector('.bubble');
@@ -907,7 +918,6 @@
                 if (!isSwipeTracking && diffX > 8) isSwipeTracking = true;
                 if (isSwipeTracking && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
-                    // Использование translate3d триггерит аппаратное ускорение
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
                     iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
