@@ -178,7 +178,7 @@
         }
         .bubble:active { transform: scale(0.98); }
         .bubble.releasing {
-            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
@@ -194,23 +194,22 @@
         }
         .reply-in-bubble .reply-owner { font-weight: 700; color: #6C63FF; font-size: 12px; margin-bottom: 2px; }
 
-        .msg-footer { display: flex; flex-direction: column; margin-top: 4px; width: 100%; }
-        .sent .msg-footer { align-items: flex-end; }
-        .received .msg-footer { align-items: flex-start; }
+        /* ИСПРАВЛЕННЫЙ ФУТЕР ДЛЯ РАЗМЕЩЕНИЯ РЕАКЦИЙ СБОКУ ОТ ВРЕМЕНИ */
+        .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+        .sent .msg-footer { flex-direction: row-reverse; }
+        .received .msg-footer { flex-direction: row; }
 
-        .time { font-size: 11px; color: #4A4A5A; padding: 3px 8px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; }
+        .time { font-size: 11px; color: #4A4A5A; padding: 4px 10px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; display: flex; align-items: center; }
 
-        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; width: fit-content; }
-        .sent .reactions-wrapper { justify-content: flex-end; }
-        .received .reactions-wrapper { justify-content: flex-start; }
+        .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
         .reaction-badge {
-            background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 14px; font-size: 14px; display: flex; align-items: center; gap: 5px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none;
+            background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none; height: 23px;
         }
         .reaction-badge:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
         .reaction-badge.active { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.4); box-shadow: 0 3px 10px rgba(108,99,255,0.15); }
-        .reaction-count { font-size: 12px; font-weight: 700; color: #4A4A5A; }
+        .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
         .reaction-modal-overlay {
@@ -221,16 +220,14 @@
         .reaction-modal-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
         .reaction-modal-box {
-            background: rgb(245, 245, 250); border: 1px solid rgba(255, 255, 255, 0.8); padding: 16px 24px; border-radius: 30px;
+            background: rgb(245, 245, 250); border: 1px solid rgba(255, 255, 255, 0.8); padding: 18px 24px; border-radius: 30px;
             box-shadow: 0 20px 45px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
             transform: scale(0.85); will-change: transform; transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.2);
         }
         .reaction-modal-overlay.active .reaction-modal-box { transform: scale(1); }
         .emojis-row { display: flex; gap: 12px; }
-
-        .action-menu-row { width: 100%; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; justify-content: center; }
-        .menu-action-btn { background: none; box-shadow: none; color: #6C63FF; font-size: 16px; font-weight: 600; padding: 6px 20px; width: auto; border-radius: 15px; }
-        .menu-action-btn:hover { background: rgba(108, 99, 255, 0.1); transform: none; box-shadow: none; }
+        .picker-emoji { font-size: 24px; cursor: pointer; transition: transform 0.1s; user-select: none; }
+        .picker-emoji:active { transform: scale(1.25); }
 
         .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
         .typing-indicator-container {
@@ -398,16 +395,12 @@
             </div>
             <div class="panel-content">
                 <div class="news-card">
-                    <h4>✨ Реакции свайпом вниз</h4>
-                    <p>Потяните сообщение вниз, чтобы открыть панель быстрых эмодзи и реакций!</p>
+                    <h4>✨ Компактные реакции</h4>
+                    <p>Теперь поставленные эмодзи отображаются на одной линии с индикатором времени.</p>
                 </div>
                 <div class="news-card">
-                    <h4>🎨 Капсула управления</h4>
-                    <p>Добавлена новая боковая панель с быстрыми окнами и красивым эффектом размытия.</p>
-                </div>
-                <div class="news-card">
-                    <h4>🚀 Разделение жестов</h4>
-                    <p>Свайп вправо — для цитирования, свайп вниз — для реакций. Без конфликтов!</p>
+                    <h4>👌 Умный свайп вниз</h4>
+                    <p>Тяните облачко плавно вниз — добавлена динамичная упругая анимация перед открытием меню!</p>
                 </div>
             </div>
         </div>
@@ -467,9 +460,6 @@
                 <span class="picker-emoji" data-emoji="🔥">🔥</span>
                 <span class="picker-emoji" data-emoji="💩">💩</span>
             </div>
-            <div class="action-menu-row">
-                <button class="menu-action-btn" id="menuReplyBtn">Ответить</button>
-            </div>
         </div>
     </div>
 
@@ -526,7 +516,6 @@
         const replyBarText = document.getElementById('replyBarText');
         const replyBarClose = document.getElementById('replyBarClose');
         const inputArea = document.getElementById('inputArea');
-        const menuReplyBtn = document.getElementById('menuReplyBtn');
 
         const newsBtn = document.getElementById('newsBtn');
         const membersBtn = document.getElementById('membersBtn');
@@ -787,13 +776,6 @@
         }
 
         replyBarClose.addEventListener('click', cancelReply);
-        menuReplyBtn.addEventListener('click', () => {
-            if (activeReactionMessageId) {
-                const msgDiv = document.getElementById('msg-' + activeReactionMessageId);
-                if (msgDiv) initiateReply(activeReactionMessageId, msgDiv.getAttribute('data-sender-name'), msgDiv.getAttribute('data-text'));
-            }
-            closeReactionPicker();
-        });
 
         async function toggleReaction(msgId, emoji) {
             if (!currentUser) return;
@@ -843,7 +825,6 @@
                 badge.addEventListener('click', async (e) => { e.stopPropagation(); await toggleReaction(msgId, emoji); });
                 wrapper.appendChild(badge);
             }
-            wrapper.style.display = hasReactions ? 'flex' : 'none';
         }
 
         function renderMessage(msg) {
@@ -876,12 +857,13 @@
             let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
             
+            // РЕАКЦИИ НА ОДНОЙ ЛИНИИ СО ВРЕМЕНЕМ ВНУТРИ MSG-FOOTER
             html += `
                 <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
                 <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
                 <div class="msg-footer">
                     <div class="time">${formatTime(timestamp)}</div>
-                    <div class="reactions-wrapper" style="display: none;"></div>
+                    <div class="reactions-wrapper"></div>
                 </div>
             `;
 
@@ -895,10 +877,9 @@
             const bubbleElement = div.querySelector('.bubble');
             const iconElement = div.querySelector('.swipe-reply-icon');
 
-            // ИСПРАВЛЕННЫЙ ТРЕКИНГ ЖЕСТОВ БЕЗ КОНФЛИКТОВ С СКРОЛЛОМ И ДРУГ ДРУГОМ
             let startX = 0, startY = 0;
             let currentTranslateX = 0, currentTranslateY = 0;
-            let swipeDirection = null; // 'horizontal', 'vertical' или null
+            let swipeDirection = null;
 
             bubbleElement.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
@@ -913,7 +894,6 @@
                 const diffX = e.touches[0].clientX - startX;
                 const diffY = e.touches[0].clientY - startY;
 
-                // Определяем направление намерения свайпа при первом заметном сдвиге
                 if (!swipeDirection) {
                     if (Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)) {
                         swipeDirection = 'horizontal';
@@ -922,7 +902,7 @@
                     }
                 }
 
-                // Обработка горизонтального свайпа (Ответ)
+                // Свайп вправо (Ответ)
                 if (swipeDirection === 'horizontal' && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
@@ -930,9 +910,10 @@
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
                 }
 
-                // Обработка вертикального свайпа вниз (Реакции)
+                // ДИНАМИЧНЫЙ СВАЙП ВНИЗ (Динамичное и легкое натяжение)
                 if (swipeDirection === 'vertical' && diffY > 0) {
-                    currentTranslateY = Math.min(diffY * 0.4, 45);
+                    // Используем логарифмическое сопротивление для упругого эффекта растяжения
+                    currentTranslateY = Math.min(diffY * 0.55, 65);
                     bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
                 }
             }, { passive: true });
@@ -946,14 +927,14 @@
                 if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
                     initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
                 } 
-                else if (swipeDirection === 'vertical' && currentTranslateY >= 25) {
+                // Легкий порог срабатывания для плавного открытия
+                else if (swipeDirection === 'vertical' && currentTranslateY >= 30) {
                     openReactionPicker(msg.id);
                 }
 
                 swipeDirection = null;
             }, { passive: true });
 
-            // Оставляем также клик на случай десктопных пользователей
             bubbleElement.addEventListener('click', (e) => { 
                 if (e.target.tagName !== 'A' && window.innerWidth > 768) openReactionPicker(msg.id); 
             });
