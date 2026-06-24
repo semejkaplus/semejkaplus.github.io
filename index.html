@@ -154,7 +154,7 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        /* ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ СПИСКА УЧАСТНИКОВ */
+        /* СТИЛИ ДЛЯ СПИСКА УЧАСТНИКОВ */
         .member-item { 
             padding: 14px 0; 
             border-bottom: 1px solid #F0F0F5; 
@@ -257,7 +257,20 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time font-size: 11px; color: #4A4A5A; padding: 4px 10px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; display: flex; align-items: center; }
+        /* ИСПРАВЛЕННЫЙ БЛОК ВРЕМЕНИ С ОТКРЫВАЮЩЕЙ СКОБКОЙ */
+        .time { 
+            font-size: 11px; 
+            color: #4A4A5A; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            background: rgba(255,255,255,0.5); 
+            border: 1px solid rgba(255,255,255,0.6); 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+            white-space: nowrap; 
+            height: 23px; 
+            display: inline-flex; 
+            align-items: center; 
+        }
 
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
@@ -748,7 +761,6 @@
         closeNewsBtn.addEventListener('click', closeAllPanels);
         closeMembersBtn.addEventListener('click', closeAllPanels);
 
-        /* ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА УЧАСТНИКОВ */
         async function loadMembersList() {
             try {
                 membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
