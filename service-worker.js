@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v14';
+const CACHE_NAME = 'semejka-v15'; // Подняли версию для обновления кэша
 const ASSETS = [
   '.',
   'index.html',
@@ -9,6 +9,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
+  self.skipWaiting(); // Автоматическая активация новой версии
 });
 
 self.addEventListener('activate', event => {
@@ -17,12 +18,19 @@ self.addEventListener('activate', event => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.url.includes('supabase.co') || event.request.url.includes('cdn.jsdelivr.net')) return;
+  // Добавляем исключения для Firebase, чтобы WebRTC-сигналинг и база данных не зависали
+  if (
+    event.request.url.includes('supabase.co') || 
+    event.request.url.includes('cdn.jsdelivr.net') ||
+    event.request.url.includes('firebase') ||
+    event.request.url.includes('googleapis.com')
+  ) return;
+
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
