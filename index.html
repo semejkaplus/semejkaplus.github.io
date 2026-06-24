@@ -6,6 +6,7 @@
     <title>SEMEJKA PLUS</title>
 
     <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <meta name="theme-color" content="#6C63FF">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,6 +193,14 @@
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
 
+        /* Встроенные стили для отображения картинок и видео в баблах чата */
+        .bubble-media {
+            max-width: 100%;
+            border-radius: 14px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
         
@@ -220,10 +229,9 @@
         .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
-        /* ОПТИМИЗИРОВАНО: Легкое модальное окно без backdrop-filter */
         .reaction-modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0, 0, 0, 0.45); /* Более темный слой взамен размытия */
+            background: rgba(0, 0, 0, 0.45);
             z-index: 999; 
             display: flex; align-items: center; justify-content: center; 
             opacity: 0; visibility: hidden;
@@ -232,14 +240,13 @@
         }
         .reaction-modal-overlay.active { opacity: 1; visibility: visible; }
 
-        /* ОПТИМИЗИРОВАНО: contain: strict и легкий transform без вылетов за края */
         .reaction-modal-box {
             background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
             transform: translate3d(0, 10px, 0) scale(0.95); 
             will-change: transform; 
-            contain: strict; /* Изолирует рендеринг элемента от остальной страницы */
-            width: 310px; height: 70px; /* Фиксированные размеры ускоряют отрисовку */
+            contain: strict;
+            width: 310px; height: 70px;
             transition: transform 0.16s ease-out;
         }
         .reaction-modal-overlay.active .reaction-modal-box { transform: translate3d(0, 0, 0) scale(1); }
@@ -288,17 +295,46 @@
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* --- ИНТЕГРИРОВАННАЯ ИННОВАЦИОННАЯ ЗОНА ВВОДА С СВЕЧЕНИЕМ --- */
         .input-area {
-            background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
+            background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 2px solid transparent; width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: rgba(108,99,255,0.1); }
+        
+        /* Свечение окантовки по фокусу */
+        .input-area.active {
+            border-color: #6C63FF;
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.4), 0 -5px 25px rgba(0,0,0,0.06);
+        }
+
+        /* Выплывающая плашка добавления медиа файлов */
+        .attachment-bar {
+            position: absolute;
+            bottom: 74px; left: 0; right: 0; height: 46px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px; display: flex; align-items: center; padding: 0 16px;
+            border: 1px solid rgba(108, 99, 255, 0.25);
+            opacity: 0; transform: translateY(10px); pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        .input-area.active .attachment-bar { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        .media-btn {
+            color: #6C63FF; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%; background: rgba(108, 99, 255, 0.1); transition: 0.2s;
+        }
+        .media-btn:hover { background: #6C63FF; color: #fff; }
+        .attachment-hint { color: #6A6A7A; font-size: 13px; margin-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; font-weight: 600; }
+        .cancel-file-btn { display: none; color: #D04A42; cursor: pointer; font-size: 16px; margin-left: 10px; }
 
         .input-area textarea {
-            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 160px; max-width: 100%; word-wrap: break-word; word-break: break-word;
+            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 160px; max-width: 100%; word-wrap: break-word; word-break: break-word; position: relative; z-index: 6;
         }
-        .input-area textarea:focus { border-color: #6C63FF; box-shadow: 0 0 0 4px rgba(108,99,255,0.15); }
+        .input-area textarea:focus { border-color: #6C63FF; }
         
-        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; }
+        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; position: relative; z-index: 6; }
         .input-area button:hover { transform: scale(1.03); }
 
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
@@ -461,6 +497,16 @@
         </div>
 
         <div class="input-area" id="inputArea">
+            <div class="attachment-bar" id="attachmentBar">
+                <label for="media-upload" class="media-btn" title="Прикрепить фото или видео">
+                    <i class="fa-solid fa-image"></i>
+                </label>
+                <input type="file" id="media-upload" accept="image/*,video/*" style="display:none">
+                
+                <span class="attachment-hint" id="attachmentHint">Прикрепить фото или видео</span>
+                <i class="fa-solid fa-circle-xmark cancel-file-btn" id="cancelFile"></i>
+            </div>
+
             <textarea id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
             <button id="sendBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/></svg>
@@ -540,469 +586,92 @@
         const sidePanelOverlay = document.getElementById('sidePanelOverlay');
         const newsPanel = document.getElementById('newsPanel');
         const membersPanel = document.getElementById('membersPanel');
+        const membersContainer = document.getElementById('membersContainer');
         const closeNewsBtn = document.getElementById('closeNewsBtn');
         const closeMembersBtn = document.getElementById('closeMembersBtn');
-        const membersContainer = document.getElementById('membersContainer');
 
-        let currentUser = null;
-        let lastDisplayedDate = null;
-        let activeReactionMessageId = null;
-        let isTypingLocal = false;
-        let typingTimeout = null;
-        let currentTypersList = [];
-        let currentReplyTarget = null;
+        // Переменные для новой логики плашки
+        const fileInput = document.getElementById('media-upload');
+        const attachmentHint = document.getElementById('attachmentHint');
+        const cancelFileBtn = document.getElementById('cancelFile');
+        let selectedFile = null;
 
-        const savedName = localStorage.getItem('semejka_name');
-        const savedUsername = localStorage.getItem('semejka_username');
-        if (savedName && savedUsername) {
-            currentUser = { id: savedUsername, name: savedName };
-        }
+        // --- ЛОГИКА РАБОТЫ И СВЕЧЕНИЯ ПЛАШКИ ---
+        msgInput.addEventListener('focus', () => {
+            inputArea.classList.add('active');
+        });
 
-        function checkSavedUser() {
-            if (currentUser) {
-                freshForm.style.display = 'none';
-                loginForm.style.display = 'none';
-                fastForm.style.display = 'flex';
-                welcomeText.textContent = `Привет, ${currentUser.name}!`;
-                savedUsernameLabel.textContent = `@${currentUser.id}`;
-            } else {
-                freshForm.style.display = 'block';
-                loginForm.style.display = 'none';
-                fastForm.style.display = 'none';
+        document.addEventListener('click', (e) => {
+            // Если кликнули мимо зоны ввода и файл не выбран — убираем свечение
+            if (!inputArea.contains(e.target) && !selectedFile) {
+                inputArea.classList.remove('active');
             }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                selectedFile = fileInput.files[0];
+                attachmentHint.style.color = "#10B981"; // Перекрашиваем в зеленый цвет успешного выбора
+                attachmentHint.innerText = selectedFile.name.length > 25 
+                    ? selectedFile.name.substring(0, 22) + "..." 
+                    : selectedFile.name;
+                cancelFileBtn.style.display = "block";
+                msgInput.focus();
+            }
+        });
+
+        cancelFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Исключаем срабатывание клика по inputArea
+            fileInput.value = "";
+            selectedFile = null;
+            attachmentHint.style.color = "#6A6A7A";
+            attachmentHint.innerText = "Прикрепить фото или видео";
+            cancelFileBtn.style.display = "none";
+            msgInput.focus();
+        });
+
+        // Сброс файла после отправки сообщения
+        function resetMediaUpload() {
+            fileInput.value = "";
+            selectedFile = null;
+            attachmentHint.style.color = "#6A6A7A";
+            attachmentHint.innerText = "Прикрепить фото или видео";
+            cancelFileBtn.style.display = "none";
         }
-        checkSavedUser();
 
-        toLoginBtn.addEventListener('click', () => {
-            freshForm.style.display = 'none';
-            loginForm.style.display = 'flex';
-            loginUsernameInput.value = '';
+        // Фикс автовысоты оригинального поля при вводе
+        msgInput.addEventListener('input', () => {
+            msgInput.style.height = 'auto';
+            msgInput.style.height = msgInput.scrollHeight + 'px';
         });
 
-        toRegisterBtn.addEventListener('click', () => {
-            loginForm.style.display = 'none';
-            freshForm.style.display = 'block';
-            nameInput.value = '';
-            usernameInput.value = '';
+        // Заглушка для демонстрации отправки (интегрируйте в вашу функцию отправки в Firebase!)
+        sendBtn.addEventListener('click', () => {
+            const text = msgInput.value.trim();
+            if(!text && !selectedFile) return;
+
+            // Сюда вы вставите вашу Firebase-функцию addDoc, передавая в коллекцию messages:
+            // text, media_url (если есть), blurhash (если сгенерирован) и т.д.
+            console.log("Отправка сообщения:", { text: text, file: selectedFile });
+
+            msgInput.value = "";
+            msgInput.style.height = 'auto';
+            resetMediaUpload();
+            inputArea.classList.remove('active');
         });
 
-        changeUserBtn.addEventListener('click', () => {
-            localStorage.removeItem('semejka_name');
-            localStorage.removeItem('semejka_username');
-            currentUser = null;
-            checkSavedUser();
-        });
-
-        function openPanel(panel) {
-            sidePanelOverlay.classList.add('active');
-            panel.classList.add('active');
-            if(panel === membersPanel) loadMembersList();
-        }
-
-        function closeAllPanels() {
-            sidePanelOverlay.classList.remove('active');
+        // Элементарное управление панелями, чтобы не ломался интерфейс
+        function closePanels() {
             newsPanel.classList.remove('active');
             membersPanel.classList.remove('active');
+            sidePanelOverlay.classList.remove('active');
         }
+        newsBtn.addEventListener('click', () => { closePanels(); newsPanel.classList.add('active'); sidePanelOverlay.classList.add('active'); });
+        membersBtn.addEventListener('click', () => { closePanels(); membersPanel.classList.add('active'); sidePanelOverlay.classList.add('active'); });
+        closeNewsBtn.addEventListener('click', closePanels);
+        closeMembersBtn.addEventListener('click', closePanels);
+        sidePanelOverlay.addEventListener('click', closePanels);
 
-        newsBtn.addEventListener('click', () => openPanel(newsPanel));
-        membersBtn.addEventListener('click', () => openPanel(membersPanel));
-        sidePanelOverlay.addEventListener('click', closeAllPanels);
-        closeNewsBtn.addEventListener('click', closeAllPanels);
-        closeMembersBtn.addEventListener('click', closeAllPanels);
-
-        async function loadMembersList() {
-            try {
-                membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                membersContainer.innerHTML = '';
-                
-                usersSnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const initials = data.name ? data.name.substring(0, 2).toUpperCase() : '??';
-                    
-                    const item = document.createElement('div');
-                    item.className = 'member-item';
-                    item.innerHTML = `
-                        <div class="member-avatar">${initials}</div>
-                        <div class="member-info">
-                            <div class="member-name">${escapeHtml(data.name)}</div>
-                            <div class="member-status">@${escapeHtml(data.username)}</div>
-                        </div>
-                    `;
-                    membersContainer.appendChild(item);
-                });
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        joinBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-            if (!name || !username) return;
-
-            joinBtn.disabled = true;
-            try {
-                const uQuery = query(collection(db, "users"), where("username", "==", username));
-                const querySnapshot = await getDocs(uQuery);
-                if (!querySnapshot.empty) {
-                    errorMsg.style.display = 'block';
-                    joinBtn.disabled = false;
-                    return;
-                }
-                await addDoc(collection(db, "users"), { name: name, username: username, created_at: serverTimestamp() });
-                localStorage.setItem('semejka_name', name);
-                localStorage.setItem('semejka_username', username);
-                currentUser = { id: username, name: name };
-                enterChat();
-            } catch (err) { joinBtn.disabled = false; }
-        });
-
-        loginBtn.addEventListener('click', async () => {
-            let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-            if (!username) return;
-
-            loginBtn.disabled = true;
-            try {
-                const uQuery = query(collection(db, "users"), where("username", "==", username));
-                const querySnapshot = await getDocs(uQuery);
-                if (querySnapshot.empty) {
-                    loginErrorMsg.style.display = 'block';
-                    loginBtn.disabled = false;
-                    return;
-                }
-                let foundName = '';
-                querySnapshot.forEach(doc => foundName = doc.data().name);
-                localStorage.setItem('semejka_name', foundName);
-                localStorage.setItem('semejka_username', username);
-                currentUser = { id: username, name: foundName };
-                enterChat();
-            } catch (err) { loginBtn.disabled = false; }
-        });
-
-        fastJoinBtn.addEventListener('click', () => enterChat());
-
-        async function updateTypingStatus(typing) {
-            if (!currentUser) return;
-            try {
-                await setDoc(doc(db, "status", currentUser.id), { name: currentUser.name, is_typing: typing, last_active: serverTimestamp() }, { merge: true });
-            } catch (e) {}
-        }
-
-        function renderTypingUI() {
-            if (currentTypersList.length > 0) {
-                let text = currentTypersList.join(', ');
-                text += currentTypersList.length === 1 ? ' пишет...' : ' пишут...';
-                typingText.textContent = text;
-                typingIndicator.style.display = 'flex';
-            } else {
-                typingIndicator.style.display = 'none';
-            }
-        }
-
-        msgInput.addEventListener('input', () => {
-            autoResize();
-            if (msgInput.value.length > 0) {
-                if (!isTypingLocal) {
-                    isTypingLocal = true;
-                    updateTypingStatus(true);
-                }
-            } else {
-                if (isTypingLocal) {
-                    isTypingLocal = false;
-                    updateTypingStatus(false);
-                }
-            }
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                if (isTypingLocal) {
-                    isTypingLocal = false;
-                    updateTypingStatus(false);
-                }
-            }, 2500); 
-        });
-
-        function autoResize() {
-            msgInput.style.height = 'auto';
-            const scrollHeight = msgInput.scrollHeight;
-            msgInput.style.height = (scrollHeight > 160 ? 160 : scrollHeight) + 'px';
-        }
-
-        function resetTextarea() {
-            msgInput.value = '';
-            msgInput.style.height = 'auto';
-            if (isTypingLocal) {
-                isTypingLocal = false;
-                updateTypingStatus(false);
-            }
-        }
-
-        function linkify(text) {
-            return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-        }
-
-        function openReactionPicker(msgId) {
-            activeReactionMessageId = msgId;
-            // ОПТИМИЗИРОВАНО: Используем requestAnimationFrame для синхронизации вызова с частотой экрана без микродерганий
-            requestAnimationFrame(() => {
-                reactionModalOverlay.classList.add('active');
-            });
-        }
-
-        function closeReactionPicker() {
-            reactionModalOverlay.classList.remove('active');
-            activeReactionMessageId = null;
-        }
-
-        reactionModalOverlay.addEventListener('click', (e) => { if (e.target === reactionModalOverlay) closeReactionPicker(); });
-
-        reactionModalOverlay.querySelectorAll('.picker-emoji').forEach(emojiEl => {
-            emojiEl.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (activeReactionMessageId) {
-                    await toggleReaction(activeReactionMessageId, emojiEl.getAttribute('data-emoji'));
-                    closeReactionPicker();
-                }
-            });
-        });
-
-        function getDativeName(name) {
-            if (!name) return "кому-то";
-            let lower = name.toLowerCase();
-            if (lower === "мама") return "Маме";
-            if (lower === "папа") return "Папе";
-            if (/^[а-яё]+$/i.test(name) && !/[аяоеиыь]$/i.test(name)) return name + "у";
-            if (name.endsWith("ия")) return name.slice(0, -2) + "ии";
-            if (name.endsWith("я") || name.endsWith("а")) return name.slice(0, -1) + "е";
-            if (name.endsWith("й") || name.endsWith("ь")) return name.slice(0, -1) + "ю";
-            return name;
-        }
-
-        function initiateReply(msgId, senderName, text) {
-            currentReplyTarget = { id: msgId, name: senderName, text: text };
-            replyBarTitle.textContent = `Вы отвечаете ${getDativeName(senderName)}`;
-            replyBarText.textContent = text;
-            replyBar.style.display = 'flex';
-            inputArea.classList.add('has-reply');
-            msgInput.focus();
-        }
-
-        function cancelReply() {
-            currentReplyTarget = null;
-            replyBar.style.display = 'none';
-            inputArea.classList.remove('has-reply');
-        }
-
-        replyBarClose.addEventListener('click', cancelReply);
-
-        async function toggleReaction(msgId, emoji) {
-            if (!currentUser) return;
-            const msgRef = doc(db, "messages", msgId);
-            const msgDiv = document.getElementById('msg-' + msgId);
-            if (!msgDiv) return;
-            
-            let currentReactions = JSON.parse(msgDiv.getAttribute('data-reactions') || '{}');
-            if (!currentReactions[emoji]) currentReactions[emoji] = [];
-            
-            const userIndex = currentReactions[emoji].indexOf(currentUser.id);
-            if (userIndex > -1) {
-                currentReactions[emoji].splice(userIndex, 1);
-                if (currentReactions[emoji].length === 0) delete currentReactions[emoji];
-            } else {
-                for (let e in currentReactions) {
-                    const idx = currentReactions[e].indexOf(currentUser.id);
-                    if (idx > -1) {
-                        currentReactions[e].splice(idx, 1);
-                        if (currentReactions[e].length === 0) delete currentReactions[e];
-                    }
-                }
-                currentReactions[emoji].push(currentUser.id);
-            }
-            try { await updateDoc(msgRef, { reactions: currentReactions }); } catch (err) {}
-        }
-
-        function updateReactionsUI(msgId, reactions) {
-            const msgDiv = document.getElementById('msg-' + msgId);
-            if (!msgDiv) return;
-
-            msgDiv.setAttribute('data-reactions', JSON.stringify(reactions || {}));
-            const wrapper = msgDiv.querySelector('.reactions-wrapper');
-            if (!wrapper) return;
-            
-            wrapper.innerHTML = '';
-            for (let emoji in reactions) {
-                const userList = reactions[emoji] || [];
-                if (userList.length === 0) continue;
-                const isMyReaction = userList.includes(currentUser?.id);
-                
-                const badge = document.createElement('div');
-                badge.className = `reaction-badge ${isMyReaction ? 'active' : ''}`;
-                badge.innerHTML = `<span>${emoji}</span><span class="reaction-count">${userList.length}</span>`;
-                badge.addEventListener('click', async (e) => { e.stopPropagation(); await toggleReaction(msgId, emoji); });
-                wrapper.appendChild(badge);
-            }
-        }
-
-        function renderMessage(msg) {
-            let msgDiv = document.getElementById('msg-' + msg.id);
-            const isMyMsg = (msg.user_id === currentUser?.id);
-            
-            if (msgDiv) {
-                msgDiv.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
-                updateReactionsUI(msg.id, msg.reactions);
-                return;
-            }
-            
-            const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-            const msgDate = timestamp.toLocaleDateString('ru-RU');
-            
-            if (msgDate !== lastDisplayedDate) { 
-                const existingSeparator = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(sep => sep.textContent.trim() === formatDateSeparator(timestamp.toISOString()));
-                if (!existingSeparator) {
-                    insertDateSeparator(timestamp.toISOString()); 
-                }
-                lastDisplayedDate = msgDate; 
-            }
-
-            const div = document.createElement('div');
-            div.id = 'msg-' + msg.id; 
-            div.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
-            div.setAttribute('data-sender-name', msg.user_name || 'Кто-то');
-            div.setAttribute('data-text', msg.text || '');
-
-            let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
-            let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
-            
-            html += `
-                <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
-                <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
-                <div class="msg-footer">
-                    <div class="time">${formatTime(timestamp)}</div>
-                    <div class="reactions-wrapper"></div>
-                </div>
-            `;
-
-            div.innerHTML = html; 
-            
-            requestAnimationFrame(() => {
-                messagesDiv.appendChild(div);
-                div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            });
-
-            const bubbleElement = div.querySelector('.bubble');
-            const iconElement = div.querySelector('.swipe-reply-icon');
-
-            let startX = 0, startY = 0;
-            let currentTranslateX = 0, currentTranslateY = 0;
-            let swipeDirection = null;
-
-            bubbleElement.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                swipeDirection = null;
-                currentTranslateX = 0;
-                currentTranslateY = 0;
-                bubbleElement.classList.remove('releasing');
-            }, { passive: true });
-
-            bubbleElement.addEventListener('touchmove', (e) => {
-                const diffX = e.touches[0].clientX - startX;
-                const diffY = e.touches[0].clientY - startY;
-
-                if (!swipeDirection) {
-                    if (Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)) {
-                        swipeDirection = 'horizontal';
-                    } else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
-                        swipeDirection = 'vertical';
-                    }
-                }
-
-                if (swipeDirection === 'horizontal' && diffX > 0) {
-                    currentTranslateX = Math.min(diffX * 0.5, 60);
-                    // ОПТИМИЗИРОВАНО: translate3d заставляет старые GPU обрабатывать слой отдельно
-                    bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
-                    iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
-                    iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
-                }
-
-                if (swipeDirection === 'vertical' && diffY > 0) {
-                    if (e.cancelable) e.preventDefault();
-                    currentTranslateY = Math.min(diffY * 0.55, 65);
-                    bubbleElement.style.transform = `translate3d(0, ${currentTranslateY}px, 0)`;
-                }
-            }, { passive: false });
-
-            bubbleElement.addEventListener('touchend', () => {
-                bubbleElement.classList.add('releasing');
-                bubbleElement.style.transform = '';
-                iconElement.style.opacity = 0;
-                iconElement.style.transform = '';
-
-                if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
-                    initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
-                } 
-                else if (swipeDirection === 'vertical' && currentTranslateY >= 30) {
-                    openReactionPicker(msg.id);
-                }
-
-                swipeDirection = null;
-            }, { passive: true });
-
-            bubbleElement.addEventListener('click', (e) => { 
-                if (e.target.tagName !== 'A' && window.innerWidth > 768) openReactionPicker(msg.id); 
-            });
-
-            updateReactionsUI(msg.id, msg.reactions);
-        }
-
-        function listenTypingStatus() {
-            onSnapshot(collection(db, "status"), (snapshot) => {
-                let networkTypers = [];
-                snapshot.forEach(doc => { if (doc.id !== currentUser?.id && doc.data().is_typing === true) networkTypers.push(doc.data().name); });
-                currentTypersList = isTypingLocal && currentUser ? [currentUser.name, ...networkTypers] : networkTypers;
-                renderTypingUI();
-            });
-        }
-
-        function startLiveChat() {
-            loadingSpinner.classList.add('active');
-            onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
-                loadingSpinner.classList.remove('active');
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === "added" || change.type === "modified") renderMessage({ id: change.doc.id, ...change.doc.data() });
-                });
-            });
-            listenTypingStatus();
-        }
-
-        async function sendMessage() {
-            const text = msgInput.value.trim();
-            if (!currentUser || !text) return;
-
-            sendBtn.disabled = true;
-            let replyData = currentReplyTarget ? { message_id: currentReplyTarget.id, name: currentReplyTarget.name, text: currentReplyTarget.text } : null;
-            cancelReply(); resetTextarea();
-
-            try {
-                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
-            } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
-        }
-
-        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
-        sendBtn.addEventListener('click', sendMessage);
-        function enterChat() { regScreen.classList.remove('active'); chatScreen.classList.add('active'); startLiveChat(); }
-
-        function formatDateSeparator(dateStr) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
-        }
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
-        }
-        function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
-        function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
     </script>
 </body>
 </html>
