@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SEMEJKA PLUS</title>
 
-    <link rel="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
+    <link class="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
     <meta name="theme-color" content="#6C63FF">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -154,7 +154,6 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        /* Стили списка участников под ваш дизайн (кнопка на всю ширину снизу) */
         .member-item { 
             display: flex; 
             flex-direction: column;
@@ -350,7 +349,6 @@
             background: rgba(108, 99, 255, 0.12); border-radius: 50%; will-change: transform, opacity; pointer-events: none;
         }
 
-        /* Окно аудиозвонка */
         .call-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(20, 20, 35, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
@@ -589,10 +587,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Регистрация Service Worker для PWA
+        // СКРИПТ АВТОМАТИЧЕСКОГО ОБНОВЛЕНИЯ PWA:
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js').catch(() => {});
+                navigator.serviceWorker.register('service-worker.js').then(reg => {
+                    // Раз в 5 минут принудительно опрашиваем сервер на наличие апдейта сервисного скрипта
+                    setInterval(() => { reg.update(); }, 1000 * 60 * 5);
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // Перезагружаем интерфейс сразу, как только новая сборка скачалась на телефон
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }).catch(() => {});
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
             });
         }
 
@@ -1162,7 +1181,6 @@
             };
 
             try {
-                // Принудительно будим плеер для обхода ограничений мобильных ОС в фоне
                 remoteAudio.play().catch(() => {});
 
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
