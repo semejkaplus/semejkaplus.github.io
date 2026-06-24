@@ -156,32 +156,32 @@
         .member-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F0F5; }
         .member-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
         
-        /* Исправленная структура: текст слева занимает максимум пространства, кнопка справа стабильна */
-        .member-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 1; min-width: 0; }
+        /* Исправленная структура: Близкое расположение элементов без конфликтов */
+        .member-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
         .member-text-block { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
         .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
         
-        /* Ультракомпактная кнопка звонка */
+        /* Компактная кнопка звонка, расположенная вплотную */
         .member-call-btn {
             background: linear-gradient(135deg, #6C63FF, #8B82FF); 
             color: white; 
             border: none; 
-            padding: 6px 14px; 
-            border-radius: 14px; 
+            padding: 6px 12px; 
+            border-radius: 12px; 
             font-size: 12px; 
             font-weight: 700;
             cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s; 
             box-shadow: 0 3px 8px rgba(108,99,255,0.15);
-            flex-shrink: 0;
+            flex-shrink: 0; /* Не дает кнопке сжиматься */
             white-space: nowrap;
         }
         .member-call-btn:hover { transform: scale(1.03); box-shadow: 0 5px 11px rgba(108,99,255,0.25); }
         .member-call-btn:active { transform: scale(0.97); }
         
-        /* Заглушка, чтобы строка "Вы" сохраняла отступы и ровную верстку */
-        .member-me-badge { font-size: 12px; color: #8A8A9A; font-weight: 600; padding-right: 8px; flex-shrink: 0; }
+        /* Бейдж "Вы" */
+        .member-me-badge { font-size: 12px; color: #8A8A9A; font-weight: 600; padding-right: 4px; flex-shrink: 0; }
 
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
@@ -232,7 +232,7 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        .time font-size: 11px; color: #4A4A5A; padding: 4px 10px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; display: flex; align-items: center; }
+        .time { font-size: 11px; color: #4A4A5A; padding: 4px 10px; display: inline-block; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; display: flex; align-items: center; }
 
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
@@ -321,7 +321,7 @@
         }
         .input-area textarea:focus { border-color: #6C63FF; box-shadow: 0 0 0 4px rgba(108,99,255,0.15); }
         
-        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; }
+        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 166px rgba(108,99,255,0.3); border: none; flex-shrink: 0; }
         .input-area button:hover { transform: scale(1.03); }
 
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
@@ -710,7 +710,7 @@
                     const item = document.createElement('div');
                     item.className = 'member-item';
                     
-                    // Обновленный блок: данные теперь выводятся для всех (Имя и юзернейм)
+                    // Оптимизированная верстка: Кнопка расположена близко, но не наслаивается
                     let innerHTML = `
                         <div class="member-avatar">${initials}</div>
                         <div class="member-info">
@@ -720,7 +720,6 @@
                             </div>
                     `;
                     
-                    // Показываем компактную кнопку звонка для других или надпись "Вы" для себя
                     if (!isMe) {
                         innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Звонок</button>`;
                     } else {
