@@ -152,11 +152,16 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; }
+        .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; position: relative; }
         .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-        .member-info { display: flex; flex-direction: column; min-width: 0; }
+        .member-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .member-call-btn {
+            background: rgba(108, 99, 255, 0.1); color: #6C63FF; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; box-shadow: none; padding: 0;
+        }
+        .member-call-btn:hover { background: #6C63FF; color: white; transform: scale(1.05); }
 
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
@@ -220,10 +225,9 @@
         .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
 
-        /* ОПТИМИЗИРОВАНО: Легкое модальное окно без backdrop-filter */
         .reaction-modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0, 0, 0, 0.45); /* Более темный слой взамен размытия */
+            background: rgba(0, 0, 0, 0.45);
             z-index: 999; 
             display: flex; align-items: center; justify-content: center; 
             opacity: 0; visibility: hidden;
@@ -232,14 +236,13 @@
         }
         .reaction-modal-overlay.active { opacity: 1; visibility: visible; }
 
-        /* ОПТИМИЗИРОВАНО: contain: strict и легкий transform без вылетов за края */
         .reaction-modal-box {
             background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
             transform: translate3d(0, 10px, 0) scale(0.95); 
             will-change: transform; 
-            contain: strict; /* Изолирует рендеринг элемента от остальной страницы */
-            width: 310px; height: 70px; /* Фиксированные размеры ускоряют отрисовку */
+            contain: strict;
+            width: 310px; height: 70px;
             transition: transform 0.16s ease-out;
         }
         .reaction-modal-overlay.active .reaction-modal-box { transform: translate3d(0, 0, 0) scale(1); }
@@ -309,6 +312,37 @@
             opacity: 0; color: #6C63FF; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
             background: rgba(108, 99, 255, 0.12); border-radius: 50%; will-change: transform, opacity; pointer-events: none;
         }
+
+        /* Стиль для всплывающего окна аудиозвонка */
+        .call-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(20, 20, 35, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .call-overlay.active { display: flex; }
+        .call-box {
+            background: rgba(255, 255, 255, 0.85); border-radius: 40px; border: 1px solid rgba(255,255,255,0.5);
+            padding: 40px 30px; max-width: 340px; width: 100%; text-align: center;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.25);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .call-avatar-big {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: 800; margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(108,99,255,0.3);
+        }
+        .call-name { font-size: 22px; font-weight: 700; color: #2A2A3A; margin-bottom: 6px; }
+        .call-status { font-size: 15px; color: #7A7A8A; font-weight: 600; margin-bottom: 35px; min-height: 22px; }
+        .call-actions { display: flex; gap: 20px; width: 100%; justify-content: center; }
+        .call-btn-action {
+            width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; border: none; transition: 0.2s; color: white;
+        }
+        .call-btn-action.accept { background: #34C759; box-shadow: 0 8px 20px rgba(52,199,89,0.3); }
+        .call-btn-action.reject { background: #FF3B30; box-shadow: 0 8px 20px rgba(255,59,48,0.3); }
+        .call-btn-action:hover { transform: scale(1.08); }
 
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
@@ -413,12 +447,12 @@
             </div>
             <div class="panel-content">
                 <div class="news-card">
-                    <h4>✨ Компактные реакции</h4>
-                    <p>Теперь поставленные эмодзи отображаются на одной линии с индикатором времени.</p>
+                    <h4>📞 Аудиозвонки</h4>
+                    <p>Теперь можно созваниваться лично из списка участников. Защищено и работает по всему миру!</p>
                 </div>
                 <div class="news-card">
-                    <h4>👌 Без багов прокрутки</h4>
-                    <p>Исправлено поведение страницы при активационном свайпе сообщений вниз.</p>
+                    <h4>✨ Компактные реакции</h4>
+                    <p>Реакции отображаются на одной линии с индикатором времени.</p>
                 </div>
             </div>
         </div>
@@ -468,6 +502,20 @@
         </div>
     </div>
 
+    <div class="call-overlay" id="callOverlay">
+        <div class="call-box">
+            <div class="call-avatar-big" id="callAvatar">?</div>
+            <div class="call-name" id="callName">Пользователь</div>
+            <div class="call-status" id="callStatusText">Инициализация...</div>
+            <div class="call-actions">
+                <button class="call-btn-action accept" id="callAcceptBtn" style="display: none;">✔</button>
+                <button class="call-btn-action reject" id="callRejectBtn">❌</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="remoteAudio" autoplay></audio>
+
     <div class="reaction-modal-overlay" id="reactionModalOverlay">
         <div class="reaction-modal-box">
             <div class="emojis-row">
@@ -483,7 +531,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, setDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAlt7Q4ZjhSM9M3gytNk1UA6XHPROtz7eQ",
@@ -544,6 +592,15 @@
         const closeMembersBtn = document.getElementById('closeMembersBtn');
         const membersContainer = document.getElementById('membersContainer');
 
+        // Звонки элементы UI
+        const callOverlay = document.getElementById('callOverlay');
+        const callAvatar = document.getElementById('callAvatar');
+        const callName = document.getElementById('callName');
+        const callStatusText = document.getElementById('callStatusText');
+        const callAcceptBtn = document.getElementById('callAcceptBtn');
+        const callRejectBtn = document.getElementById('callRejectBtn');
+        const remoteAudio = document.getElementById('remoteAudio');
+
         let currentUser = null;
         let lastDisplayedDate = null;
         let activeReactionMessageId = null;
@@ -551,6 +608,14 @@
         let typingTimeout = null;
         let currentTypersList = [];
         let currentReplyTarget = null;
+
+        // Звонки состояния WebRTC
+        let peerConnection = null;
+        let localStream = null;
+        let currentCallId = null;
+        let isCaller = false;
+        let callUnsubscribe = null;
+        let audioRing = null;
 
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
@@ -620,17 +685,34 @@
                 usersSnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const initials = data.name ? data.name.substring(0, 2).toUpperCase() : '??';
+                    const isMe = data.username === currentUser?.id;
                     
                     const item = document.createElement('div');
                     item.className = 'member-item';
-                    item.innerHTML = `
+                    
+                    let innerHTML = `
                         <div class="member-avatar">${initials}</div>
                         <div class="member-info">
                             <div class="member-name">${escapeHtml(data.name)}</div>
                             <div class="member-status">@${escapeHtml(data.username)}</div>
                         </div>
                     `;
+                    
+                    if (!isMe) {
+                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}" title="Позвонить">📞</button>`;
+                    }
+                    
+                    item.innerHTML = innerHTML;
                     membersContainer.appendChild(item);
+                });
+
+                // События на кнопки звонка
+                membersContainer.querySelectorAll('.member-call-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeAllPanels();
+                        startAudioCall(btn.getAttribute('data-username'), btn.getAttribute('data-name'));
+                    });
                 });
             } catch(e) {
                 console.error(e);
@@ -744,7 +826,6 @@
 
         function openReactionPicker(msgId) {
             activeReactionMessageId = msgId;
-            // ОПТИМИЗИРОВАНО: Используем requestAnimationFrame для синхронизации вызова с частотой экрана без микродерганий
             requestAnimationFrame(() => {
                 reactionModalOverlay.classList.add('active');
             });
@@ -920,7 +1001,6 @@
 
                 if (swipeDirection === 'horizontal' && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
-                    // ОПТИМИЗИРОВАНО: translate3d заставляет старые GPU обрабатывать слой отдельно
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
                     iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
@@ -965,6 +1045,219 @@
             });
         }
 
+        // --- ЛОГИКА АУДИОЗВОНКОВ (WEBRTC + METERED) ---
+
+        // Твой авторизованный запрос настроек TURN-серверов с персональным apiKey
+        async function fetchIceServers() {
+            try {
+                const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (err) {
+                console.warn("Не удалось получить TURN с Metered, используем STUN от Google:", err);
+            }
+            return [{ urls: "stun:stun.l.google.com:19302" }];
+        }
+
+        // Звуковое сопровождение (гудки)
+        function playRingTone(type) {
+            stopRingTone();
+            audioRing = new Audio();
+            if (type === 'dial') {
+                audioRing.src = 'https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg';
+                audioRing.loop = true;
+            } else if (type === 'ring') {
+                audioRing.src = 'https://actions.google.com/sounds/v1/cell_phones/cellular_ring.ogg';
+                audioRing.loop = true;
+            }
+            audioRing.play().catch(() => {});
+        }
+
+        function stopRingTone() {
+            if (audioRing) {
+                audioRing.pause();
+                audioRing = null;
+            }
+        }
+
+        // Настройка WebRTC соединения
+        async function setupPeerConnection() {
+            const iceServers = await fetchIceServers();
+            peerConnection = new RTCPeerConnection({ iceServers });
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate && currentCallId) {
+                    const candidatesCol = collection(db, "calls", currentCallId, isCaller ? "callerCandidates" : "calleeCandidates");
+                    addDoc(candidatesCol, event.candidate.toJSON()).catch(()=>{});
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                if (event.streams && event.streams[0]) {
+                    remoteAudio.srcObject = event.streams[0];
+                }
+            };
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            } catch (err) {
+                alert("Ошибка доступа к микрофону! Пожалуйста, разрешите доступ для звонков.");
+                endCall();
+            }
+        }
+
+        // Запуск исходящего вызова
+        async function startAudioCall(targetUsername, targetName) {
+            if (peerConnection) return;
+            
+            isCaller = true;
+            currentCallId = currentUser.id + "_" + targetUsername + "_" + Date.now();
+            
+            callAvatar.textContent = targetName.substring(0, 2).toUpperCase();
+            callName.textContent = targetName;
+            callStatusText.textContent = "Вызов...";
+            callAcceptBtn.style.display = "none";
+            callOverlay.classList.add("active");
+            
+            playRingTone('dial');
+            await setupPeerConnection();
+
+            const callDocRef = doc(db, "calls", currentCallId);
+            
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            await setDoc(callDocRef, {
+                id: currentCallId,
+                callerId: currentUser.id,
+                callerName: currentUser.name,
+                calleeId: targetUsername,
+                status: "ringing",
+                offer: { type: offer.type, sdp: offer.sdp }
+            });
+
+            callUnsubscribe = onSnapshot(callDocRef, async (snapshot) => {
+                if (!snapshot.exists()) {
+                    endCall();
+                    return;
+                }
+                const data = snapshot.data();
+                
+                if (data.status === "accepted" && data.answer && !peerConnection.currentRemoteDescription) {
+                    stopRingTone();
+                    callStatusText.textContent = "Разговор...";
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                }
+                
+                if (data.status === "rejected") {
+                    endCall();
+                }
+            });
+
+            onSnapshot(collection(db, "calls", currentCallId, "calleeCandidates"), (snapshot) => {
+                snapshot.docChanges().forEach(async (change) => {
+                    if (change.type === "added" && peerConnection) {
+                        try { await peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data())); } catch(e){}
+                    }
+                });
+            });
+        }
+
+        // Прослушивание входящих вызовов
+        function listenIncomingCalls() {
+            if (!currentUser) return;
+            
+            const callsQuery = query(collection(db, "calls"), where("calleeId", "==", currentUser.id), where("status", "==", "ringing"));
+            
+            onSnapshot(callsQuery, (snapshot) => {
+                if (peerConnection || isCaller) return;
+                
+                snapshot.forEach(async (changeDoc) => {
+                    const callData = changeDoc.data();
+                    currentCallId = callData.id;
+                    isCaller = false;
+
+                    callAvatar.textContent = callData.callerName.substring(0, 2).toUpperCase();
+                    callName.textContent = callData.callerName;
+                    callStatusText.textContent = "Входящий аудиозвонок...";
+                    callAcceptBtn.style.display = "block";
+                    callOverlay.classList.add("active");
+                    
+                    playRingTone('ring');
+
+                    callUnsubscribe = onSnapshot(doc(db, "calls", currentCallId), (snap) => {
+                        if (!snap.exists() || snap.data().status === "rejected") {
+                            endCall();
+                        }
+                    });
+                });
+            });
+        }
+
+        // Принять вызов
+        callAcceptBtn.addEventListener('click', async () => {
+            stopRingTone();
+            callAcceptBtn.style.display = "none";
+            callStatusText.textContent = "Соединение...";
+
+            const callDocRef = doc(db, "calls", currentCallId);
+            const callSnap = await getDoc(callDocRef);
+            if (!callSnap.exists()) { endCall(); return; }
+            
+            const callData = callSnap.data();
+            await setupPeerConnection();
+
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            await updateDoc(callDocRef, {
+                status: "accepted",
+                answer: { type: answer.type, sdp: answer.sdp }
+            });
+
+            callStatusText.textContent = "Разговор...";
+
+            onSnapshot(collection(db, "calls", currentCallId, "callerCandidates"), (snapshot) => {
+                snapshot.docChanges().forEach(async (change) => {
+                    if (change.type === "added" && peerConnection) {
+                        try { await peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data())); } catch(e){}
+                    }
+                });
+            });
+        });
+
+        // Отклонить / Положить трубку
+        async function rejectOrHangUp() {
+            if (currentCallId) {
+                const callDocRef = doc(db, "calls", currentCallId);
+                try {
+                    await updateDoc(callDocRef, { status: "rejected" });
+                    await deleteDoc(callDocRef);
+                } catch(e){}
+            }
+            endCall();
+        }
+
+        callRejectBtn.addEventListener('click', rejectOrHangUp);
+
+        // Очистить WebRTC сессию
+        function endCall() {
+            stopRingTone();
+            if (callUnsubscribe) { callUnsubscribe(); callUnsubscribe = null; }
+            if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+            if (peerConnection) { peerConnection.close(); peerConnection = null; }
+            
+            remoteAudio.srcObject = null;
+            currentCallId = null;
+            isCaller = false;
+            callOverlay.classList.remove("active");
+        }
+
+        // --- КОНЕЦ ЛОГИКИ ЗВОНКОВ ---
+
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
@@ -974,6 +1267,7 @@
                 });
             });
             listenTypingStatus();
+            listenIncomingCalls(); 
         }
 
         async function sendMessage() {
