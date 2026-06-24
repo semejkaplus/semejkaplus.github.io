@@ -295,6 +295,7 @@
         @keyframes fadeInIndicator { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         .typing-text { font-size: 13px; font-weight: 600; color: #4A4A5A; }
         .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
+        .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
         .typing-sparkle {
             font-size: 11px; color: #6C63FF; opacity: 0.3; will-change: transform, opacity;
             transform: translate3d(0, 0, 0) scale(0.6); animation: familySparkle 1.2s infinite ease-in-out;
@@ -591,13 +592,12 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
-                    // Раз в 5 минут принудительно опрашиваем сервер на наличие апдейта сервисного скрипта
+                    // Проверяем обновления каждые 5 минут
                     setInterval(() => { reg.update(); }, 1000 * 60 * 5);
 
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
-                            // Перезагружаем интерфейс сразу, как только новая сборка скачалась на телефон
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 window.location.reload();
                             }
@@ -771,7 +771,7 @@
                     innerHTML += `</div>`;
                     
                     if (!isMe) {
-                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Звонок ${escapeHtml(data.name)}</button>`;
+                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Позвонить</button>`;
                     }
                     
                     item.innerHTML = innerHTML;
