@@ -152,28 +152,32 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        .member-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F0F5; position: relative; }
+        /* Контейнер участника */
+        .member-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F0F5; }
         .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-        .member-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-        .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Измененная структура: имя, юзернейм и кнопка выстроены в один ряд */
+        .member-info { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1; min-width: 0; }
+        .member-text-block { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
         .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Кнопка "Звонок" — исправлено сжатие на мобильных устройствах */
+        /* Компактная кнопка «Звонок» рядом с текстом */
         .member-call-btn {
             background: linear-gradient(135deg, #6C63FF, #8B82FF); 
             color: white; 
             border: none; 
-            padding: 8px 16px; 
-            border-radius: 16px; 
-            font-size: 13px; 
+            padding: 5px 12px; 
+            border-radius: 12px; 
+            font-size: 12px; 
             font-weight: 700;
             cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s; 
-            box-shadow: 0 4px 10px rgba(108,99,255,0.2);
-            flex-shrink: 0; /* Жестко запрещает мобильным браузерам скрывать/сжимать кнопку */
+            box-shadow: 0 3px 8px rgba(108,99,255,0.15);
+            flex-shrink: 0;
             white-space: nowrap;
         }
-        .member-call-btn:hover { transform: scale(1.03); box-shadow: 0 6px 14px rgba(108,99,255,0.3); }
+        .member-call-btn:hover { transform: scale(1.03); box-shadow: 0 5px 11px rgba(108,99,255,0.25); }
         .member-call-btn:active { transform: scale(0.97); }
 
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
@@ -703,19 +707,21 @@
                     const item = document.createElement('div');
                     item.className = 'member-item';
                     
+                    // Обновленная разметка: имя, юзернейм и кнопка выстроены в линию внутри .member-info
                     let innerHTML = `
                         <div class="member-avatar">${initials}</div>
                         <div class="member-info">
-                            <div class="member-name">${escapeHtml(data.name)}</div>
-                            <div class="member-status">@${escapeHtml(data.username)}</div>
-                        </div>
+                            <div class="member-text-block">
+                                <div class="member-name">${escapeHtml(data.name)}</div>
+                                <div class="member-status">@${escapeHtml(data.username)}</div>
+                            </div>
                     `;
                     
                     if (!isMe) {
-                        // Заменили значок трубки на стильную текстовую кнопку "Звонок"
                         innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Звонок</button>`;
                     }
                     
+                    innerHTML += `</div>`;
                     item.innerHTML = innerHTML;
                     membersContainer.appendChild(item);
                 });
@@ -1061,7 +1067,6 @@
 
         // --- ЛОГИКА АУДИОЗВОНКОВ (WEBRTC + METERED) ---
 
-        // Твой авторизованный запрос настроек TURN-серверов с персональным apiKey
         async function fetchIceServers() {
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
@@ -1074,7 +1079,6 @@
             return [{ urls: "stun:stun.l.google.com:19302" }];
         }
 
-        // Звуковое сопровождение (гудки)
         function playRingTone(type) {
             stopRingTone();
             audioRing = new Audio();
@@ -1095,7 +1099,6 @@
             }
         }
 
-        // Настройка WebRTC соединения
         async function setupPeerConnection() {
             const iceServers = await fetchIceServers();
             peerConnection = new RTCPeerConnection({ iceServers });
@@ -1122,7 +1125,6 @@
             }
         }
 
-        // Запуск исходящего вызова
         async function startAudioCall(targetUsername, targetName) {
             if (peerConnection) return;
             
@@ -1179,7 +1181,6 @@
             });
         }
 
-        // Прослушивание входящих вызовов
         function listenIncomingCalls() {
             if (!currentUser) return;
             
@@ -1210,7 +1211,6 @@
             });
         }
 
-        // Принять вызов
         callAcceptBtn.addEventListener('click', async () => {
             stopRingTone();
             callAcceptBtn.style.display = "none";
@@ -1243,7 +1243,6 @@
             });
         });
 
-        // Отклонить / Положить трубку
         async function rejectOrHangUp() {
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
@@ -1257,7 +1256,6 @@
 
         callRejectBtn.addEventListener('click', rejectOrHangUp);
 
-        // Очистить WebRTC сессию
         function endCall() {
             stopRingTone();
             if (callUnsubscribe) { callUnsubscribe(); callUnsubscribe = null; }
