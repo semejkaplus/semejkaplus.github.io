@@ -152,16 +152,29 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        .member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0F5; position: relative; }
+        .member-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F0F5; position: relative; }
         .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
         .member-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .member-name { font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 12px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
+        /* Кнопка "Звонок" — исправлено сжатие на мобильных устройствах */
         .member-call-btn {
-            background: rgba(108, 99, 255, 0.1); color: #6C63FF; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; box-shadow: none; padding: 0;
+            background: linear-gradient(135deg, #6C63FF, #8B82FF); 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 16px; 
+            font-size: 13px; 
+            font-weight: 700;
+            cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            box-shadow: 0 4px 10px rgba(108,99,255,0.2);
+            flex-shrink: 0; /* Жестко запрещает мобильным браузерам скрывать/сжимать кнопку */
+            white-space: nowrap;
         }
-        .member-call-btn:hover { background: #6C63FF; color: white; transform: scale(1.05); }
+        .member-call-btn:hover { transform: scale(1.03); box-shadow: 0 6px 14px rgba(108,99,255,0.3); }
+        .member-call-btn:active { transform: scale(0.97); }
 
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
@@ -699,7 +712,8 @@
                     `;
                     
                     if (!isMe) {
-                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}" title="Позвонить">📞</button>`;
+                        // Заменили значок трубки на стильную текстовую кнопку "Звонок"
+                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Звонок</button>`;
                     }
                     
                     item.innerHTML = innerHTML;
