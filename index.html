@@ -163,7 +163,7 @@
             border-bottom: 1px solid #F0F0F5; 
         }
         
-        /* Информация об участнике (Имя + Юзернейм) */
+        /* Информация об участнике */
         .member-info { 
             display: flex; 
             align-items: center; 
@@ -182,10 +182,10 @@
         .member-name { font-size: 16px; font-weight: 600; color: #3A3A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 13px; color: #9A9A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
         
-        /* Исправленная компактная и короткая кнопка звонка */
+        /* Компактная и аккуратная кнопка звонка */
         .member-call-btn {
-            width: auto !important; /* Отменяем принудительные 100% ширины */
-            padding: 8px 14px !important; /* Уменьшаем внутренние поля */
+            width: auto !important; 
+            padding: 8px 16px !important; 
             background: linear-gradient(135deg, #6C63FF, #8B82FF); 
             color: white; 
             border: none; 
@@ -731,7 +731,8 @@
                     `;
                     
                     if (!isMe) {
-                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Звонок ${escapeHtml(data.name)}</button>`;
+                        // Текст изменен на простое и компактное "Позвонить"
+                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Позвонить</button>`;
                     } else {
                         innerHTML += `<div class="member-me-badge">Вы</div>`;
                     }
@@ -1086,7 +1087,7 @@
                     return await response.json();
                 }
             } catch (err) {
-                console.warn("Не удалось получить TURN с Metered, используем STUN от Google:", err);
+                console.warn("Не удалось получить TURN, используем STUN:", err);
             }
             return [{ urls: "stun:stun.l.google.com:19302" }];
         }
@@ -1132,7 +1133,7 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
             } catch (err) {
-                alert("Ошибка доступа к микрофону! Пожалуйста, разрешите доступ для звонков.");
+                alert("Ошибка доступа к микрофону!");
                 endCall();
             }
         }
