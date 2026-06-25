@@ -90,6 +90,7 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
+        /* Измененная капсула для размещения 3 кнопок */
         .control-capsule {
             position: absolute; top: 16px; right: 16px;
             width: 54px; height: 165px;
@@ -153,6 +154,19 @@
         .panel-content { flex: 1; overflow-y: auto; padding-right: 5px; font-size: 15px; color: #4A4A5A; line-height: 1.6; }
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
+
+        /* Аватарки */
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            background: #EAEAEA; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.05);
+        }
+        .avatar-large-container {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 10px;
+        }
+        .avatar-large {
+            width: 90px; height: 90px; border-radius: 50%; object-fit: cover;
+            background: #EAEAEA; border: 2px solid #6C63FF; box-shadow: 0 4px 12px rgba(108,99,255,0.2);
+        }
 
         /* СТИЛИ ДЛЯ СПИСКА УЧАСТНИКОВ */
         .member-item { 
@@ -226,14 +240,18 @@
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
 
-        .msg { max-width: 100%; display: flex; flex-direction: column; margin-bottom: 2px; position: relative; }
-        .msg.sent { align-items: flex-end; }
-        .msg.received { align-items: flex-start; }
+        .msg { max-width: 100%; display: flex; gap: 10px; margin-bottom: 2px; position: relative; }
+        .msg.sent { flex-direction: row-reverse; }
+        .msg.received { flex-direction: row; }
+
+        .msg-body { display: flex; flex-direction: column; max-width: 75%; }
+        .msg.sent .msg-body { align-items: flex-end; }
+        .msg.received .msg-body { align-items: flex-start; }
 
         .bubble {
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75);
-            color: #3A3A4A; max-width: 75%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
+            color: #3A3A4A; width: 100%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
             cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.1s ease;
             position: relative;
         }
@@ -257,7 +275,6 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        /* ИСПРАВЛЕННЫЙ БЛОК ВРЕМЕНИ С ОТКРЫВАЮЩЕЙ СКОБКОЙ */
         .time { 
             font-size: 11px; 
             color: #4A4A5A; 
@@ -406,7 +423,7 @@
 
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
-            .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
+            .bubble { font-size: 15px; padding: 11px 16px; }
             .control-capsule { width: 50px; height: 150px; top: 12px; right: 12px; border-radius: 25px; }
             .side-panel { left: 16px; right: 16px; padding: 20px; }
         }
@@ -474,7 +491,7 @@
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
             <button class="capsule-btn" id="newsBtn" title="О новинках">
-                <svg class="star-icon-svg" width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg class="star-icon-svg" width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#FFBA42"/>
@@ -488,21 +505,21 @@
             
             <div class="capsule-divider"></div>
             
+            <button class="capsule-btn" id="profileBtn" title="Мой профиль">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#231F20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            
+            <div class="capsule-divider"></div>
+            
             <button class="capsule-btn" id="membersBtn" title="Участники">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#231F20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#231F20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-            </button>
-
-            <div class="capsule-divider"></div>
-
-            <button class="capsule-btn" id="profileBtn" title="Мой профиль">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#231F20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
                 </svg>
             </button>
         </div>
@@ -526,27 +543,28 @@
             </div>
         </div>
 
-        <div class="side-panel" id="membersPanel">
-            <div class="panel-header">
-                <div class="panel-title">Участники</div>
-                <button class="panel-close" id="closeMembersBtn">&times;</button>
-            </div>
-            <div class="panel-content" id="membersContainer"></div>
-        </div>
-
         <div class="side-panel" id="profilePanel">
             <div class="panel-header">
                 <div class="panel-title">Мой профиль</div>
                 <button class="panel-close" id="closeProfileBtn">&times;</button>
             </div>
             <div class="panel-content">
-                <div class="news-card" style="text-align: center; padding: 25px 15px;">
-                    <div style="width: 70px; height: 70px; background: #6C63FF; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 0 auto 15px auto; box-shadow: 0 8px 20px rgba(108,99,255,0.25);" id="profileAvatar">U</div>
-                    <h4 id="profileName" style="font-size: 20px; color: #2A2A3A;">Имя</h4>
-                    <p id="profileUsername" style="font-size: 15px; color: #8A8A9A; margin-top: 4px;">@username</p>
+                <div class="avatar-large-container">
+                    <img id="myLargeAvatar" class="avatar-large" src="" alt="Аватар">
                 </div>
-                <button class="link-btn" id="logoutBtn" style="border-color: #FF3B30; color: #FF3B30; margin-top: 20px;">Выйти из аккаунта</button>
+                <input type="text" id="profileNameInput" placeholder="Ваше имя" style="margin-bottom:12px;">
+                <input type="text" id="profileAvatarInput" placeholder="Ссылка на фото (аватарку)" style="margin-bottom:20px;">
+                <button id="saveProfileBtn" style="margin-bottom:12px;">Сохранить изменения</button>
+                <button class="link-btn" id="logoutProfileBtn" style="border-color:#FF3B30; color:#FF3B30;">Выйти из аккаунта</button>
             </div>
+        </div>
+
+        <div class="side-panel" id="membersPanel">
+            <div class="panel-header">
+                <div class="panel-title">Участники</div>
+                <button class="panel-close" id="closeMembersBtn">&times;</button>
+            </div>
+            <div class="panel-content" id="membersContainer"></div>
         </div>
 
         <div class="messages" id="messages">
@@ -694,21 +712,22 @@
         const inputArea = document.getElementById('inputArea');
 
         const newsBtn = document.getElementById('newsBtn');
-        const membersBtn = document.getElementById('membersBtn');
         const profileBtn = document.getElementById('profileBtn');
+        const membersBtn = document.getElementById('membersBtn');
         const sidePanelOverlay = document.getElementById('sidePanelOverlay');
         const newsPanel = document.getElementById('newsPanel');
-        const membersPanel = document.getElementById('membersPanel');
         const profilePanel = document.getElementById('profilePanel');
+        const membersPanel = document.getElementById('membersPanel');
         const closeNewsBtn = document.getElementById('closeNewsBtn');
-        const closeMembersBtn = document.getElementById('closeMembersBtn');
         const closeProfileBtn = document.getElementById('closeProfileBtn');
+        const closeMembersBtn = document.getElementById('closeMembersBtn');
         const membersContainer = document.getElementById('membersContainer');
-        
-        const profileName = document.getElementById('profileName');
-        const profileUsername = document.getElementById('profileUsername');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const logoutBtn = document.getElementById('logoutBtn');
+
+        const profileNameInput = document.getElementById('profileNameInput');
+        const profileAvatarInput = document.getElementById('profileAvatarInput');
+        const myLargeAvatar = document.getElementById('myLargeAvatar');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const logoutProfileBtn = document.getElementById('logoutProfileBtn');
 
         const callOverlay = document.getElementById('callOverlay');
         const callName = document.getElementById('callName');
@@ -725,6 +744,7 @@
         let typingTimeout = null;
         let currentTypersList = [];
         let currentReplyTarget = null;
+        let globalUsersCache = {};
 
         let peerConnection = null;
         let localStream = null;
@@ -734,10 +754,13 @@
         let audioRing = null;
         let isMuted = false;
 
+        const defaultAvatar = "https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg";
+
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
+        const savedAvatar = localStorage.getItem('semejka_avatar') || defaultAvatar;
         if (savedName && savedUsername) {
-            currentUser = { id: savedUsername, name: savedName };
+            currentUser = { id: savedUsername, name: savedName, avatar: savedAvatar };
         }
 
         function checkSavedUser() {
@@ -768,48 +791,78 @@
             usernameInput.value = '';
         });
 
-        changeUserBtn.addEventListener('click', () => {
+        function doLogout() {
             localStorage.removeItem('semejka_name');
             localStorage.removeItem('semejka_username');
+            localStorage.removeItem('semejka_avatar');
             currentUser = null;
+            closeAllPanels();
+            chatScreen.classList.remove('active');
+            regScreen.classList.add('active');
             checkSavedUser();
-        });
+        }
+
+        changeUserBtn.addEventListener('click', doLogout);
+        logoutProfileBtn.addEventListener('click', doLogout);
 
         function openPanel(panel) {
             sidePanelOverlay.classList.add('active');
             panel.classList.add('active');
             if(panel === membersPanel) loadMembersList();
-            if(panel === profilePanel) loadProfileData();
+            if(panel === profilePanel) loadMyProfileUI();
         }
 
         function closeAllPanels() {
             sidePanelOverlay.classList.remove('active');
             newsPanel.classList.remove('active');
-            membersPanel.classList.remove('active');
             profilePanel.classList.remove('active');
+            membersPanel.classList.remove('active');
         }
 
         newsBtn.addEventListener('click', () => openPanel(newsPanel));
-        membersBtn.addEventListener('click', () => openPanel(membersPanel));
         profileBtn.addEventListener('click', () => openPanel(profilePanel));
+        membersBtn.addEventListener('click', () => openPanel(membersPanel));
         sidePanelOverlay.addEventListener('click', closeAllPanels);
         closeNewsBtn.addEventListener('click', closeAllPanels);
-        closeMembersBtn.addEventListener('click', closeAllPanels);
         closeProfileBtn.addEventListener('click', closeAllPanels);
+        closeMembersBtn.addEventListener('click', closeAllPanels);
 
-        function loadProfileData() {
-            if (currentUser) {
-                profileName.textContent = currentUser.name;
-                profileUsername.textContent = `@${currentUser.id}`;
-                profileAvatar.textContent = currentUser.name.trim().charAt(0).toUpperCase();
-            }
+        function loadMyProfileUI() {
+            profileNameInput.value = currentUser.name;
+            profileAvatarInput.value = currentUser.avatar === defaultAvatar ? "" : currentUser.avatar;
+            myLargeAvatar.src = currentUser.avatar;
         }
 
-        logoutBtn.addEventListener('click', () => {
-            if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
-                localStorage.removeItem('semejka_name');
-                localStorage.removeItem('semejka_username');
+        saveProfileBtn.addEventListener('click', async () => {
+            const newName = profileNameInput.value.trim();
+            let newAvatar = profileAvatarInput.value.trim();
+            if(!newName) return;
+            if(!newAvatar) newAvatar = defaultAvatar;
+
+            saveProfileBtn.disabled = true;
+            try {
+                const uQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
+                const querySnapshot = await getDocs(uQuery);
+                if (!querySnapshot.empty) {
+                    let docId = querySnapshot.docs[0].id;
+                    await updateDoc(doc(db, "users", docId), {
+                        name: newName,
+                        avatar: newAvatar
+                    });
+                }
+                currentUser.name = newName;
+                currentUser.avatar = newAvatar;
+                localStorage.setItem('semejka_name', newName);
+                localStorage.setItem('semejka_avatar', newAvatar);
+                
+                myLargeAvatar.src = newAvatar;
+                alert("Профиль успешно сохранен!");
+                closeAllPanels();
                 window.location.reload();
+            } catch(e) {
+                alert("Ошибка при сохранении");
+            } finally {
+                saveProfileBtn.disabled = false;
             }
         });
 
@@ -822,12 +875,14 @@
                 usersSnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const isMe = data.username === currentUser?.id;
+                    const uAvatar = data.avatar || defaultAvatar;
                     
                     const item = document.createElement('div');
                     item.className = 'member-item';
                     
                     let innerHTML = `
                         <div class="member-info">
+                            <img class="avatar" src="${escapeHtml(uAvatar)}" alt="Ava">
                             <div class="member-text-block">
                                 <div class="member-name">${escapeHtml(data.name)}</div>
                                 <div class="member-status">@${escapeHtml(data.username)}</div>
@@ -877,10 +932,11 @@
                     joinBtn.disabled = false;
                     return;
                 }
-                await addDoc(collection(db, "users"), { name: name, username: username, created_at: serverTimestamp() });
+                await addDoc(collection(db, "users"), { name: name, username: username, avatar: defaultAvatar, created_at: serverTimestamp() });
                 localStorage.setItem('semejka_name', name);
                 localStorage.setItem('semejka_username', username);
-                currentUser = { id: username, name: name };
+                localStorage.setItem('semejka_avatar', defaultAvatar);
+                currentUser = { id: username, name: name, avatar: defaultAvatar };
                 enterChat();
             } catch (err) { joinBtn.disabled = false; }
         });
@@ -899,10 +955,15 @@
                     return;
                 }
                 let foundName = '';
-                querySnapshot.forEach(doc => foundName = doc.data().name);
+                let foundAvatar = defaultAvatar;
+                querySnapshot.forEach(doc => {
+                    foundName = doc.data().name;
+                    if(doc.data().avatar) foundAvatar = doc.data().avatar;
+                });
                 localStorage.setItem('semejka_name', foundName);
                 localStorage.setItem('semejka_username', username);
-                currentUser = { id: username, name: foundName };
+                localStorage.setItem('semejka_avatar', foundAvatar);
+                currentUser = { id: username, name: foundName, avatar: foundAvatar };
                 enterChat();
             } catch (err) { loginBtn.disabled = false; }
         });
@@ -1074,7 +1135,6 @@
             const isMyMsg = (msg.user_id === currentUser?.id);
             
             if (msgDiv) {
-                msgDiv.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
                 updateReactionsUI(msg.id, msg.reactions);
                 return;
             }
@@ -1096,16 +1156,28 @@
             div.setAttribute('data-sender-name', msg.user_name || 'Кто-то');
             div.setAttribute('data-text', msg.text || '');
 
-            let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
+            let msgUserAvatar = msg.user_avatar || defaultAvatar;
+            if (globalUsersCache[msg.user_id]) {
+                msgUserAvatar = globalUsersCache[msg.user_id].avatar || defaultAvatar;
+            }
+
+            let html = `<img class="avatar" src="${escapeHtml(msgUserAvatar)}" alt="Ava">`;
+            let nameHTML = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
             
             html += `
-                <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
-                <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
-                <div class="msg-footer">
-                    <div class="time">${formatTime(timestamp)}</div>
-                    <div class="reactions-wrapper"></div>
+                <div class="msg-body">
+                    ${nameHTML}
+                    <div class="bubble">
+                        ${replyHTML}
+                        <div>${linkify(escapeHtml(msg.text || ''))}</div>
+                    </div>
+                    <div class="msg-footer">
+                        <div class="time">${formatTime(timestamp)}</div>
+                        <div class="reactions-wrapper"></div>
+                    </div>
                 </div>
+                <div class="swipe-reply-icon" style="display:none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
             `;
 
             div.innerHTML = html; 
@@ -1143,11 +1215,19 @@
                     }
                 }
 
-                if (swipeDirection === 'horizontal' && diffX > 0) {
-                    currentTranslateX = Math.min(diffX * 0.5, 60);
-                    bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
-                    iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
-                    iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
+                if (swipeDirection === 'horizontal') {
+                    if(iconElement) iconElement.style.display = 'flex';
+                    let directionMultiplier = isMyMsg ? -0.5 : 0.5;
+                    currentTranslateX = diffX * directionMultiplier;
+                    if(currentTranslateX < 0) currentTranslateX = 0;
+                    if(currentTranslateX > 60) currentTranslateX = 60;
+                    
+                    let visualTranslate = isMyMsg ? -currentTranslateX : currentTranslateX;
+                    bubbleElement.style.transform = `translate3d(${visualTranslate}px, 0, 0)`;
+                    if(iconElement) {
+                        iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
+                        iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
+                    }
                 }
 
                 if (swipeDirection === 'vertical' && diffY > 0) {
@@ -1160,8 +1240,10 @@
             bubbleElement.addEventListener('touchend', () => {
                 bubbleElement.classList.add('releasing');
                 bubbleElement.style.transform = '';
-                iconElement.style.opacity = 0;
-                iconElement.style.transform = '';
+                if(iconElement) {
+                    iconElement.style.opacity = 0;
+                    iconElement.style.transform = '';
+                }
 
                 if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
                     initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
@@ -1416,8 +1498,20 @@
             callOverlay.classList.remove("active");
         }
 
-        function startLiveChat() {
+        async function buildUsersCache() {
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                snap.forEach(docSnap => {
+                    const uData = docSnap.data();
+                    globalUsersCache[uData.username] = uData;
+                });
+            } catch(e) {}
+        }
+
+        async function startLiveChat() {
             loadingSpinner.classList.add('active');
+            await buildUsersCache();
+            
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
                 snapshot.docChanges().forEach(change => {
@@ -1437,7 +1531,15 @@
             cancelReply(); resetTextarea();
 
             try {
-                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
+                await addDoc(collection(db, "messages"), { 
+                    user_id: currentUser.id, 
+                    user_name: currentUser.name, 
+                    user_avatar: currentUser.avatar || defaultAvatar,
+                    text: text, 
+                    reactions: {}, 
+                    reply_to: replyData, 
+                    created_at: serverTimestamp() 
+                });
             } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
