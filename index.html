@@ -90,7 +90,7 @@
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
 
-        /* Капсула расширена со 110px до 165px для красивого вмещения трех кнопок */
+        /* Панель управления на 3 кнопки в ряд */
         .control-capsule {
             position: absolute; top: 16px; right: 16px;
             width: 54px; height: 165px;
@@ -109,7 +109,7 @@
         .capsule-btn:hover { background: rgba(0,0,0,0.02); }
         .capsule-divider { height: 1px; width: 100%; background: #231F20; opacity: 0.15; }
 
-        /* Индивидуальный нежно-фиолетовый стиль для кнопки профиля по референсу */
+        /* Стиль для круглой фиолетовой кнопки профиля */
         .profile-btn-inner {
             width: 40px;
             height: 40px;
@@ -170,6 +170,43 @@
         .panel-content { flex: 1; overflow-y: auto; padding-right: 5px; font-size: 15px; color: #4A4A5A; line-height: 1.6; }
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
+
+        /* Контейнер интерактивной аватарки в профиле */
+        .avatar-container {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 15px auto;
+            cursor: pointer;
+        }
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #EDECFF;
+            color: #6C63FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #6C63FF;
+            box-shadow: 0 6px 16px rgba(108,99,255,0.15);
+            overflow: hidden;
+        }
+        .avatar-badge {
+            position: absolute;
+            bottom: -2px; right: -2px;
+            width: 28px; height: 28px;
+            background: #6C63FF;
+            color: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
 
         /* СТИЛИ ДЛЯ СПИСКА УЧАСТНИКОВ */
         .member-item { 
@@ -423,7 +460,6 @@
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
             .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
-            /* Высота капсулы на мобильных устройствах пропорционально изменена до 150px */
             .control-capsule { width: 50px; height: 150px; top: 12px; right: 12px; border-radius: 25px; }
             .side-panel { left: 16px; right: 16px; padding: 20px; }
         }
@@ -490,17 +526,6 @@
 
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
-            <button class="capsule-btn" id="profileBtn" title="Мой профиль">
-                <div class="profile-btn-inner">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
-            </button>
-
-            <div class="capsule-divider"></div>
-
             <button class="capsule-btn" id="newsBtn" title="О новинках">
                 <svg class="star-icon-svg" width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -514,6 +539,17 @@
                 </svg>
             </button>
             
+            <div class="capsule-divider"></div>
+
+            <button class="capsule-btn" id="profileBtn" title="Мой профиль">
+                <div class="profile-btn-inner">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+            </button>
+
             <div class="capsule-divider"></div>
             
             <button class="capsule-btn" id="membersBtn" title="Участники">
@@ -534,12 +570,18 @@
                 <button class="panel-close" id="closeProfileBtn">&times;</button>
             </div>
             <div class="panel-content" style="text-align: center; padding-top: 10px;">
-                <div style="width: 80px; height: 80px; border-radius: 50%; background: #EDECFF; color: #6C63FF; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(108,99,255,0.15);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                <div class="avatar-container" id="avatarClickZone">
+                    <div class="avatar-image" id="profileAvatarDisplay">
+                        <svg id="defaultAvatarSvg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <img id="userAvatarImg" style="display:none; width:100%; height:100%; object-fit:cover;" alt="Аватар">
+                    </div>
+                    <div class="avatar-badge">📷</div>
                 </div>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+
                 <h3 id="profileNameDisplay" style="font-size: 22px; font-weight: 800; color: #2A2A3A; margin-bottom: 4px;">Имя</h3>
                 <p id="profileUsernameDisplay" style="font-size: 15px; color: #8A8A9A; font-weight: 600; margin-bottom: 25px;">@username</p>
                 <button class="link-btn" id="profileLogoutBtn" style="border-color: #FF3B30; color: #FF3B30; box-shadow: 0 4px 10px rgba(255,59,48,0.1); margin-top: 0;">Выйти из аккаунта</button>
@@ -652,7 +694,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // СКРИПТ АВТОМАТИЧЕСКОГО ОБНОВЛЕНИЯ PWA:
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
@@ -731,6 +772,11 @@
         const profileUsernameDisplay = document.getElementById('profileUsernameDisplay');
         const profileLogoutBtn = document.getElementById('profileLogoutBtn');
 
+        const avatarClickZone = document.getElementById('avatarClickZone');
+        const avatarFileInput = document.getElementById('avatarFileInput');
+        const defaultAvatarSvg = document.getElementById('defaultAvatarSvg');
+        const userAvatarImg = document.getElementById('userAvatarImg');
+
         const callOverlay = document.getElementById('callOverlay');
         const callName = document.getElementById('callName');
         const callStatusText = document.getElementById('callStatusText');
@@ -796,14 +842,46 @@
         function logoutUser() {
             localStorage.removeItem('semejka_name');
             localStorage.removeItem('semejka_username');
+            localStorage.removeItem('semejka_avatar_' + (currentUser?.id || ''));
             currentUser = null;
             checkSavedUser();
             closeAllPanels();
             chatScreen.classList.remove('active');
             regScreen.classList.add('active');
-            // Перезагружаем страницу, чтобы сбросить все snapshot-слушатели Firebase
             window.location.reload();
         }
+
+        // Логика отображения и изменения аватарки локально
+        function loadAvatarUI() {
+            if (!currentUser) return;
+            const storedAvatar = localStorage.getItem('semejka_avatar_' + currentUser.id);
+            if (storedAvatar) {
+                defaultAvatarSvg.style.display = 'none';
+                userAvatarImg.src = storedAvatar;
+                userAvatarImg.style.display = 'block';
+            } else {
+                defaultAvatarSvg.style.display = 'block';
+                userAvatarImg.style.display = 'none';
+                userAvatarImg.src = '';
+            }
+        }
+
+        avatarClickZone.addEventListener('click', () => {
+            avatarFileInput.click();
+        });
+
+        avatarFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64String = event.target.result;
+                localStorage.setItem('semejka_avatar_' + currentUser.id, base64String);
+                loadAvatarUI();
+            };
+            reader.readAsDataURL(file);
+        });
 
         function openPanel(panel) {
             sidePanelOverlay.classList.add('active');
@@ -812,6 +890,7 @@
             if(panel === profilePanel && currentUser) {
                 profileNameDisplay.textContent = currentUser.name;
                 profileUsernameDisplay.textContent = `@${currentUser.id}`;
+                loadAvatarUI();
             }
         }
 
