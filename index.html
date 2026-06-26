@@ -82,7 +82,6 @@
             transform: translateY(-1px);
         }
 
-        /* Глобальные кнопки форм */
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; cursor: not-allowed; }
@@ -108,10 +107,7 @@
         .capsule-btn:hover { background: rgba(0,0,0,0.02); }
         .capsule-divider { height: 1px; width: 100%; background: #231F20; opacity: 0.15; }
 
-        .star-icon-svg {
-            transform: rotate(-15deg);
-            transform-origin: center;
-        }
+        .star-icon-svg { transform: rotate(-15deg); transform-origin: center; }
 
         .side-panel-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -120,10 +116,7 @@
             will-change: opacity, visibility;
             transition: opacity 0.2s ease, visibility 0.2s ease;
         }
-        .side-panel-overlay.active {
-            opacity: 1; visibility: visible;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
+        .side-panel-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 
         .side-panel {
             position: fixed; 
@@ -139,11 +132,7 @@
             will-change: transform, opacity, visibility;
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.2s ease, visibility 0.2s ease;
         }
-        .side-panel.active { 
-            opacity: 1; 
-            visibility: visible; 
-            transform: translate3d(0, -50%, 0) scale(1); 
-        }
+        .side-panel.active { opacity: 1; visibility: visible; transform: translate3d(0, -50%, 0) scale(1); }
         
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
         .panel-title { font-size: 20px; font-weight: 800; color: #2A2A3A; }
@@ -154,60 +143,15 @@
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
 
-        .member-item { 
-            padding: 14px 0; 
-            border-bottom: 1px solid #F0F0F5; 
-        }
-        
-        .member-info { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between;
-            width: 100%;
-            gap: 15px;
-        }
-        
-        .member-text-block { 
-            display: flex; 
-            flex-direction: column; 
-            min-width: 0; 
-            flex: 1;
-        }
-        
+        .member-item { padding: 14px 0; border-bottom: 1px solid #F0F0F5; }
+        .member-info { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; }
+        .member-text-block { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .member-name { font-size: 17px; font-weight: 700; color: #2A2A3A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 14px; color: #8A8A9A; margin-top: 2px; }
-        
-        .member-action-block {
-            flex-shrink: 0;
-        }
-
-        .member-call-btn {
-            width: auto !important; 
-            min-width: 100px;
-            padding: 10px 20px !important; 
-            background: #7B73FF; 
-            color: white; 
-            border: none; 
-            border-radius: 18px; 
-            font-size: 14px; 
-            font-weight: 700;
-            cursor: pointer; 
-            transition: 0.2s; 
-            box-shadow: 0 4px 12px rgba(108,99,255,0.2);
-            text-align: center;
-        }
+        .member-action-block { flex-shrink: 0; }
+        .member-call-btn { width: auto !important; min-width: 100px; padding: 10px 20px !important; background: #7B73FF; color: white; border: none; border-radius: 18px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(108,99,255,0.2); text-align: center; }
         .member-call-btn:hover { background: #6C63FF; transform: translateY(-1px); }
-        .member-call-btn:active { transform: translateY(0); }
-        
-        .member-me-badge { 
-            font-size: 13px; 
-            color: #6A6A7A; 
-            font-weight: 700; 
-            padding: 6px 14px;
-            background: #EAEAEA;
-            border-radius: 12px;
-            display: inline-block;
-        }
+        .member-me-badge { font-size: 13px; color: #6A6A7A; font-weight: 700; padding: 6px 14px; background: #EAEAEA; border-radius: 12px; display: inline-block; }
 
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
@@ -217,9 +161,7 @@
             flex: 1 1 auto; overflow-y: auto; padding: 10px 20px 80px 20px;
             display: flex; flex-direction: column; gap: 14px;
             margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
-            position: relative;
-            overscroll-behavior-y: contain; 
-            -webkit-overflow-scrolling: touch;
+            position: relative; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch;
         }
 
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
@@ -233,11 +175,9 @@
             display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75);
             color: #3A3A4A; max-width: 75%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
-            cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.1s ease;
-            position: relative;
+            cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.1s ease; position: relative;
         }
         .bubble:active { transform: scale(0.98); }
-        .bubble.releasing { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
 
@@ -245,8 +185,7 @@
         .sent .name { display: none; }
         
         .reply-in-bubble {
-            background: rgba(108, 99, 255, 0.08);
-            border-left: 3px solid #6C63FF;
+            background: rgba(108, 99, 255, 0.08); border-left: 3px solid #6C63FF;
             padding: 4px 10px; margin-bottom: 8px; border-radius: 6px; font-size: 14px; color: #4A4A5A;
             max-height: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
@@ -257,150 +196,66 @@
         .received .msg-footer { flex-direction: row; }
 
         .time { 
-            font-size: 11px; 
-            color: #4A4A5A; 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            background: rgba(255,255,255,0.5); 
-            border: 1px solid rgba(255,255,255,0.6); 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
-            white-space: nowrap; 
-            height: 23px; 
-            display: inline-flex; 
-            align-items: center; 
+            font-size: 11px; color: #4A4A5A; padding: 4px 10px; border-radius: 12px; 
+            background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; 
+            display: inline-flex; align-items: center; 
         }
 
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-
         .reaction-badge {
             background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 4px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none; height: 23px;
         }
-        .reaction-badge:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
-        .reaction-badge.active { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.4); box-shadow: 0 3px 10px rgba(108,99,255,0.15); }
+        .reaction-badge.active { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.4); }
         .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
-        .reaction-badge.active .reaction-count { color: #6C63FF; }
 
         .reaction-modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0, 0, 0, 0.45);
-            z-index: 999; 
-            display: flex; align-items: center; justify-content: center; 
-            opacity: 0; visibility: hidden;
-            will-change: opacity; 
-            transition: opacity 0.16s ease-out, visibility 0.16s ease-out;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.45);
+            z-index: 999; display: flex; align-items: center; justify-content: center; 
+            opacity: 0; visibility: hidden; transition: opacity 0.16s ease-out, visibility 0.16s ease-out;
         }
         .reaction-modal-overlay.active { opacity: 1; visibility: visible; }
-
         .reaction-modal-box {
             background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
-            transform: translate3d(0, 10px, 0) scale(0.95); will-change: transform; width: 310px; height: 70px;
-            transition: transform 0.16s ease-out;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; gap: 12px; transform: translate3d(0, 10px, 0) scale(0.95); transition: transform 0.16s ease-out;
         }
         .reaction-modal-overlay.active .reaction-modal-box { transform: translate3d(0, 0, 0) scale(1); }
-        .emojis-row { display: flex; gap: 12px; }
         .picker-emoji { font-size: 24px; cursor: pointer; transition: transform 0.1s; user-select: none; }
-        .picker-emoji:active { transform: scale(1.2); }
 
         .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
         .typing-indicator-container {
             display: none; align-items: center; gap: 10px; padding: 8px 18px; position: absolute; bottom: 8px;
             background: rgba(255, 255, 255, 0.9); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.25); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            transform: translate3d(0, 0, 0); will-change: transform, opacity; animation: fadeInIndicator 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
         }
-        @keyframes fadeInIndicator { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         .typing-text { font-size: 13px; font-weight: 600; color: #4A4A5A; }
-        .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
-        .typing-sparkle {
-            font-size: 11px; color: #6C63FF; opacity: 0.3; will-change: transform, opacity;
-            transform: translate3d(0, 0, 0) scale(0.6); animation: familySparkle 1.2s infinite ease-in-out;
-        }
-        .typing-sparkle:nth-child(1) { animation-delay: 0s; }
-        .typing-sparkle:nth-child(2) { animation-delay: 0.2s; }
-        .typing-sparkle:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes familySparkle {
-            0%, 100% { transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg); opacity: 0.3; }
-            50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; }
-        }
+        .typing-sparkles { display: flex; align-items: center; gap: 5px; }
+        .typing-sparkle { font-size: 11px; color: #6C63FF; animation: familySparkle 1.2s infinite ease-in-out; }
+        @keyframes familySparkle { 0%, 100% { transform: scale(0.6); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 1; } }
 
         .reply-bar {
             display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto;
             background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px;
-            border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none;
-            align-items: center; gap: 12px; position: relative; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
-            animation: slideUpReply 0.15s ease-out forwards;
+            border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none; align-items: center; gap: 12px; position: relative; z-index: 10;
         }
-        @keyframes slideUpReply { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
-        .reply-bar-accent { width: 3px; height: 36px; background: #6C63FF; border-radius: 2px; flex-shrink: 0; }
-        .reply-bar-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-        .reply-bar-title { font-size: 13px; font-weight: 700; color: #6C63FF; margin-bottom: 2px; }
+        .reply-bar-accent { width: 3px; height: 36px; background: #6C63FF; border-radius: 2px; }
+        .reply-bar-content { flex: 1; min-width: 0; }
+        .reply-bar-title { font-size: 13px; font-weight: 700; color: #6C63FF; }
         .reply-bar-text { font-size: 14px; color: #5A5A6A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .reply-bar-close { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8A8A9A; transition: 0.15s; }
-        .reply-bar-close:hover { color: #6C63FF; }
-
-        .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
-        .loading-spinner.active { display: flex; }
-        .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .reply-bar-close { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8A8A9A; }
 
         .input-area {
-            background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
+            background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
         }
-        .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: rgba(108,99,255,0.1); }
-
-        .input-area textarea {
-            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 160px; max-width: 100%; word-wrap: break-word; word-break: break-word;
-        }
-        .input-area textarea:focus { border-color: #6C63FF; box-shadow: 0 0 0 4px rgba(108,99,255,0.15); }
+        .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; }
+        .input-area textarea { flex: 1; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; resize: none; min-height: 52px; max-height: 160px; font-family: inherit; }
         
-        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; }
+        /* Классическая круглая кнопка со стрелочкой */
+        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
         .input-area button:hover { transform: scale(1.03); }
 
-        .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
-        .bubble a:hover { color: #4A42D0; }
-
-        .swipe-reply-icon {
-            position: absolute; left: -40px; top: 50%; transform: translateY(-50%) scale(0.6);
-            opacity: 0; color: #6C63FF; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            background: rgba(108, 99, 255, 0.12); border-radius: 50%; will-change: transform, opacity; pointer-events: none;
-        }
-
-        .call-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(20, 20, 35, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
-        }
-        .call-overlay.active { display: flex; }
-        .call-box {
-            background: rgba(255, 255, 255, 0.85); border-radius: 40px; border: 1px solid rgba(255,255,255,0.5);
-            padding: 40px 30px; max-width: 340px; width: 100%; text-align: center;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.25);
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .call-name { font-size: 22px; font-weight: 700; color: #2A2A3A; margin-bottom: 6px; }
-        .call-status { font-size: 15px; color: #7A7A8A; font-weight: 600; margin-bottom: 35px; min-height: 22px; }
-        .call-actions { display: flex; gap: 20px; width: 100%; justify-content: center; align-items: center; }
-        .call-btn-action {
-            width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; cursor: pointer; border: none; transition: 0.2s; color: white;
-        }
-        .call-btn-action.accept { background: #34C759; box-shadow: 0 8px 20px rgba(52,199,89,0.3); width: 64px !important; }
-        .call-btn-action.reject { background: #FF3B30; box-shadow: 0 8px 20px rgba(255,59,48,0.3); width: 64px !important; }
-        
-        .call-btn-action.mute { 
-            background: #8E8E93; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
-            width: 56px !important; 
-            height: 56px !important;
-            font-size: 20px;
-        }
-        .call-btn-action.mute.muted { 
-            background: #FF9500; 
-            box-shadow: 0 8px 20px rgba(255,149,0,0.3); 
-        }
-
-        .call-btn-action:hover { transform: scale(1.08); }
+        .bubble a { color: #6C63FF; text-decoration: underline; }
+        .swipe-reply-icon { position: absolute; left: -40px; top: 50%; transform: translateY(-50%) scale(0.6); opacity: 0; color: #6C63FF; transition: 0.1s; }
 
         @media (max-width: 480px) {
             .messages { padding: 5px 10px 75px 10px; gap: 12px; }
@@ -431,15 +286,10 @@
                             <stop offset="45%" stop-color="#F2796D" />
                             <stop offset="100%" stop-color="#C93D36" />
                         </linearGradient>
-                        <linearGradient id="glassPlus" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#FFAA85" />
-                            <stop offset="50%" stop-color="#ED5D52" />
-                            <stop offset="100%" stop-color="#A61C17" />
-                        </linearGradient>
                     </defs>
                     <g filter="url(#liquidGlassEffect)">
-                        <text x="200" y="65" font-family="'Arial Rounded MT Bold', 'Comic Sans MS', system-ui, sans-serif" font-weight="900" font-size="56" text-anchor="middle" letter-spacing="3" fill="url(#glassSemejka)">SEMEJKA</text>
-                        <text x="200" y="138" font-family="'Arial Rounded MT Bold', 'Comic Sans MS', system-ui, sans-serif" font-weight="900" font-size="62" text-anchor="middle" letter-spacing="4" fill="url(#glassPlus)">PLUS</text>
+                        <text x="200" y="65" font-family="'Arial Rounded MT Bold', sans-serif" font-weight="900" font-size="56" text-anchor="middle" fill="url(#glassSemejka)">SEMEJKA</text>
+                        <text x="200" y="138" font-family="'Arial Rounded MT Bold', sans-serif" font-weight="900" font-size="62" text-anchor="middle" fill="url(#glassSemejka)">PLUS</text>
                     </g>
                 </svg>
             </div>
@@ -472,15 +322,8 @@
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
             <button class="capsule-btn" id="newsBtn" title="О новинках">
-                <svg class="star-icon-svg" width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#FFBA42"/>
-                            <stop offset="40%" stop-color="#FF781F"/>
-                            <stop offset="100%" stop-color="#D64500"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M32 6L40.2 22.6L58.5 25.3L45.2 38.3L48.4 56.6L32 48L15.6 56.6L18.8 38.3L5.5 25.3L23.8 22.6L32 6Z" fill="url(#starGrad)" stroke="#522613" stroke-width="3.5" stroke-linejoin="round"/>
+                <svg class="star-icon-svg" width="32" height="32" viewBox="0 0 64 64" fill="none">
+                    <path d="M32 6L40.2 22.6L58.5 25.3L45.2 38.3L48.4 56.6L32 48L15.6 56.6L18.8 38.3L5.5 25.3L23.8 22.6L32 6Z" fill="#FFBA42" stroke="#522613" stroke-width="3.5" stroke-linejoin="round"/>
                 </svg>
             </button>
             <div class="capsule-divider"></div>
@@ -488,8 +331,6 @@
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
             </button>
         </div>
@@ -503,16 +344,12 @@
             </div>
             <div class="panel-content">
                 <div class="news-card">
-                    <h4>✨ Реакции на сообщения!</h4>
-                    <p>Просто зажмите или тапните по сообщению, чтобы поставить эмодзи. Семья оценит!</p>
+                    <h4>✨ Push-уведомления</h4>
+                    <p>Теперь вы не пропустите важные сообщения от родных, даже когда приложение закрыто!</p>
                 </div>
                 <div class="news-card">
                     <h4>💬 Ответы на сообщения</h4>
                     <p>Потяните сообщение вправо (свайп), чтобы быстро ответить на него.</p>
-                </div>
-                <div class="news-card">
-                    <h4>📞 Улучшенные WebRTC звонки</h4>
-                    <p>Переработана капсула управления. Звоните родным прямо из списка участников в один клик!</p>
                 </div>
             </div>
         </div>
@@ -522,8 +359,7 @@
                 <div class="panel-title">Участники Семьи 🤍</div>
                 <button class="panel-close" id="closeMembersBtn">&times;</button>
             </div>
-            <div class="panel-content" id="membersList">
-                </div>
+            <div class="panel-content" id="membersList"></div>
         </div>
 
         <div class="messages" id="messages"></div>
@@ -531,18 +367,14 @@
         <div class="typing-container-wrapper">
             <div class="typing-indicator-container" id="typingContainer">
                 <span class="typing-text" id="typingText">Кто-то шуршит...</span>
-                <div class="typing-sparkles">
-                    <span class="typing-sparkle">✦</span>
-                    <span class="typing-sparkle">✦</span>
-                    <span class="typing-sparkle">✦</span>
-                </div>
+                <div class="typing-sparkles"><span class="typing-sparkle">✦</span></div>
             </div>
         </div>
 
         <div class="reply-bar" id="replyBar">
             <div class="reply-bar-accent"></div>
             <div class="reply-bar-content">
-                <div class="reply-bar-title" id="replyBarTitle">Ответ пользователю</div>
+                <div class="reply-bar-title" id="replyBarTitle">Ответ</div>
                 <div class="reply-bar-text" id="replyBarText">Текст...</div>
             </div>
             <div class="reply-bar-close" id="replyBarClose">&times;</div>
@@ -561,37 +393,18 @@
 
     <div class="reaction-modal-overlay" id="reactionOverlay">
         <div class="reaction-modal-box">
-            <div class="emojis-row">
-                <span class="picker-emoji" data-emoji="❤️">❤️</span>
-                <span class="picker-emoji" data-emoji="👍">👍</span>
-                <span class="picker-emoji" data-emoji="🔥">🔥</span>
-                <span class="picker-emoji" data-emoji="😂">😂</span>
-                <span class="picker-emoji" data-emoji="😮">😮</span>
-                <span class="picker-emoji" data-emoji="🙏">🙏</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="call-overlay" id="callOverlay">
-        <div class="call-box">
-            <div class="call-name" id="callTargetName">Мама</div>
-            <div class="call-status" id="callStatusText">Вызов...</div>
-            <div class="call-actions">
-                <button class="call-btn-action mute" id="callMuteBtn">🎤</button>
-                <button class="call-btn-action accept" id="callAcceptBtn">📞</button>
-                <button class="call-btn-action reject" id="callRejectBtn">❌</button>
-            </div>
+            <span class="picker-emoji" data-emoji="❤️">❤️</span>
+            <span class="picker-emoji" data-emoji="👍">👍</span>
+            <span class="picker-emoji" data-emoji="🔥">🔥</span>
+            <span class="picker-emoji" data-emoji="😂">😂</span>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getFirestore, collection, addDoc, onSnapshot, query, orderBy, 
-            serverTimestamp, doc, setDoc, getDocs, getDoc, updateDoc 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
-        // Firebase Конфигурация
         const firebaseConfig = {
             apiKey: "AIzaSyDE_YOUR_API_KEY", 
             authDomain: "semejka-plus.firebaseapp.com",
@@ -603,15 +416,15 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        let messaging = null;
+        try { messaging = getMessaging(app); } catch(e) { console.log("Уведомления не поддерживаются"); }
 
-        // Переменные состояния приложения
         let currentUser = null;
         let replyData = null;
         let activeReactionMessageId = null;
         let lastMessageDateStr = null;
         let typingTimeout = null;
 
-        // Элементы DOM экранов авторизации
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const freshForm = document.getElementById('freshForm');
@@ -626,29 +439,25 @@
         const savedUsernameLabel = document.getElementById('savedUsernameLabel');
         const welcomeText = document.getElementById('welcomeText');
 
-        // Элементы UI чата
         const messagesDiv = document.getElementById('messages');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
         const inputArea = document.getElementById('inputArea');
 
-        // Панели новостей и участников
         const newsPanel = document.getElementById('newsPanel');
         const membersPanel = document.getElementById('membersPanel');
         const panelOverlay = document.getElementById('panelOverlay');
         const membersList = document.getElementById('membersList');
-
-        // Модальное окно реакций
         const reactionOverlay = document.getElementById('reactionOverlay');
 
-        // Инициализация форм при загрузке страницы
+        // Автоматический вход по кэшу (Исправлено приведение к нижнему регистру)
         window.addEventListener('DOMContentLoaded', async () => {
             const cached = localStorage.getItem('semejka_user');
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    // Проверяем актуальность юзера в БД
-                    const userDoc = await getDoc(doc(db, "users", parsed.username));
+                    const cleanUsername = parsed.username.trim().toLowerCase();
+                    const userDoc = await getDoc(doc(db, "users", cleanUsername));
                     if (userDoc.exists()) {
                         currentUser = userDoc.data();
                         welcomeText.innerText = `С возвращением, ${currentUser.name}!`;
@@ -656,497 +465,199 @@
                         freshForm.style.display = 'none';
                         loginForm.style.display = 'none';
                         fastForm.style.display = 'flex';
-                    } else {
-                        localStorage.removeItem('semejka_user');
                     }
-                } catch(e) {
-                    localStorage.removeItem('semejka_user');
-                }
+                } catch(e) { localStorage.removeItem('semejka_user'); }
             }
         });
 
-        // Навигация между Регистрацией / Логином
-        document.getElementById('toLoginBtn').addEventListener('click', () => {
-            freshForm.style.display = 'none';
-            loginForm.style.display = 'flex';
-        });
-        document.getElementById('toRegisterBtn').addEventListener('click', () => {
-            loginForm.style.display = 'none';
-            freshForm.style.display = 'flex';
-        });
-        document.getElementById('changeUserBtn').addEventListener('click', () => {
-            fastForm.style.display = 'none';
-            freshForm.style.display = 'flex';
-        });
+        // Переключение экранов
+        document.getElementById('toLoginBtn').addEventListener('click', () => { freshForm.style.display = 'none'; loginForm.style.display = 'flex'; });
+        document.getElementById('toRegisterBtn').addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'flex'; });
+        document.getElementById('changeUserBtn').addEventListener('click', () => { fastForm.style.display = 'none'; freshForm.style.display = 'flex'; });
 
-        // Логика создания аккаунта
+        // Регистрация нового аккаунта
         document.getElementById('joinBtn').addEventListener('click', async () => {
             const name = nameInput.value.trim();
             const username = usernameInput.value.trim().toLowerCase();
             errorMsg.style.display = 'none';
-
             if (!name || !username) return;
 
-            try {
-                const userDocRef = doc(db, "users", username);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    errorMsg.style.display = 'block';
-                    return;
-                }
+            const userDocRef = doc(db, "users", username);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) { errorMsg.style.display = 'block'; return; }
 
-                const userData = { id: username, username: username, name: name, status: 'online', last_seen: serverTimestamp() };
-                await setDoc(userDocRef, userData);
-                
-                currentUser = userData;
-                localStorage.setItem('semejka_user', JSON.stringify(userData));
-                enterChat();
-            } catch(err) {
-                console.error(err);
-            }
+            const userData = { id: username, username: username, name: name, status: 'online', last_seen: serverTimestamp() };
+            await setDoc(userDocRef, userData);
+            currentUser = userData;
+            localStorage.setItem('semejka_user', JSON.stringify(userData));
+            enterChat();
         });
 
-        // Логика входа по юзернейму
+        // Вход по юзернейму (Исправлено)
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const username = loginUsernameInput.value.trim().toLowerCase();
             loginErrorMsg.style.display = 'none';
-
             if (!username) return;
 
-            try {
-                const userDocRef = doc(db, "users", username);
-                const userDoc = await getDoc(userDocRef);
-                if (!userDoc.exists()) {
-                    loginErrorMsg.style.display = 'block';
-                    return;
-                }
+            const userDocRef = doc(db, "users", username);
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) { loginErrorMsg.style.display = 'block'; return; }
 
-                currentUser = userDoc.data();
-                await updateDoc(userDocRef, { status: 'online', last_seen: serverTimestamp() });
-                
-                localStorage.setItem('semejka_user', JSON.stringify(currentUser));
-                enterChat();
-            } catch(err) {
-                console.error(err);
-            }
+            currentUser = userDoc.data();
+            await updateDoc(userDocRef, { status: 'online', last_seen: serverTimestamp() });
+            localStorage.setItem('semejka_user', JSON.stringify(currentUser));
+            enterChat();
         });
 
-        // Быстрый вход
-        document.getElementById('fastJoinBtn').addEventListener('click', async () => {
-            if (currentUser) {
-                try {
-                    await updateDoc(doc(db, "users", currentUser.username), { status: 'online', last_seen: serverTimestamp() });
-                } catch(e){}
-                enterChat();
-            }
-        });
+        document.getElementById('fastJoinBtn').addEventListener('click', () => { if (currentUser) enterChat(); });
 
         function enterChat() {
             regScreen.classList.remove('active');
             chatScreen.classList.add('active');
             startLiveChat();
-            startTrackingStatus();
+            setupNotifications();
         }
 
-        // Обновление статуса Онлайн
-        function startTrackingStatus() {
-            if (!currentUser) return;
-            setInterval(async () => {
-                try {
-                    await updateDoc(doc(db, "users", currentUser.username), { status: 'online', last_seen: serverTimestamp() });
-                } catch(e){}
-            }, 45000);
+        // Подключение пуш-уведомлений
+        async function setupNotifications() {
+            if (!messaging || !currentUser) return;
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted' && 'serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.ready;
+                    const token = await getToken(messaging, { serviceWorkerRegistration: reg, vapidKey: "YOUR_PUBLIC_VAPID_KEY" });
+                    if (token) {
+                        await updateDoc(doc(db, "users", currentUser.username), { pushToken: token });
+                    }
+                }
+            } catch (err) { console.log("Ошибка уведомлений:", err); }
+        }
 
-            window.addEventListener('beforeunload', () => {
-                navigator.sendBeacon; // Для упрощения оставляем базовый оффлайн по таймауту
+        // Кнопки управления панелями
+        document.getElementById('newsBtn').addEventListener('click', () => { panelOverlay.classList.add('active'); newsPanel.classList.add('active'); });
+        document.getElementById('membersBtn').addEventListener('click', () => { panelOverlay.classList.add('active'); membersPanel.classList.add('active'); loadMembersList(); });
+        
+        function closeAllPanels() { panelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
+        document.getElementById('closeNewsBtn').addEventListener('click', closeAllPanels);
+        document.getElementById('closeMembersBtn').addEventListener('click', closeAllPanels);
+        panelOverlay.addEventListener('click', closeAllPanels);
+
+        async function loadMembersList() {
+            membersList.innerHTML = '';
+            const qSnap = await getDocs(collection(db, "users"));
+            qSnap.forEach(uDoc => {
+                const u = uDoc.data();
+                const item = document.createElement('div');
+                item.className = 'member-item';
+                item.innerHTML = `
+                    <div class="member-info">
+                        <div class="member-text-block">
+                            <span class="member-name">${escapeHtml(u.name)}</span>
+                            <span class="member-status">${u.status === 'online' ? '● В сети' : 'был(а) недавно'}</span>
+                        </div>
+                        <div>${u.id === currentUser.id ? '<span class="member-me-badge">Вы</span>' : ''}</div>
+                    </div>`;
+                membersList.appendChild(item);
             });
         }
 
-        // РАБОТА С КНОПКАМИ И МОДАЛЬНЫМИ ПАНЕЛЯМИ
-        const newsBtn = document.getElementById('newsBtn');
-        const membersBtn = document.getElementById('membersBtn');
-        const closeNewsBtn = document.getElementById('closeNewsBtn');
-        const closeMembersBtn = document.getElementById('closeMembersBtn');
-
-        newsBtn.addEventListener('click', () => {
-            panelOverlay.classList.add('active');
-            newsPanel.classList.add('active');
-        });
-
-        membersBtn.addEventListener('click', () => {
-            panelOverlay.classList.add('active');
-            membersPanel.classList.add('active');
-            loadMembersList();
-        });
-
-        function closeAllPanels() {
-            panelOverlay.classList.remove('active');
-            newsPanel.classList.remove('active');
-            membersPanel.classList.remove('active');
-        }
-
-        closeNewsBtn.addEventListener('click', closeAllPanels);
-        closeMembersBtn.addEventListener('click', closeAllPanels);
-        panelOverlay.addEventListener('click', closeAllPanels);
-
-        // Получение списка участников семьи
-        async function loadMembersList() {
-            membersList.innerHTML = '<div style="text-align:center;padding:20px;color:#8A8A9A;">Семейный совет собирается...</div>';
-            try {
-                const qSnap = await getDocs(collection(db, "users"));
-                membersList.innerHTML = '';
-                qSnap.forEach(uDoc => {
-                    const u = uDoc.data();
-                    const item = document.createElement('div');
-                    item.className = 'member-item';
-                    
-                    let actionHtml = `<button class="member-call-btn" data-id="${u.id}" data-name="${u.name}">Звонок</button>`;
-                    if (u.id === currentUser.id) {
-                        actionHtml = `<span class="member-me-badge">Это вы</span>`;
-                    }
-
-                    item.innerHTML = `
-                        <div class="member-info">
-                            <div class="member-text-block">
-                                <span class="member-name">${escapeHtml(u.name)}</span>
-                                <span class="member-status">${u.status === 'online' ? '● В сети' : 'был(а) недавно'}</span>
-                            </div>
-                            <div class="member-action-block">
-                                ${actionHtml}
-                            </div>
-                        </div>
-                    `;
-                    membersList.appendChild(item);
-                });
-
-                // Вешаем события на кнопки звонков
-                membersList.querySelectorAll('.member-call-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const targetId = e.currentTarget.getAttribute('data-id');
-                        const targetName = e.currentTarget.getAttribute('data-name');
-                        startWebRTCCall(targetId, targetName);
-                    });
-                });
-
-            } catch(e) {
-                membersList.innerHTML = '<div style="text-align:center;padding:20px;color:#D04A42;">Ошибка загрузки</div>';
-            }
-        }
-
-        // ЗАГРУЗКА ИСТОРИИ ЧАТА И LIVE-ОБНОВЛЕНИЯ
+        // Загрузка живой истории чата
         function startLiveChat() {
             const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
             onSnapshot(q, (snapshot) => {
                 messagesDiv.innerHTML = '';
                 lastMessageDateStr = null;
-
-                snapshot.forEach((docSnap) => {
-                    renderMessage(docSnap.id, docSnap.data());
-                });
-                
-                setTimeout(() => {
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }, 50);
-            }, (error) => {
-                console.error("Ошибка Live-чата:", error);
+                snapshot.forEach((docSnap) => renderMessage(docSnap.id, docSnap.data()));
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
 
-            // Слушаем статус печати со стороны других
-            listenTypingStatus();
+            onSnapshot(collection(db, "typing"), (snapshot) => {
+                let typers = [];
+                snapshot.forEach(dDoc => { if (dDoc.id !== currentUser.id && dDoc.data().isTyping) typers.push(dDoc.data().name); });
+                document.getElementById('typingContainer').style.display = typers.length > 0 ? 'flex' : 'none';
+            });
         }
 
-        // Отображение одного сообщения на экране
         function renderMessage(msgId, data) {
-            if (!data.created_at) return; // Пропуск локальных недошедших сообщений
-
+            if (!data.created_at) return;
             const msgDate = data.created_at.toDate();
-            const dateStr = msgDate.toDateString();
-
-            if (dateStr !== lastMessageDateStr) {
+            if (msgDate.toDateString() !== lastMessageDateStr) {
                 insertDateSeparator(msgDate);
-                lastMessageDateStr = dateStr;
+                lastMessageDateStr = msgDate.toDateString();
             }
 
             const isMe = data.user_id === currentUser.id;
             const msgNode = document.createElement('div');
             msgNode.className = `msg ${isMe ? 'sent' : 'received'}`;
-            msgNode.setAttribute('data-id', msgId);
-
-            let replyHtml = '';
-            if (data.reply_to) {
-                replyHtml = `
-                    <div class="reply-in-bubble">
-                        <div class="reply-owner">${escapeHtml(data.reply_to.user_name)}</div>
-                        <div>${escapeHtml(data.reply_to.text)}</div>
-                    </div>
-                `;
-            }
-
-            // Рендер блока реакций
-            let reactionsHtml = '';
-            if (data.reactions && Object.keys(data.reactions).length > 0) {
-                reactionsHtml = `<div class="reactions-wrapper">`;
-                const summary = {};
-                
-                Object.entries(data.reactions).forEach(([user, emoji]) => {
-                    if (!summary[emoji]) summary[emoji] = { count: 0, active: false };
-                    summary[emoji].count++;
-                    if (user === currentUser.id) summary[emoji].active = true;
-                });
-
-                Object.entries(summary).forEach(([emoji, info]) => {
-                    reactionsHtml += `
-                        <div class="reaction-badge ${info.active ? 'active' : ''}" data-emoji="${emoji}">
-                            <span>${emoji}</span>
-                            <span class="reaction-count">${info.count}</span>
-                        </div>
-                    `;
-                });
-                reactionsHtml += `</div>`;
-            }
+            
+            let replyHtml = data.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(data.reply_to.user_name)}</div><div>${escapeHtml(data.reply_to.text)}</div></div>` : '';
 
             msgNode.innerHTML = `
                 <span class="swipe-reply-icon">➔</span>
                 <div class="name">${escapeHtml(data.user_name)}</div>
-                <div class="bubble">
-                    ${replyHtml}
-                    <div>${linkify(escapeHtml(data.text))}</div>
-                </div>
-                <div class="msg-footer">
-                    <div class="time">${formatTime(msgDate)}</div>
-                    ${reactionsHtml}
-                </div>
-            `;
+                <div class="bubble">${replyHtml}<div>${escapeHtml(data.text)}</div></div>
+                <div class="msg-footer"><div class="time">${formatTime(msgDate)}</div></div>`;
 
-            // Обработка долгого тапа/клика для реакций
-            const bubble = msgNode.querySelector('.bubble');
-            bubble.addEventListener('click', () => {
-                activeReactionMessageId = msgId;
-                reactionOverlay.classList.add('active');
-            });
-
-            // Клик на существующую плашку реакции, чтобы убрать/добавить её
-            msgNode.querySelectorAll('.reaction-badge').forEach(badge => {
-                badge.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const emoji = badge.getAttribute('data-emoji');
-                    await toggleReaction(msgId, data.reactions || {}, emoji);
-                });
-            });
-
-            // Поддержка свайпа вправо для ответа на смартфонах
+            msgNode.querySelector('.bubble').addEventListener('click', () => { activeReactionMessageId = msgId; reactionOverlay.classList.add('active'); });
             setupSwipeToReply(msgNode, data);
-
             messagesDiv.appendChild(msgNode);
         }
 
-        // Логика установки реакций
-        reactionOverlay.addEventListener('click', () => reactionOverlay.classList.remove('active'));
-        document.querySelectorAll('.picker-emoji').forEach(elem => {
-            elem.addEventListener('click', async (e) => {
-                const emoji = e.currentTarget.getAttribute('data-emoji');
-                if (activeReactionMessageId) {
-                    const msgRef = doc(db, "messages", activeReactionMessageId);
-                    const msgSnap = await getDoc(msgRef);
-                    if (msgSnap.exists()) {
-                        const currentReactions = msgSnap.data().reactions || {};
-                        await toggleReaction(activeReactionMessageId, currentReactions, emoji);
-                    }
-                }
-            });
-        });
-
-        async function toggleReaction(msgId, currentReactions, emoji) {
-            const msgRef = doc(db, "messages", msgId);
-            if (currentReactions[currentUser.id] === emoji) {
-                delete currentReactions[currentUser.id];
-            } else {
-                currentReactions[currentUser.id] = emoji;
-            }
-            await updateDoc(msgRef, { reactions: currentReactions });
-        }
-
-        // КЛАССИЧЕСКАЯ ОТПРАВКА СООБЩЕНИЙ
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
-
             sendBtn.disabled = true;
             msgInput.value = '';
-            adjustTextareaHeight();
+            msgInput.style.height = 'auto';
 
             try {
-                const msgPayload = {
-                    user_id: currentUser.id,
-                    user_name: currentUser.name,
-                    text: text,
-                    reactions: {},
-                    created_at: serverTimestamp()
-                };
-
-                if (replyData) {
-                    msgPayload.reply_to = replyData;
-                    cancelReply();
-                }
-
-                await addDoc(collection(db, "messages"), msgPayload);
-                
-                // Сбрасываем статус печати
-                await setDoc(doc(db, "typing", currentUser.id), { name: currentUser.name, isTyping: false });
-            } catch (err) {
-                console.error("Ошибка при отправке:", err);
-            } finally {
-                sendBtn.disabled = false;
-                msgInput.focus();
-            }
+                const payload = { user_id: currentUser.id, user_name: currentUser.name, text: text, created_at: serverTimestamp() };
+                if (replyData) { payload.reply_to = replyData; cancelReply(); }
+                await addDoc(collection(db, "messages"), payload);
+                await setDoc(doc(db, "typing", currentUser.id), { isTyping: false });
+            } catch(e) {} finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
         sendBtn.addEventListener('click', sendMessage);
+        msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
-        msgInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                await sendMessage();
-            }
-        });
-
-        // Событие ввода текста для статуса «печатает...»
         msgInput.addEventListener('input', () => {
-            adjustTextareaHeight();
-            if (!currentUser) return;
-
+            msgInput.style.height = 'auto'; msgInput.style.height = msgInput.scrollHeight + 'px';
             setDoc(doc(db, "typing", currentUser.id), { name: currentUser.name, isTyping: true });
-            
             clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                setDoc(doc(db, "typing", currentUser.id), { name: currentUser.name, isTyping: false });
-            }, 2500);
+            typingTimeout = setTimeout(() => { setDoc(doc(db, "typing", currentUser.id), { isTyping: false }); }, 2000);
         });
 
-        // Мониторинг статуса печати других участников
-        const typingContainer = document.getElementById('typingContainer');
-        const typingText = document.getElementById('typingText');
-
-        function listenTypingStatus() {
-            onSnapshot(collection(db, "typing"), (snapshot) => {
-                let typers = [];
-                snapshot.forEach(dDoc => {
-                    if (dDoc.id !== currentUser.id && dDoc.data().isTyping) {
-                        typers.push(dDoc.data().name);
-                    }
-                });
-
-                if (typers.length > 0) {
-                    typingText.innerText = typers.length === 1 ? `${typers[0]} шуршит...` : 'Несколько человек шуршат...';
-                    typingContainer.style.display = 'flex';
-                } else {
-                    typingContainer.style.display = 'none';
-                }
-            });
-        }
-
-        // Логика ответа на сообщения
         function setupSwipeToReply(node, data) {
-            let startX = 0;
-            const bubble = node.querySelector('.bubble');
-            const icon = node.querySelector('.swipe-reply-icon');
-
-            bubble.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-            }, { passive: true });
-
+            let startX = 0; const bubble = node.querySelector('.bubble');
+            bubble.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, {passive:true});
             bubble.addEventListener('touchmove', (e) => {
                 let diff = e.touches[0].clientX - startX;
-                if (diff > 0 && diff < 80) {
-                    bubble.style.transform = `translateX(${diff}px)`;
-                    icon.style.opacity = diff / 60;
-                    icon.style.transform = `translateY(-50%) scale(${0.6 + (diff/100)})`;
-                }
-            }, { passive: true });
-
+                if (diff > 0 && diff < 60) bubble.style.transform = `translateX(${diff}px)`;
+            }, {passive:true});
             bubble.addEventListener('touchend', (e) => {
                 let diff = e.changedTouches[0].clientX - startX;
                 bubble.style.transform = '';
-                icon.style.opacity = 0;
-                if (diff >= 65) {
-                    initiateReply(data);
+                if (diff >= 50) {
+                    replyData = { text: data.text, user_name: data.user_name };
+                    document.getElementById('replyBarText').innerText = data.text;
+                    document.getElementById('replyBar').style.display = 'flex';
+                    inputArea.classList.add('has-reply');
                 }
             });
         }
 
-        function initiateReply(data) {
-            replyData = { text: data.text, user_name: data.user_name, user_id: data.user_id };
-            document.getElementById('replyBarTitle').innerText = `Ответ пользователю ${data.user_name}`;
-            document.getElementById('replyBarText').innerText = data.text;
-            document.getElementById('replyBar').style.display = 'flex';
-            inputArea.classList.add('has-reply');
-            msgInput.focus();
-        }
-
-        function cancelReply() {
-            replyData = null;
-            document.getElementById('replyBar').style.display = 'none';
-            inputArea.classList.remove('has-reply');
-        }
+        function cancelReply() { replyData = null; document.getElementById('replyBar').style.display = 'none'; inputArea.classList.remove('has-reply'); }
         document.getElementById('replyBarClose').addEventListener('click', cancelReply);
+        reactionOverlay.addEventListener('click', () => reactionOverlay.classList.remove('active'));
 
-        // Функция автоматического подгона высоты поля ввода
-        function adjustTextareaHeight() {
-            msgInput.style.height = 'auto';
-            msgInput.style.height = (msgInput.scrollHeight) + '2px';
+        function insertDateSeparator(date) {
+            const sep = document.createElement('div'); sep.className = 'date-separator';
+            sep.innerHTML = `<span>${date.getDate()} ${['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][date.getMonth()]}</span>`;
+            messagesDiv.appendChild(sep);
         }
-
-        // Вспомогательные утилиты разметки
-        function formatDateSeparator(dateStr) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); 
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
-        }
-
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); 
-            sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; 
-            messagesDiv.appendChild(sep); 
-        }
-
-        function formatTime(dateObj) { 
-            return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); 
-        } 
-
-        function escapeHtml(text) { 
-            const el = document.createElement('div'); 
-            el.innerText = text; 
-            return el.innerHTML; 
-        }
-
-        function linkify(inputText) {
-            var replacedText, replacePattern1, replacePattern2, replacePattern3;
-            replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-            replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
-            replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-            replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
-            replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
-            replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
-            return replacedText;
-        }
-
-        // ЗАГЛУШКА WEB RTC СИГНАЛИНГА ДЛЯ ЗВОНКОВ
-        const callOverlay = document.getElementById('callOverlay');
-        const callTargetName = document.getElementById('callTargetName');
-        const callStatusText = document.getElementById('callStatusText');
-
-        function startWebRTCCall(targetId, targetName) {
-            closeAllPanels();
-            callTargetName.innerText = targetName;
-            callStatusText.innerText = "Вызов...";
-            document.getElementById('callAcceptBtn').style.display = 'none';
-            callOverlay.classList.add('active');
-        }
-
-        document.getElementById('callRejectBtn').addEventListener('click', () => {
-            callOverlay.classList.remove('active');
-        });
+        function formatTime(d) { return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0'); }
+        function escapeHtml(t) { const e = document.createElement('div'); e.innerText = t; return e.innerHTML; }
     </script>
 </body>
 </html>
