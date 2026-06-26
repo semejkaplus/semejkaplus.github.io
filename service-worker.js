@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v17'; // Версия обновлена для пуш-уведомлений
+const CACHE_NAME = 'semejka-v16'; // Подняли версию для обновления кэша
 const ASSETS = [
   '.',
   'index.html',
@@ -9,7 +9,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // Автоматическая активация новой версии
 });
 
 self.addEventListener('activate', event => {
@@ -23,13 +23,12 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Добавляем исключения для Firebase, чтобы WebRTC-сигналинг и база данных не зависали
   if (
     event.request.url.includes('supabase.co') || 
     event.request.url.includes('cdn.jsdelivr.net') ||
     event.request.url.includes('firebase') ||
-    event.request.url.includes('googleapis.com') ||
-    event.request.url.includes('onesignal.com') ||
-    event.request.url.includes('workers.dev')
+    event.request.url.includes('googleapis.com')
   ) return;
 
   event.respondWith(
@@ -37,51 +36,31 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Интеграция дифференцированной обработки пушей звонков и сообщений
 self.addEventListener('push', event => {
   if (!event.data) return;
-  
-  try {
-    const payload = event.data.json();
-    const customData = payload.custom && payload.custom.a ? payload.custom.a : {};
-    
-    let options = {
-      body: payload.body,
-      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
-      badge: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
-      data: { url: '.', message: payload }
-    };
-
-    // Настраиваем разное поведение вибровызова телефона
-    if (customData.type === "call") {
-      options.vibrate = [500, 300, 500, 300, 500, 300, 500]; // Длинный вибровызов для звонка
-      options.tag = 'semejka-call';
-      options.renotify = true;
-    } else {
-      options.vibrate = [200, 100, 200]; // Короткое вибро для сообщений
-      options.tag = 'semejka-msg';
-    }
-
-    event.waitUntil(
-      self.registration.showNotification(payload.title, options)
-    );
-  } catch (err) {
-    console.error("Ошибка обработки входящего пуша:", err);
-  }
+  const payload = event.data.json();
+  const options = {
+    body: payload.body,
+    icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
+    badge: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
+    vibrate: [200, 100, 200],
+    tag: 'semejka-msg',
+    data: { url: '.', message: payload }
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      if (clientList.length > 0) {
-        let client = clientList[0];
-        for (let c of clientList) {
-          if (c.focused) { client = c; break; }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.postMessage(event.notification.data.message);
+          return client.focus();
         }
-        return client.focus();
       }
-      return self.clients.openWindow('.');
+      if (clients.openWindow) return clients.openWindow('.');
     })
   );
 });
