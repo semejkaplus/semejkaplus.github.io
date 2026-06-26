@@ -249,10 +249,8 @@
         }
         .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; }
         .input-area textarea { flex: 1; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; resize: none; min-height: 52px; max-height: 160px; font-family: inherit; }
-        
-        /* Классическая круглая кнопка со стрелочкой */
-        .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 16px rgba(108,99,255,0.3); border: none; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
-        .input-area button:hover { transform: scale(1.03); }
+        .input-area button { background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; padding: 15px 25px; border-radius: 25px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(108,99,255,0.25); flex-shrink: 0; transition: 0.15s; height: 52px; }
+        .input-area button:hover { transform: scale(1.02); }
 
         .bubble a { color: #6C63FF; text-decoration: underline; }
         .swipe-reply-icon { position: absolute; left: -40px; top: 50%; transform: translateY(-50%) scale(0.6); opacity: 0; color: #6C63FF; transition: 0.1s; }
@@ -305,7 +303,7 @@
 
             <div id="loginForm" class="login-existing">
                 <input type="text" id="loginUsernameInput" placeholder="Введите ваш юзернейм">
-                <div class="error-msg" id="loginErrorMsg">Пользователь с таким юзернеймом не найден!</div>
+                <div class="error-msg" id="loginErrorMsg">Пользователь не найден!</div>
                 <button id="loginBtn">Войти</button>
                 <button class="link-btn" id="toRegisterBtn">Создать новый аккаунт</button>
             </div>
@@ -321,13 +319,13 @@
 
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
-            <button class="capsule-btn" id="newsBtn" title="О новинках">
+            <button class="capsule-btn" id="newsBtn" style="opacity: 0.4; cursor: not-allowed;" disabled>
                 <svg class="star-icon-svg" width="32" height="32" viewBox="0 0 64 64" fill="none">
                     <path d="M32 6L40.2 22.6L58.5 25.3L45.2 38.3L48.4 56.6L32 48L15.6 56.6L18.8 38.3L5.5 25.3L23.8 22.6L32 6Z" fill="#FFBA42" stroke="#522613" stroke-width="3.5" stroke-linejoin="round"/>
                 </svg>
             </button>
             <div class="capsule-divider"></div>
-            <button class="capsule-btn" id="membersBtn" title="Участники">
+            <button class="capsule-btn" id="membersBtn" style="opacity: 0.4; cursor: not-allowed;" disabled>
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -339,17 +337,13 @@
         
         <div class="side-panel" id="newsPanel">
             <div class="panel-header">
-                <div class="panel-title">Что нового в Семейке+ 🌟</div>
+                <div class="panel-title">Что нового 🌟</div>
                 <button class="panel-close" id="closeNewsBtn">&times;</button>
             </div>
             <div class="panel-content">
                 <div class="news-card">
-                    <h4>✨ Push-уведомления</h4>
-                    <p>Теперь вы не пропустите важные сообщения от родных, даже когда приложение закрыто!</p>
-                </div>
-                <div class="news-card">
-                    <h4>💬 Ответы на сообщения</h4>
-                    <p>Потяните сообщение вправо (свайп), чтобы быстро ответить на него.</p>
+                    <h4>Реакции на сообщения</h4>
+                    <p>Нажмите на любое облачко сообщения, чтобы оставить быстрое сердечко или лайк!</p>
                 </div>
             </div>
         </div>
@@ -382,12 +376,7 @@
 
         <div class="input-area" id="inputArea">
             <textarea id="msgInput" placeholder="Напишите сообщение..." rows="1"></textarea>
-            <button id="sendBtn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-            </button>
+            <button id="sendBtn">Отправить</button>
         </div>
     </div>
 
@@ -416,8 +405,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // Инициализация уведомлений Firebase
         let messaging = null;
-        try { messaging = getMessaging(app); } catch(e) { console.log("Уведомления не поддерживаются"); }
+        try { messaging = getMessaging(app); } catch(e) { console.log("Уведомления не поддерживаются вашим браузером"); }
 
         let currentUser = null;
         let replyData = null;
@@ -450,17 +441,15 @@
         const membersList = document.getElementById('membersList');
         const reactionOverlay = document.getElementById('reactionOverlay');
 
-        // Автоматический вход по кэшу (Исправлено приведение к нижнему регистру)
         window.addEventListener('DOMContentLoaded', async () => {
             const cached = localStorage.getItem('semejka_user');
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    const cleanUsername = parsed.username.trim().toLowerCase();
-                    const userDoc = await getDoc(doc(db, "users", cleanUsername));
+                    const userDoc = await getDoc(doc(db, "users", parsed.username));
                     if (userDoc.exists()) {
                         currentUser = userDoc.data();
-                        welcomeText.innerText = `С возвращением, ${currentUser.name}!`;
+                        welcomeText.innerText = `Привет, ${currentUser.name}!`;
                         savedUsernameLabel.innerText = `@${currentUser.username}`;
                         freshForm.style.display = 'none';
                         loginForm.style.display = 'none';
@@ -470,15 +459,13 @@
             }
         });
 
-        // Переключение экранов
         document.getElementById('toLoginBtn').addEventListener('click', () => { freshForm.style.display = 'none'; loginForm.style.display = 'flex'; });
         document.getElementById('toRegisterBtn').addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'flex'; });
         document.getElementById('changeUserBtn').addEventListener('click', () => { fastForm.style.display = 'none'; freshForm.style.display = 'flex'; });
 
-        // Регистрация нового аккаунта
         document.getElementById('joinBtn').addEventListener('click', async () => {
             const name = nameInput.value.trim();
-            const username = usernameInput.value.trim().toLowerCase();
+            const username = usernameInput.value.trim();
             errorMsg.style.display = 'none';
             if (!name || !username) return;
 
@@ -493,9 +480,8 @@
             enterChat();
         });
 
-        // Вход по юзернейму (Исправлено)
         document.getElementById('loginBtn').addEventListener('click', async () => {
-            const username = loginUsernameInput.value.trim().toLowerCase();
+            const username = loginUsernameInput.value.trim();
             loginErrorMsg.style.display = 'none';
             if (!username) return;
 
@@ -511,14 +497,14 @@
 
         document.getElementById('fastJoinBtn').addEventListener('click', () => { if (currentUser) enterChat(); });
 
-        function enterChat() {
-            regScreen.classList.remove('active');
-            chatScreen.classList.add('active');
-            startLiveChat();
-            setupNotifications();
+        function enterChat() { 
+            regScreen.classList.remove('active'); 
+            chatScreen.classList.add('active'); 
+            startLiveChat(); 
+            setupNotifications(); // Запрос токена при успешном входе в чат
         }
 
-        // Подключение пуш-уведомлений
+        // Функция запроса разрешений и привязки токена к аккаунту
         async function setupNotifications() {
             if (!messaging || !currentUser) return;
             try {
@@ -530,43 +516,18 @@
                         await updateDoc(doc(db, "users", currentUser.username), { pushToken: token });
                     }
                 }
-            } catch (err) { console.log("Ошибка уведомлений:", err); }
+            } catch (err) { console.log("Не удалось настроить уведомления:", err); }
         }
 
-        // Кнопки управления панелями
-        document.getElementById('newsBtn').addEventListener('click', () => { panelOverlay.classList.add('active'); newsPanel.classList.add('active'); });
-        document.getElementById('membersBtn').addEventListener('click', () => { panelOverlay.classList.add('active'); membersPanel.classList.add('active'); loadMembersList(); });
-        
         function closeAllPanels() { panelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
         document.getElementById('closeNewsBtn').addEventListener('click', closeAllPanels);
         document.getElementById('closeMembersBtn').addEventListener('click', closeAllPanels);
         panelOverlay.addEventListener('click', closeAllPanels);
 
-        async function loadMembersList() {
-            membersList.innerHTML = '';
-            const qSnap = await getDocs(collection(db, "users"));
-            qSnap.forEach(uDoc => {
-                const u = uDoc.data();
-                const item = document.createElement('div');
-                item.className = 'member-item';
-                item.innerHTML = `
-                    <div class="member-info">
-                        <div class="member-text-block">
-                            <span class="member-name">${escapeHtml(u.name)}</span>
-                            <span class="member-status">${u.status === 'online' ? '● В сети' : 'был(а) недавно'}</span>
-                        </div>
-                        <div>${u.id === currentUser.id ? '<span class="member-me-badge">Вы</span>' : ''}</div>
-                    </div>`;
-                membersList.appendChild(item);
-            });
-        }
-
-        // Загрузка живой истории чата
         function startLiveChat() {
             const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
             onSnapshot(q, (snapshot) => {
-                messagesDiv.innerHTML = '';
-                lastMessageDateStr = null;
+                messagesDiv.innerHTML = ''; lastMessageDateStr = null;
                 snapshot.forEach((docSnap) => renderMessage(docSnap.id, docSnap.data()));
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
@@ -581,10 +542,8 @@
         function renderMessage(msgId, data) {
             if (!data.created_at) return;
             const msgDate = data.created_at.toDate();
-            if (msgDate.toDateString() !== lastMessageDateStr) {
-                insertDateSeparator(msgDate);
-                lastMessageDateStr = msgDate.toDateString();
-            }
+            const dateStr = msgDate.toDateString();
+            if (dateStr !== lastMessageDateStr) { insertDateSeparator(dateStr); lastMessageDateStr = dateStr; }
 
             const isMe = data.user_id === currentUser.id;
             const msgNode = document.createElement('div');
@@ -592,34 +551,82 @@
             
             let replyHtml = data.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(data.reply_to.user_name)}</div><div>${escapeHtml(data.reply_to.text)}</div></div>` : '';
 
+            let rxWrapperHtml = '';
+            if (data.reactions && Object.keys(data.reactions).length > 0) {
+                rxWrapperHtml = '<div class="reactions-wrapper">';
+                const counts = {};
+                Object.values(data.reactions).forEach(emoji => counts[emoji] = (counts[emoji] || 0) + 1);
+                for (const [emoji, count] of Object.entries(counts)) {
+                    const activeClass = data.reactions[currentUser.id] === emoji ? 'active' : '';
+                    rxWrapperHtml += `<div class="reaction-badge ${activeClass}" data-emoji="${emoji}">${emoji} <span class="reaction-count">${count}</span></div>`;
+                }
+                rxWrapperHtml += '</div>';
+            }
+
             msgNode.innerHTML = `
                 <span class="swipe-reply-icon">➔</span>
                 <div class="name">${escapeHtml(data.user_name)}</div>
                 <div class="bubble">${replyHtml}<div>${escapeHtml(data.text)}</div></div>
-                <div class="msg-footer"><div class="time">${formatTime(msgDate)}</div></div>`;
+                <div class="msg-footer">
+                    <div class="time">${formatTime(msgDate)}</div>
+                    ${rxWrapperHtml}
+                </div>`;
 
             msgNode.querySelector('.bubble').addEventListener('click', () => { activeReactionMessageId = msgId; reactionOverlay.classList.add('active'); });
+            
+            msgNode.querySelectorAll('.reaction-badge').forEach(badge => {
+                badge.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const emoji = badge.getAttribute('data-emoji');
+                    const msgRef = doc(db, "messages", msgId);
+                    const currentReactions = data.reactions || {};
+                    if (currentReactions[currentUser.id] === emoji) {
+                        delete currentReactions[currentUser.id];
+                    } else {
+                        currentReactions[currentUser.id] = emoji;
+                    }
+                    await updateDoc(msgRef, { reactions: currentReactions });
+                });
+            });
+
             setupSwipeToReply(msgNode, data);
             messagesDiv.appendChild(msgNode);
         }
+
+        reactionOverlay.querySelectorAll('.picker-emoji').forEach(item => {
+            item.addEventListener('click', async () => {
+                const emoji = item.getAttribute('data-emoji');
+                if (!activeReactionMessageId) return;
+                const msgRef = doc(db, "messages", activeReactionMessageId);
+                const msgDoc = await getDoc(msgRef);
+                if (msgDoc.exists()) {
+                    const currentReactions = msgDoc.data().reactions || {};
+                    if (currentReactions[currentUser.id] === emoji) {
+                        delete currentReactions[currentUser.id];
+                    } else {
+                        currentReactions[currentUser.id] = emoji;
+                    }
+                    await updateDoc(msgRef, { reactions: currentReactions });
+                }
+                reactionOverlay.classList.remove('active');
+            });
+        });
 
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
             sendBtn.disabled = true;
-            msgInput.value = '';
-            msgInput.style.height = 'auto';
+            msgInput.value = ''; msgInput.style.height = 'auto';
 
             try {
-                const payload = { user_id: currentUser.id, user_name: currentUser.name, text: text, created_at: serverTimestamp() };
-                if (replyData) { payload.reply_to = replyData; cancelReply(); }
-                await addDoc(collection(db, "messages"), payload);
+                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
                 await setDoc(doc(db, "typing", currentUser.id), { isTyping: false });
-            } catch(e) {} finally { sendBtn.disabled = false; msgInput.focus(); }
+                if (replyData) cancelReply();
+            } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
+        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
-        msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
         msgInput.addEventListener('input', () => {
             msgInput.style.height = 'auto'; msgInput.style.height = msgInput.scrollHeight + 'px';
@@ -636,8 +643,7 @@
                 if (diff > 0 && diff < 60) bubble.style.transform = `translateX(${diff}px)`;
             }, {passive:true});
             bubble.addEventListener('touchend', (e) => {
-                let diff = e.changedTouches[0].clientX - startX;
-                bubble.style.transform = '';
+                let diff = e.changedTouches[0].clientX - startX; bubble.style.transform = '';
                 if (diff >= 50) {
                     replyData = { text: data.text, user_name: data.user_name };
                     document.getElementById('replyBarText').innerText = data.text;
@@ -651,13 +657,16 @@
         document.getElementById('replyBarClose').addEventListener('click', cancelReply);
         reactionOverlay.addEventListener('click', () => reactionOverlay.classList.remove('active'));
 
-        function insertDateSeparator(date) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${date.getDate()} ${['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][date.getMonth()]}</span>`;
-            messagesDiv.appendChild(sep);
+        function formatDateSeparator(dateStr) {
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
-        function formatTime(d) { return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0'); }
-        function escapeHtml(t) { const e = document.createElement('div'); e.innerText = t; return e.innerHTML; }
+        function insertDateSeparator(dateString) {
+            const sep = document.createElement('div'); sep.className = 'date-separator';
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
+        }
+        function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
+        function escapeHtml(text) { const el = document.createElement('div'); el.innerText = text; return el.innerHTML; }
     </script>
 </body>
 </html>
