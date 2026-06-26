@@ -391,7 +391,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
         const firebaseConfig = {
@@ -406,9 +406,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Инициализация уведомлений Firebase
         let messaging = null;
-        try { messaging = getMessaging(app); } catch(e) { console.log("Уведомления не поддерживаются вашим браузером"); }
+        try {
+            messaging = getMessaging(app);
+        } catch(e) {
+            console.log("Уведомления не поддерживаются вашим браузером");
+        }
 
         let currentUser = null;
         let replyData = null;
@@ -455,13 +458,26 @@
                         loginForm.style.display = 'none';
                         fastForm.style.display = 'flex';
                     }
-                } catch(e) { localStorage.removeItem('semejka_user'); }
+                } catch(e) {
+                    localStorage.removeItem('semejka_user');
+                }
             }
         });
 
-        document.getElementById('toLoginBtn').addEventListener('click', () => { freshForm.style.display = 'none'; loginForm.style.display = 'flex'; });
-        document.getElementById('toRegisterBtn').addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'flex'; });
-        document.getElementById('changeUserBtn').addEventListener('click', () => { fastForm.style.display = 'none'; freshForm.style.display = 'flex'; });
+        document.getElementById('toLoginBtn').addEventListener('click', () => {
+            freshForm.style.display = 'none';
+            loginForm.style.display = 'flex';
+        });
+
+        document.getElementById('toRegisterBtn').addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            freshForm.style.display = 'flex';
+        });
+
+        document.getElementById('changeUserBtn').addEventListener('click', () => {
+            fastForm.style.display = 'none';
+            freshForm.style.display = 'flex';
+        });
 
         document.getElementById('joinBtn').addEventListener('click', async () => {
             const name = nameInput.value.trim();
@@ -471,9 +487,19 @@
 
             const userDocRef = doc(db, "users", username);
             const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) { errorMsg.style.display = 'block'; return; }
+            if (userDoc.exists()) {
+                errorMsg.style.display = 'block';
+                return;
+            }
 
-            const userData = { id: username, username: username, name: name, status: 'online', last_seen: serverTimestamp() };
+            const userData = {
+                id: username,
+                username: username,
+                name: name,
+                status: 'online',
+                last_seen: serverTimestamp()
+            };
+
             await setDoc(userDocRef, userData);
             currentUser = userData;
             localStorage.setItem('semejka_user', JSON.stringify(userData));
@@ -487,39 +513,29 @@
 
             const userDocRef = doc(db, "users", username);
             const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) { loginErrorMsg.style.display = 'block'; return; }
+            if (!userDoc.exists()) {
+                loginErrorMsg.style.display = 'block';
+                return;
+            }
 
             currentUser = userDoc.data();
-            await updateDoc(userDocRef, { status: 'online', last_seen: serverTimestamp() });
+            await updateDoc(userDocRef, {
+                status: 'online',
+                last_seen: serverTimestamp()
+            });
             localStorage.setItem('semejka_user', JSON.stringify(currentUser));
             enterChat();
         });
 
-        document.getElementById('fastJoinBtn').addEventListener('click', () => { if (currentUser) enterChat(); });
+        document.getElementById('fastJoinBtn').addEventListener('click', () => {
+            if (currentUser) enterChat();
+        });
 
-        function enterChat() { 
-            regScreen.classList.remove('active'); 
-            chatScreen.classList.add('active'); 
-            startLiveChat(); 
-            setupNotifications(); // Запрос токена при успешном входе в чат
+        function closeAllPanels() {
+            panelOverlay.classList.remove('active');
+            newsPanel.classList.remove('active');
+            membersPanel.classList.remove('active');
         }
-
-        // Функция запроса разрешений и привязки токена к аккаунту
-        async function setupNotifications() {
-            if (!messaging || !currentUser) return;
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted' && 'serviceWorker' in navigator) {
-                    const reg = await navigator.serviceWorker.ready;
-                    const token = await getToken(messaging, { serviceWorkerRegistration: reg, vapidKey: "YOUR_PUBLIC_VAPID_KEY" });
-                    if (token) {
-                        await updateDoc(doc(db, "users", currentUser.username), { pushToken: token });
-                    }
-                }
-            } catch (err) { console.log("Не удалось настроить уведомления:", err); }
-        }
-
-        function closeAllPanels() { panelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
         document.getElementById('closeNewsBtn').addEventListener('click', closeAllPanels);
         document.getElementById('closeMembersBtn').addEventListener('click', closeAllPanels);
         panelOverlay.addEventListener('click', closeAllPanels);
@@ -527,15 +543,26 @@
         function startLiveChat() {
             const q = query(collection(db, "messages"), orderBy("created_at", "asc"));
             onSnapshot(q, (snapshot) => {
-                messagesDiv.innerHTML = ''; lastMessageDateStr = null;
-                snapshot.forEach((docSnap) => renderMessage(docSnap.id, docSnap.data()));
+                messagesDiv.innerHTML = '';
+                lastMessageDateStr = null;
+                snapshot.forEach((docSnap) => {
+                    renderMessage(docSnap.id, docSnap.data());
+                });
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
 
             onSnapshot(collection(db, "typing"), (snapshot) => {
                 let typers = [];
-                snapshot.forEach(dDoc => { if (dDoc.id !== currentUser.id && dDoc.data().isTyping) typers.push(dDoc.data().name); });
-                document.getElementById('typingContainer').style.display = typers.length > 0 ? 'flex' : 'none';
+                snapshot.forEach(dDoc => {
+                    if (dDoc.id !== currentUser.id && dDoc.data().isTyping) {
+                        typers.push(dDoc.data().name);
+                    }
+                });
+                if (typers.length > 0) {
+                    document.getElementById('typingContainer').style.display = 'flex';
+                } else {
+                    document.getElementById('typingContainer').style.display = 'none';
+                }
             });
         }
 
@@ -543,19 +570,33 @@
             if (!data.created_at) return;
             const msgDate = data.created_at.toDate();
             const dateStr = msgDate.toDateString();
-            if (dateStr !== lastMessageDateStr) { insertDateSeparator(dateStr); lastMessageDateStr = dateStr; }
+            
+            if (dateStr !== lastMessageDateStr) {
+                insertDateSeparator(dateStr);
+                lastMessageDateStr = dateStr;
+            }
 
             const isMe = data.user_id === currentUser.id;
             const msgNode = document.createElement('div');
             msgNode.className = `msg ${isMe ? 'sent' : 'received'}`;
             
-            let replyHtml = data.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(data.reply_to.user_name)}</div><div>${escapeHtml(data.reply_to.text)}</div></div>` : '';
+            let replyHtml = '';
+            if (data.reply_to) {
+                replyHtml = `
+                    <div class="reply-in-bubble">
+                        <div class="reply-owner">${escapeHtml(data.reply_to.user_name)}</div>
+                        <div>${escapeHtml(data.reply_to.text)}</div>
+                    </div>
+                `;
+            }
 
             let rxWrapperHtml = '';
             if (data.reactions && Object.keys(data.reactions).length > 0) {
                 rxWrapperHtml = '<div class="reactions-wrapper">';
                 const counts = {};
-                Object.values(data.reactions).forEach(emoji => counts[emoji] = (counts[emoji] || 0) + 1);
+                Object.values(data.reactions).forEach(emoji => {
+                    counts[emoji] = (counts[emoji] || 0) + 1;
+                });
                 for (const [emoji, count] of Object.entries(counts)) {
                     const activeClass = data.reactions[currentUser.id] === emoji ? 'active' : '';
                     rxWrapperHtml += `<div class="reaction-badge ${activeClass}" data-emoji="${emoji}">${emoji} <span class="reaction-count">${count}</span></div>`;
@@ -566,13 +607,20 @@
             msgNode.innerHTML = `
                 <span class="swipe-reply-icon">➔</span>
                 <div class="name">${escapeHtml(data.user_name)}</div>
-                <div class="bubble">${replyHtml}<div>${escapeHtml(data.text)}</div></div>
+                <div class="bubble">
+                    ${replyHtml}
+                    <div>${escapeHtml(data.text)}</div>
+                </div>
                 <div class="msg-footer">
                     <div class="time">${formatTime(msgDate)}</div>
                     ${rxWrapperHtml}
-                </div>`;
+                </div>
+            `;
 
-            msgNode.querySelector('.bubble').addEventListener('click', () => { activeReactionMessageId = msgId; reactionOverlay.classList.add('active'); });
+            msgNode.querySelector('.bubble').addEventListener('click', () => {
+                activeReactionMessageId = msgId;
+                reactionOverlay.classList.add('active');
+            });
             
             msgNode.querySelectorAll('.reaction-badge').forEach(badge => {
                 badge.addEventListener('click', async (e) => {
@@ -615,35 +663,65 @@
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !currentUser) return;
+
             sendBtn.disabled = true;
-            msgInput.value = ''; msgInput.style.height = 'auto';
+            msgInput.value = '';
+            msgInput.style.height = 'auto';
 
             try {
-                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
+                await addDoc(collection(db, "messages"), { 
+                    user_id: currentUser.id, 
+                    user_name: currentUser.name, 
+                    text: text, 
+                    reactions: {}, 
+                    reply_to: replyData, 
+                    created_at: serverTimestamp() 
+                });
                 await setDoc(doc(db, "typing", currentUser.id), { isTyping: false });
                 if (replyData) cancelReply();
-            } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
+            } catch (err) {
+                console.error(err);
+            } finally { 
+                sendBtn.disabled = false; 
+                msgInput.focus(); 
+            }
         }
 
-        msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
+        msgInput.addEventListener('keypress', async (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                await sendMessage(); 
+            } 
+        });
         sendBtn.addEventListener('click', sendMessage);
 
         msgInput.addEventListener('input', () => {
-            msgInput.style.height = 'auto'; msgInput.style.height = msgInput.scrollHeight + 'px';
+            msgInput.style.height = 'auto';
+            msgInput.style.height = msgInput.scrollHeight + 'px';
             setDoc(doc(db, "typing", currentUser.id), { name: currentUser.name, isTyping: true });
             clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => { setDoc(doc(db, "typing", currentUser.id), { isTyping: false }); }, 2000);
+            typingTimeout = setTimeout(() => {
+                setDoc(doc(db, "typing", currentUser.id), { isTyping: false });
+            }, 2000);
         });
 
         function setupSwipeToReply(node, data) {
-            let startX = 0; const bubble = node.querySelector('.bubble');
-            bubble.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, {passive:true});
+            let startX = 0;
+            const bubble = node.querySelector('.bubble');
+            bubble.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            }, {passive: true});
+
             bubble.addEventListener('touchmove', (e) => {
                 let diff = e.touches[0].clientX - startX;
-                if (diff > 0 && diff < 60) bubble.style.transform = `translateX(${diff}px)`;
-            }, {passive:true});
+                if (diff > 0 && diff < 60) {
+                    bubble.style.transform = `translateX(${diff}px)`;
+                }
+            }, {passive: true});
+
             bubble.addEventListener('touchend', (e) => {
-                let diff = e.changedTouches[0].clientX - startX; bubble.style.transform = '';
+                let diff = e.changedTouches[0].clientX - startX;
+                bubble.style.transform = '';
                 if (diff >= 50) {
                     replyData = { text: data.text, user_name: data.user_name };
                     document.getElementById('replyBarText').innerText = data.text;
@@ -653,20 +731,65 @@
             });
         }
 
-        function cancelReply() { replyData = null; document.getElementById('replyBar').style.display = 'none'; inputArea.classList.remove('has-reply'); }
+        function cancelReply() {
+            replyData = null;
+            document.getElementById('replyBar').style.display = 'none';
+            inputArea.classList.remove('has-reply');
+        }
         document.getElementById('replyBarClose').addEventListener('click', cancelReply);
         reactionOverlay.addEventListener('click', () => reactionOverlay.classList.remove('active'));
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
+            const d = new Date(dateStr); 
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
         }
+        
         function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
+            const sep = document.createElement('div'); 
+            sep.className = 'date-separator';
+            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; 
+            messagesDiv.appendChild(sep); 
         }
-        function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
-        function escapeHtml(text) { const el = document.createElement('div'); el.innerText = text; return el.innerHTML; }
+        
+        function formatTime(dateObj) { 
+            return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); 
+        } 
+        
+        function escapeHtml(text) { 
+            const el = document.createElement('div'); 
+            el.innerText = text; 
+            return el.innerHTML; 
+        }
+
+        async function setupNotifications() {
+            if (!messaging || !currentUser) return;
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted' && 'serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.register('service-worker (4).js');
+                    const token = await getToken(messaging, { 
+                        serviceWorkerRegistration: reg, 
+                        vapidKey: "YOUR_PUBLIC_VAPID_KEY" 
+                    });
+                    if (token) {
+                        await updateDoc(doc(db, "users", currentUser.username), { 
+                            pushToken: token 
+                        });
+                        console.log("Токен уведомлений сохранен.");
+                    }
+                }
+            } catch (err) { 
+                console.log("Ошибка настройки пуш-уведомлений:", err); 
+            }
+        }
+
+        function enterChat() { 
+            regScreen.classList.remove('active'); 
+            chatScreen.classList.add('active'); 
+            startLiveChat(); 
+            setupNotifications();
+        }
     </script>
 </body>
 </html>
