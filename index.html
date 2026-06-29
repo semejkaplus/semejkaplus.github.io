@@ -592,6 +592,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { setupNotifications, sendPushNotification } from "./notifications.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAlt7Q4ZjhSM9M3gytNk1UA6XHPROtz7eQ",
@@ -1377,21 +1378,40 @@
         }
 
         async function sendMessage() {
-            const text = msgInput.value.trim();
-            if (!currentUser || !text) return;
+    const text = msgInput.value.trim();
+    if (!currentUser || !text) return;
 
-            sendBtn.disabled = true;
-            let replyData = currentReplyTarget ? { message_id: currentReplyTarget.id, name: currentReplyTarget.name, text: currentReplyTarget.text } : null;
-            cancelReply(); resetTextarea();
+    sendBtn.disabled = true;
+    let replyData = currentReplyTarget ? { message_id: currentReplyTarget.id, name: currentReplyTarget.name, text: currentReplyTarget.text } : null;
+    cancelReply(); resetTextarea();
 
-            try {
-                await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
-            } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
-        }
+    try {
+        // 1. Сохраняем в базу данных чата
+        await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
+        
+        // 2. Отправляем пуш-уведомление через Cloudflare
+        // Воркер сам поймет кому слать, зная кто отправитель (например, если пишет Папа, пуш летит Маме)
+        sendPushNotification(currentUser.name, currentUser.id, text);
+        
+    } catch (err) {
+        console.error("Ошибка при отправке сообщения:", err);
+    } finally { 
+        sendBtn.disabled = false; 
+        msgInput.focus(); 
+    }
+}
+
 
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
-        function enterChat() { regScreen.classList.remove('active'); chatScreen.classList.add('active'); startLiveChat(); }
+function enterChat() { 
+    regScreen.classList.remove('active'); 
+    chatScreen.classList.add('active'); 
+    startLiveChat(); 
+    // Запускаем OneSignal-уведомления для зашедшего члена семьи
+    setupNotifications(currentUser);
+}
+
 
         function formatDateSeparator(dateStr) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
