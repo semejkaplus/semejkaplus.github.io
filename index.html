@@ -1277,7 +1277,7 @@
             
             callName.textContent = targetName;
             callStatusText.textContent = "Вызов...";
-            if (callAcceptBtn) { callAcceptBtn.style.setProperty('display', 'none', 'important'); }
+            callAcceptBtn.style.setProperty("display", "none", "important");
             callMuteBtn.style.display = "none";
             callOverlay.classList.add("active");
             
@@ -1358,7 +1358,7 @@
 
         callAcceptBtn.addEventListener('click', async () => {
             stopRingTone();
-            callAcceptBtn.style.display = "none";
+            callAcceptBtn.style.setProperty("display", "none", "important");
             callStatusText.textContent = "Соединение...";
 
             const callDocRef = doc(db, "calls", currentCallId);
