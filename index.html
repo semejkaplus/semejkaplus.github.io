@@ -1277,7 +1277,7 @@
             
             callName.textContent = targetName;
             callStatusText.textContent = "Вызов...";
-            callAcceptBtn.style.display = "none";
+            if (callAcceptBtn) { callAcceptBtn.style.setProperty('display', 'none', 'important'); }
             callMuteBtn.style.display = "none";
             callOverlay.classList.add("active");
             
