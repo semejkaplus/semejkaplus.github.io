@@ -1456,12 +1456,6 @@
         }
         function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
         function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
-    
-        // Безопасный перехват события PWA для мобильных браузеров
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Браузер сам знает, что это PWA. Мы сохраняем событие в глобальное окно на случай, если понадобится кнопка
-            window.deferredPrompt = e;
-        });
     </script>
 </body>
 </html>
