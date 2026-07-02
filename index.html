@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1225,22 +1226,9 @@
         callMuteBtn.addEventListener('click', () => {
             if (!localStream) return;
             isMuted = !isMuted;
-            
-            // 1. Отключаем микрофон локально
             localStream.getAudioTracks().forEach(track => {
                 track.enabled = !isMuted;
             });
-            
-            // 2. WebRTC Keep-Alive фикс против засыпания аудиопотока
-            if (peerConnection) {
-                const transceivers = peerConnection.getTransceivers();
-                const audioTransceiver = transceivers.find(t => t.sender && t.sender.track && t.sender.track.kind === 'audio');
-                if (audioTransceiver) {
-                    audioTransceiver.direction = isMuted ? 'sendonly' : 'sendrecv';
-                }
-            }
-            
-            // 3. Обновление визуального состояния кнопки
             if (isMuted) {
                 callMuteBtn.classList.add('muted');
                 callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/><line x1="2" y1="2" x2="22" y2="22" stroke="#ff4b4b" stroke-width="2.5" stroke-linecap="round"/></svg>';
@@ -1425,11 +1413,8 @@
             currentCallId = null;
             isCaller = false;
             isMuted = false;
-            if (callMuteBtn) {
-                callMuteBtn.classList.remove('muted');
-                callMuteBtn.style.display = "none";
-                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
-            }
+            callMuteBtn.classList.remove('muted');
+            callMuteBtn.style.display = "none";
             callOverlay.classList.remove("active");
         }
 
