@@ -1,7 +1,8 @@
-const CACHE_NAME = 'semejka-v16'; // Подняли версию для обновления кэша
+const CACHE_NAME = 'semejka-v17'; // Подняли версию для сброса старого кэша
 const ASSETS = [
   '.',
   'index.html',
+  'manifest.json',
   'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
 ];
 
@@ -53,14 +54,16 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.postMessage(event.notification.data.message);
+    clients.matchAll({ type: 'window' }).then(windowClients => {
+      for (let i = 0; i < windowClients.length; i++) {
+        let client = windowClients[i];
+        if (client.url === event.notification.data.url && 'focus' in client) {
           return client.focus();
         }
       }
-      if (clients.openWindow) return clients.openWindow('.');
+      if (clients.openWindow) {
+        return clients.openWindow(event.notification.data.url);
+      }
     })
   );
 });
