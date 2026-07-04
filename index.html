@@ -1070,7 +1070,7 @@
             }
         }
 
-        function renderMessage(msg) {
+        function renderMessage(msg, forceScroll = true) {
             let msgDiv = document.getElementById('msg-' + msg.id);
             const isMyMsg = (msg.user_id === currentUser?.id);
             
@@ -1113,9 +1113,10 @@
             
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
-                // Вызываем отрисовку реакций строго после того, как элемент физически встроился в DOM и стал доступен для поиска через getElementById
                 updateReactionsUI(msg.id, msg.reactions);
-                div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                if (forceScroll) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
             });
 
             const bubbleElement = div.querySelector('.bubble');
@@ -1423,11 +1424,30 @@
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
+                
+                // Сохраняем состояние скролла и фокуса
+                const isFocused = (document.activeElement === msgInput);
+                const selectionStart = msgInput.selectionStart;
+                const selectionEnd = msgInput.selectionEnd;
+                const shouldScroll = (messagesDiv.scrollTop + messagesDiv.clientHeight >= messagesDiv.scrollHeight - 150);
+
                 messagesDiv.innerHTML = '';
                 lastDisplayedDate = null;
+                
                 snapshot.docs.forEach(doc => {
-                    renderMessage({ id: doc.id, ...doc.data() });
+                    renderMessage({ id: doc.id, ...doc.data() }, false); // передаем false, чтобы не вызывать принудительный scrollIntoView
                 });
+
+                // Восстанавливаем фокус и курсор без прыжков клавиатуры
+                if (isFocused) {
+                    msgInput.focus();
+                    msgInput.setSelectionRange(selectionStart, selectionEnd);
+                }
+
+                // Скроллим вниз только если пользователь был внизу чата, используя scrollTop (это не дергает клавиатуру в PWA)
+                if (shouldScroll || snapshot.docChanges().some(c => c.type === 'added' && c.doc.data().user_id === currentUser?.id)) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
             });
             listenTypingStatus();
             listenIncomingCalls(); 
