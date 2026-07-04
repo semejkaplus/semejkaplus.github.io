@@ -1438,7 +1438,7 @@
                     renderMessage({ id: doc.id, ...doc.data() }, false); // передаем false, чтобы не вызывать принудительный scrollIntoView
                 });
 
-                // Восстанавливаем фокус и курсор без прыжков клавиатуры
+                // Восстанавливаем   фокус и курсор без прыжков клавиатуры
                 if (isFocused) {
                     msgInput.focus();
                     msgInput.setSelectionRange(selectionStart, selectionEnd);
