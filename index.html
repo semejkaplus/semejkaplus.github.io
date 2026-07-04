@@ -1425,7 +1425,7 @@
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
                 
-                // Сохраняем состояние скролла и фокуса
+                // Сохраняем состояние скролла и фокуса 👌
                 const isFocused = (document.activeElement === msgInput);
                 const selectionStart = msgInput.selectionStart;
                 const selectionEnd = msgInput.selectionEnd;
