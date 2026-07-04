@@ -1111,11 +1111,10 @@
 
             div.innerHTML = html; 
             
-            // Рендерим существующие реакции сразу при создании сообщения
-            updateReactionsUI(msg.id, msg.reactions);
-            
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
+                // Вызываем отрисовку реакций строго после того, как элемент физически встроился в DOM и стал доступен для поиска через getElementById
+                updateReactionsUI(msg.id, msg.reactions);
                 div.scrollIntoView({ behavior: 'smooth', block: 'end' });
             });
 
