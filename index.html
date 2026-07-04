@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1112,6 +1111,9 @@
 
             div.innerHTML = html; 
             
+            // Рендерим существующие реакции сразу при создании сообщения
+            updateReactionsUI(msg.id, msg.reactions);
+            
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
                 div.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -1422,8 +1424,10 @@
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === "added" || change.type === "modified") renderMessage({ id: change.doc.id, ...change.doc.data() });
+                messagesDiv.innerHTML = '';
+                lastDisplayedDate = null;
+                snapshot.docs.forEach(doc => {
+                    renderMessage({ id: doc.id, ...doc.data() });
                 });
             });
             listenTypingStatus();
