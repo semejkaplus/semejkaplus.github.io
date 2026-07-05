@@ -655,7 +655,27 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Обновление PWA
+        // ============================================================
+        // ПРИНУДИТЕЛЬНЫЙ СБРОС SERVICE WORKER ДЛЯ ПРИМЕНЕНИЯ НОВОЙ ЛОГИКИ
+        // ============================================================
+        (async function forceServiceWorkerReset() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of registrations) {
+                        await reg.unregister();
+                    }
+                    // Если страница была загружена не через принудительную перезагрузку, перезагружаем с очисткой кэша
+                    if (performance.navigation.type !== 1) {
+                        location.reload(true);
+                    }
+                } catch (e) {
+                    console.warn('Ошибка при сбросе Service Worker:', e);
+                }
+            }
+        })();
+
+        // --- Обычное обновление PWA (периодическая проверка) ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
