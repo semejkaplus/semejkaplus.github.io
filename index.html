@@ -1116,13 +1116,13 @@
             }
         }
 
-        // --- Функции для дат (исправлены) ---
-        function formatDateSeparatorFromKey(dateKey) {
-            // dateKey = "DD.MM.YYYY"
-            const parts = dateKey.split('.');
-            const day = parseInt(parts[0], 10);
+        // === НОВЫЕ ФУНКЦИИ ДЛЯ ДАТ (ГРУППИРОВКА ПО UTC) ===
+        function formatDateSeparatorFromUTC(dateKey) {
+            // dateKey = "2026-07-05"
+            const parts = dateKey.split('-');
+            const year = parseInt(parts[0], 10);
             const month = parseInt(parts[1], 10) - 1; // месяцы в JS 0-11
-            const year = parseInt(parts[2], 10);
+            const day = parseInt(parts[2], 10);
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
             return `${day} ${months[month]} ${year} г.`;
         }
@@ -1472,7 +1472,7 @@
             callOverlay.classList.remove("active");
         }
 
-        // --- ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ГРУППИРОВКОЙ ПО ДАТАМ) ---
+        // --- ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ГРУППИРОВКОЙ ПО UTC) ---
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
@@ -1499,32 +1499,25 @@
                     return timeA - timeB;
                 });
                 
-                // 3. Группируем по дате (ключ – строка даты)
+                // 3. Группируем по UTC-дате (ключ – "YYYY-MM-DD")
                 const groups = {};
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-                    const dateKey = timestamp.toLocaleDateString('ru-RU'); // "DD.MM.YYYY"
+                    const dateKey = timestamp.toISOString().split('T')[0]; // "2026-07-05"
                     if (!groups[dateKey]) {
                         groups[dateKey] = [];
                     }
                     groups[dateKey].push(msg);
                 });
                 
-                // 4. Рендерим группы в порядке дат (ключи сортируем)
-                const sortedDateKeys = Object.keys(groups).sort((a, b) => {
-                    // Сравниваем как строки "DD.MM.YYYY" -> преобразуем в "YYYYMMDD" для сравнения
-                    const partsA = a.split('.').reverse().join('');
-                    const partsB = b.split('.').reverse().join('');
-                    return partsA.localeCompare(partsB);
-                });
+                // 4. Сортируем ключи (лексикографически, что соответствует хронологии)
+                const sortedDateKeys = Object.keys(groups).sort();
                 
+                // 5. Рендерим группы
                 sortedDateKeys.forEach(dateKey => {
-                    // Формируем текст разделителя прямо из dateKey
-                    const separatorText = formatDateSeparatorFromKey(dateKey);
-                    // Вставляем разделитель
+                    const separatorText = formatDateSeparatorFromUTC(dateKey);
                     insertDateSeparatorWithText(separatorText);
                     
-                    // Рендерим все сообщения этой группы
                     groups[dateKey].forEach(msg => {
                         renderMessage(msg, false);
                     });
