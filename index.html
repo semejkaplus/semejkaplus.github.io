@@ -257,7 +257,6 @@
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
 
-        /* ИСПРАВЛЕННЫЙ БЛОК ВРЕМЕНИ С ОТКРЫВАЮЩЕЙ СКОБКОЙ */
         .time { 
             font-size: 11px; 
             color: #4A4A5A; 
@@ -383,7 +382,6 @@
         .call-name { font-size: 22px; font-weight: 700; color: #2A2A3A; margin-bottom: 6px; }
         .call-status { font-size: 15px; color: #7A7A8A; font-weight: 600; margin-bottom: 35px; min-height: 22px; }
         
-        /* Новые круглые кнопки по референсу */
         .call-actions { 
             display: flex !important; 
             gap: 24px !important; 
@@ -740,7 +738,6 @@
         const remoteAudio = document.getElementById('remoteAudio');
 
         let currentUser = null;
-        let lastDisplayedDate = null;
         let activeReactionMessageId = null;
         let isTypingLocal = false;
         let typingTimeout = null;
@@ -1070,6 +1067,26 @@
             }
         }
 
+        function formatDateSeparator(dateStr) {
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            const d = new Date(dateStr); 
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+        }
+
+        function insertDateSeparator(dateString) {
+            // Проверяем, нет ли уже такого разделителя
+            const dateStr = formatDateSeparator(dateString);
+            const existing = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(
+                sep => sep.textContent.trim() === dateStr
+            );
+            if (existing) return;
+            
+            const sep = document.createElement('div');
+            sep.className = 'date-separator';
+            sep.innerHTML = `<span>${dateStr}</span>`;
+            messagesDiv.appendChild(sep);
+        }
+
         function renderMessage(msg, forceScroll = true) {
             let msgDiv = document.getElementById('msg-' + msg.id);
             const isMyMsg = (msg.user_id === currentUser?.id);
@@ -1081,15 +1098,6 @@
             }
             
             const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-            const msgDate = timestamp.toLocaleDateString('ru-RU');
-            
-            if (msgDate !== lastDisplayedDate) { 
-                const existingSeparator = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(sep => sep.textContent.trim() === formatDateSeparator(timestamp.toISOString()));
-                if (!existingSeparator) {
-                    insertDateSeparator(timestamp.toISOString()); 
-                }
-                lastDisplayedDate = msgDate; 
-            }
 
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id; 
@@ -1425,26 +1433,53 @@
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
                 
-                // Сохраняем состояние скролла и фокуса 👌
                 const isFocused = (document.activeElement === msgInput);
                 const selectionStart = msgInput.selectionStart;
                 const selectionEnd = msgInput.selectionEnd;
                 const shouldScroll = (messagesDiv.scrollTop + messagesDiv.clientHeight >= messagesDiv.scrollHeight - 150);
 
+                // Очищаем чат
                 messagesDiv.innerHTML = '';
-                lastDisplayedDate = null;
                 
+                // Собираем все сообщения в массив для сортировки
+                const messages = [];
                 snapshot.docs.forEach(doc => {
-                    renderMessage({ id: doc.id, ...doc.data() }, false); // передаем false, чтобы не вызывать принудительный scrollIntoView
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Сортируем по времени создания (от старых к новым)
+                messages.sort((a, b) => {
+                    const timeA = a.created_at ? a.created_at.toDate().getTime() : 0;
+                    const timeB = b.created_at ? b.created_at.toDate().getTime() : 0;
+                    return timeA - timeB;
+                });
+                
+                // Рендерим сообщения в правильном порядке
+                let lastDate = null;
+                messages.forEach(msg => {
+                    const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
+                    const msgDate = timestamp.toLocaleDateString('ru-RU');
+                    
+                    // Вставляем разделитель только если дата изменилась
+                    if (lastDate !== msgDate) {
+                        const dateString = formatDateSeparator(timestamp.toISOString());
+                        const existingSeparator = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(
+                            sep => sep.textContent.trim() === dateString
+                        );
+                        if (!existingSeparator) {
+                            insertDateSeparator(timestamp.toISOString());
+                        }
+                        lastDate = msgDate;
+                    }
+                    
+                    renderMessage(msg, false);
                 });
 
-                // Восстанавливаем   фокус и курсор без прыжков клавиатуры
                 if (isFocused) {
                     msgInput.focus();
                     msgInput.setSelectionRange(selectionStart, selectionEnd);
                 }
 
-                // Скроллим вниз только если пользователь был внизу чата, используя scrollTop (это не дергает клавиатуру в PWA)
                 if (shouldScroll || snapshot.docChanges().some(c => c.type === 'added' && c.doc.data().user_id === currentUser?.id)) {
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 }
@@ -1470,14 +1505,6 @@
         sendBtn.addEventListener('click', sendMessage);
         function enterChat() { regScreen.classList.remove('active'); chatScreen.classList.add('active'); startLiveChat(); }
 
-        function formatDateSeparator(dateStr) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`; 
-        }
-        function insertDateSeparator(dateString) {
-            const sep = document.createElement('div'); sep.className = 'date-separator';
-            sep.innerHTML = `<span>${formatDateSeparator(dateString)}</span>`; messagesDiv.appendChild(sep); 
-        }
         function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); } 
         function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; } 
     </script>
