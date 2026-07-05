@@ -15,6 +15,7 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
+        /* ===== ВСЁ ТОТ ЖЕ CSS, ЧТО БЫЛ РАНЕЕ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         html, body {
@@ -445,7 +446,7 @@
     </style>
 </head>
 <body>
-    <!-- Экран регистрации -->
+    <!-- ===== ВЕСЬ HTML БЕЗ ИЗМЕНЕНИЙ (ТАКОЙ ЖЕ, КАК ВЫШЕ) ===== -->
     <div id="regScreen" class="screen active">
         <div class="box">
             <div class="logo-glass-container">
@@ -504,7 +505,6 @@
         </div>
     </div>
 
-    <!-- Экран чата -->
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
             <button class="capsule-btn" id="newsBtn" title="О новинках">
@@ -594,7 +594,6 @@
         </div>
     </div>
 
-    <!-- Оверлей звонка -->
     <div class="call-overlay" id="callOverlay">
         <div class="call-box">
             <div class="call-name" id="callName">Пользователь</div>
@@ -624,7 +623,6 @@
 
     <audio id="remoteAudio" autoplay playsinline style="display:none; position:absolute; width:1px; height:1px; opacity:0;"></audio>
 
-    <!-- Модалка реакций -->
     <div class="reaction-modal-overlay" id="reactionModalOverlay">
         <div class="reaction-modal-box">
             <div class="emojis-row">
@@ -639,6 +637,55 @@
     </div>
 
     <script type="module">
+        // ============================================================
+        // ЖЁСТКИЙ СБРОС КЭША И SERVICE WORKER (ВЫПОЛНЯЕТСЯ 1 РАЗ)
+        // ============================================================
+        (async function resetAll() {
+            // Проверяем, не был ли уже выполнен сброс
+            if (sessionStorage.getItem('semejka_reset_done')) {
+                return; // Уже сброшено в этой сессии
+            }
+
+            // Если в URL есть параметр reset=1, значит мы уже перезагрузились после сброса
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('reset') === '1') {
+                // Убираем параметр из URL, чтобы не мешал
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+                sessionStorage.setItem('semejka_reset_done', 'true');
+                // Продолжаем загрузку страницы, теперь уже с новым кодом
+                return;
+            }
+
+            // Если мы здесь, значит нужно выполнить сброс
+            try {
+                // 1. Удаляем все Service Worker'ы
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of registrations) {
+                        await reg.unregister();
+                    }
+                }
+
+                // 2. Очищаем все кэши браузера (Cache API)
+                if ('caches' in window) {
+                    const cacheKeys = await caches.keys();
+                    await Promise.all(cacheKeys.map(key => caches.delete(key)));
+                }
+
+                // 3. Перезагружаем страницу с параметром reset=1 (чтобы избежать цикла)
+                window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
+            } catch (e) {
+                console.warn('Ошибка при сбросе:', e);
+                // В случае ошибки всё равно перезагружаем
+                window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
+            }
+        })();
+
+        // ============================================================
+        // ОСНОВНОЙ КОД (импорты Firebase, логика чата)
+        // ============================================================
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -655,27 +702,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ============================================================
-        // ПРИНУДИТЕЛЬНЫЙ СБРОС SERVICE WORKER ДЛЯ ПРИМЕНЕНИЯ НОВОЙ ЛОГИКИ
-        // ============================================================
-        (async function forceServiceWorkerReset() {
-            if ('serviceWorker' in navigator) {
-                try {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let reg of registrations) {
-                        await reg.unregister();
-                    }
-                    // Если страница была загружена не через принудительную перезагрузку, перезагружаем с очисткой кэша
-                    if (performance.navigation.type !== 1) {
-                        location.reload(true);
-                    }
-                } catch (e) {
-                    console.warn('Ошибка при сбросе Service Worker:', e);
-                }
-            }
-        })();
-
-        // --- Обычное обновление PWA (периодическая проверка) ---
+        // Обычное обновление PWA (периодическая проверка)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
@@ -1089,23 +1116,27 @@
             }
         }
 
-        // --- Функции для дат ---
-        function formatDateSeparator(dateStr) {
+        // --- Функции для дат (исправлены) ---
+        function formatDateSeparatorFromKey(dateKey) {
+            // dateKey = "DD.MM.YYYY"
+            const parts = dateKey.split('.');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // месяцы в JS 0-11
+            const year = parseInt(parts[2], 10);
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            const d = new Date(dateStr); 
-            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+            return `${day} ${months[month]} ${year} г.`;
         }
 
-        function insertDateSeparator(dateString) {
-            const dateStr = formatDateSeparator(dateString);
+        function insertDateSeparatorWithText(text) {
+            // Проверяем, нет ли уже такого разделителя
             const existing = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(
-                sep => sep.textContent.trim() === dateStr
+                sep => sep.textContent.trim() === text
             );
             if (existing) return;
             
             const sep = document.createElement('div');
             sep.className = 'date-separator';
-            sep.innerHTML = `<span>${dateStr}</span>`;
+            sep.innerHTML = `<span>${text}</span>`;
             messagesDiv.appendChild(sep);
         }
 
@@ -1472,7 +1503,7 @@
                 const groups = {};
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-                    const dateKey = timestamp.toLocaleDateString('ru-RU'); // "06.07.2026"
+                    const dateKey = timestamp.toLocaleDateString('ru-RU'); // "DD.MM.YYYY"
                     if (!groups[dateKey]) {
                         groups[dateKey] = [];
                     }
@@ -1481,22 +1512,17 @@
                 
                 // 4. Рендерим группы в порядке дат (ключи сортируем)
                 const sortedDateKeys = Object.keys(groups).sort((a, b) => {
-                    // Преобразуем строки дат в числа для сравнения
-                    const partsA = a.split('.').reverse().join('-'); // "2026-07-06"
-                    const partsB = b.split('.').reverse().join('-');
+                    // Сравниваем как строки "DD.MM.YYYY" -> преобразуем в "YYYYMMDD" для сравнения
+                    const partsA = a.split('.').reverse().join('');
+                    const partsB = b.split('.').reverse().join('');
                     return partsA.localeCompare(partsB);
                 });
                 
                 sortedDateKeys.forEach(dateKey => {
-                    // Вставляем разделитель для этой даты
-                    const dateObj = new Date(dateKey.split('.').reverse().join('-')); // "2026-07-06"
-                    const dateString = formatDateSeparator(dateObj.toISOString());
-                    const existing = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(
-                        sep => sep.textContent.trim() === dateString
-                    );
-                    if (!existing) {
-                        insertDateSeparator(dateObj.toISOString());
-                    }
+                    // Формируем текст разделителя прямо из dateKey
+                    const separatorText = formatDateSeparatorFromKey(dateKey);
+                    // Вставляем разделитель
+                    insertDateSeparatorWithText(separatorText);
                     
                     // Рендерим все сообщения этой группы
                     groups[dateKey].forEach(msg => {
