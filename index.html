@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SEMEJKA PLUS</title>
-
     <link class="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
     <meta name="theme-color" content="#6C63FF">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Семейка+">
@@ -15,322 +13,102 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
-        /* ===== ВСЁ ТОТ ЖЕ CSS, ЧТО БЫЛ РАНЕЕ ===== */
+        /* ===== ВЕСЬ ВАШ CSS БЕЗ ИЗМЕНЕНИЙ (скопируйте его из вашего файла) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html, body {
-            height: 100dvh; height: 100vh; 
-            overflow: hidden;
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: auto;
-        }
-        
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
-        }
+        html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
         .screen { display: none; height: 100%; width: 100%; }
         .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-        #regScreen {
-            background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%);
-            padding: 20px;
-        }
-        .box {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.6);
-            text-align: center; border: 1px solid rgba(255,255,255,0.5);
-        }
-
-        .logo-glass-container {
-            width: 100%;
-            max-width: 320px;
-            margin: 0 auto 20px auto;
-            user-select: none;
-        }
+        #regScreen { background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); padding: 20px; }
+        .box { background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 40px; padding: 45px 35px; max-width: 420px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.6); text-align: center; border: 1px solid rgba(255,255,255,0.5); }
+        .logo-glass-container { width: 100%; max-width: 320px; margin: 0 auto 20px auto; user-select: none; }
         .logo-glass-container svg { width: 100%; height: auto; display: block; }
-
         p { color: #635857; margin-bottom: 25px; font-size: 17px; font-weight: 600; opacity: 0.85; }
         input { width: 100%; padding: 18px 24px; font-size: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 25px; margin-bottom: 15px; background: rgba(255,255,255,0.5); outline: none; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); color: #3A3A4A; }
         input:focus { border-color: #6C63FF; background: rgba(255,255,255,0.8); box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 5px 15px rgba(0,0,0,0.1); }
-        
         .error-msg { color: #D04A42; font-size: 14px; font-weight: 600; margin-bottom: 15px; display: none; text-align: left; padding-left: 15px; }
-        
         .welcome-back, .login-existing { display: none; flex-direction: column; gap: 15px; width: 100%; }
         .welcome-text { color: #3A3A4A; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
-        
-        .link-btn { 
-            width: 100% !important;
-            padding: 14px; 
-            background: rgba(255, 255, 255, 0.4); 
-            border: 2px solid #6C63FF; 
-            color: #6C63FF; 
-            font-size: 16px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            border-radius: 25px;
-            margin-top: 12px; 
-            display: inline-block;
-            transition: 0.2s;
-            box-shadow: 0 4px 10px rgba(108,99,255,0.1);
-        }
-        .link-btn:hover { 
-            background: #6C63FF;
-            color: white;
-            box-shadow: 0 8px 15px rgba(108,99,255,0.2);
-            transform: translateY(-1px);
-        }
-
+        .link-btn { width: 100% !important; padding: 14px; background: rgba(255, 255, 255, 0.4); border: 2px solid #6C63FF; color: #6C63FF; font-size: 16px; font-weight: 700; cursor: pointer; border-radius: 25px; margin-top: 12px; display: inline-block; transition: 0.2s; box-shadow: 0 4px 10px rgba(108,99,255,0.1); }
+        .link-btn:hover { background: #6C63FF; color: white; box-shadow: 0 8px 15px rgba(108,99,255,0.2); transform: translateY(-1px); }
         button { width: 100%; padding: 18px; background: linear-gradient(135deg, #6C63FF, #8B82FF); color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 25px rgba(108,99,255,0.4); }
         button:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(108,99,255,0.5); }
         button:disabled { background: #B0B0B0; box-shadow: none; transform: none; cursor: not-allowed; }
-
         #chatScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #FEE0B7 0%, #FDD299 33%, #EB8680 66%, #E67D76 100%); display: none; flex-direction: column; width: 100%; height: 100%; }
         #chatScreen.active { display: flex; }
-
-        .control-capsule {
-            position: absolute; top: 16px; right: 16px;
-            width: 54px; height: 110px;
-            background: #FFFDF9;
-            border: 1px solid rgba(0,0,0,0.06);
-            border-radius: 27px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            display: flex; flex-direction: column; z-index: 100; overflow: hidden;
-        }
-        .capsule-btn {
-            flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; background: none; border: none; border-radius: 0; padding: 0; box-shadow: none;
-            transition: background 0.15s ease, transform 0.1s ease;
-        }
+        .control-capsule { position: absolute; top: 16px; right: 16px; width: 54px; height: 110px; background: #FFFDF9; border: 1px solid rgba(0,0,0,0.06); border-radius: 27px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; z-index: 100; overflow: hidden; }
+        .capsule-btn { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; background: none; border: none; border-radius: 0; padding: 0; box-shadow: none; transition: background 0.15s ease, transform 0.1s ease; }
         .capsule-btn:active { transform: scale(0.92); }
         .capsule-btn:hover { background: rgba(0,0,0,0.02); }
         .capsule-divider { height: 1px; width: 100%; background: #231F20; opacity: 0.15; }
-
-        .star-icon-svg {
-            transform: rotate(-15deg);
-            transform-origin: center;
-        }
-
-        .side-panel-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.25);
-            z-index: 150; opacity: 0; visibility: hidden;
-            will-change: opacity, visibility;
-            transition: opacity 0.2s ease, visibility 0.2s ease;
-        }
-        .side-panel-overlay.active {
-            opacity: 1; visibility: visible;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-
-        .side-panel {
-            position: fixed; 
-            top: 50%; left: 20px; right: 20px;
-            max-width: 500px; margin: 0 auto;
-            background: white; border-radius: 32px;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
-            z-index: 160; padding: 24px;
-            display: flex; flex-direction: column;
-            max-height: 80vh;
-            opacity: 0; visibility: hidden;
-            transform: translate3d(0, -45%, 0) scale(0.95);
-            will-change: transform, opacity, visibility;
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.2s ease, visibility 0.2s ease;
-        }
-        .side-panel.active { 
-            opacity: 1; 
-            visibility: visible; 
-            transform: translate3d(0, -50%, 0) scale(1); 
-        }
-        
+        .star-icon-svg { transform: rotate(-15deg); transform-origin: center; }
+        .side-panel-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.25); z-index: 150; opacity: 0; visibility: hidden; will-change: opacity, visibility; transition: opacity 0.2s ease, visibility 0.2s ease; }
+        .side-panel-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .side-panel { position: fixed; top: 50%; left: 20px; right: 20px; max-width: 500px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); z-index: 160; padding: 24px; display: flex; flex-direction: column; max-height: 80vh; opacity: 0; visibility: hidden; transform: translate3d(0, -45%, 0) scale(0.95); will-change: transform, opacity, visibility; transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.2s ease, visibility 0.2s ease; }
+        .side-panel.active { opacity: 1; visibility: visible; transform: translate3d(0, -50%, 0) scale(1); }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
         .panel-title { font-size: 20px; font-weight: 800; color: #2A2A3A; }
         .panel-close { background: none; border: none; padding: 0; width: 34px; height: 34px; min-height: auto; border-radius: 50%; color: #8A8A9A; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: none; transition: 0.15s; font-size: 22px; }
         .panel-close:hover { background: #F0F0F5; color: #333; transform: none; }
-        
         .panel-content { flex: 1; overflow-y: auto; padding-right: 5px; font-size: 15px; color: #4A4A5A; line-height: 1.6; }
         .panel-content::-webkit-scrollbar { width: 4px; }
         .panel-content::-webkit-scrollbar-thumb { background: #E0E0E5; border-radius: 4px; }
-
-        .member-item { 
-            padding: 14px 0; 
-            border-bottom: 1px solid #F0F0F5; 
-        }
-        
-        .member-info { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between;
-            width: 100%;
-            gap: 15px;
-        }
-        
-        .member-text-block { 
-            display: flex; 
-            flex-direction: column; 
-            min-width: 0; 
-            flex: 1;
-        }
-        
+        .member-item { padding: 14px 0; border-bottom: 1px solid #F0F0F5; }
+        .member-info { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; }
+        .member-text-block { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .member-name { font-size: 17px; font-weight: 700; color: #2A2A3A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .member-status { font-size: 14px; color: #8A8A9A; margin-top: 2px; }
-        
-        .member-action-block {
-            flex-shrink: 0;
-        }
-
-        .member-call-btn {
-            width: auto !important; 
-            min-width: 100px;
-            padding: 10px 20px !important; 
-            background: #7B73FF; 
-            color: white; 
-            border: none; 
-            border-radius: 18px; 
-            font-size: 14px; 
-            font-weight: 700;
-            cursor: pointer; 
-            transition: 0.2s; 
-            box-shadow: 0 4px 12px rgba(108,99,255,0.2);
-            text-align: center;
-        }
+        .member-action-block { flex-shrink: 0; }
+        .member-call-btn { width: auto !important; min-width: 100px; padding: 10px 20px !important; background: #7B73FF; color: white; border: none; border-radius: 18px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(108,99,255,0.2); text-align: center; }
         .member-call-btn:hover { background: #6C63FF; transform: translateY(-1px); }
         .member-call-btn:active { transform: translateY(0); }
-        
-        .member-me-badge { 
-            font-size: 13px; 
-            color: #6A6A7A; 
-            font-weight: 700; 
-            padding: 6px 14px;
-            background: #EAEAEA;
-            border-radius: 12px;
-            display: inline-block;
-        }
-
+        .member-me-badge { font-size: 13px; color: #6A6A7A; font-weight: 700; padding: 6px 14px; background: #EAEAEA; border-radius: 12px; display: inline-block; }
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
         .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
-
-        .messages {
-            flex: 1 1 auto; overflow-y: auto; padding: 10px 20px 80px 20px;
-            display: flex; flex-direction: column; gap: 14px;
-            margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch;
-            position: relative;
-            overscroll-behavior-y: contain; 
-            -webkit-overflow-scrolling: touch;
-        }
-
+        .messages { flex: 1 1 auto; overflow-y: auto; padding: 10px 20px 80px 20px; display: flex; flex-direction: column; gap: 14px; margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch; position: relative; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
         .date-separator { display: flex; justify-content: center; align-items: center; margin: 10px 0; width: 100%; }
         .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
-
         .msg { max-width: 100%; display: flex; flex-direction: column; margin-bottom: 2px; position: relative; }
         .msg.sent { align-items: flex-end; }
         .msg.received { align-items: flex-start; }
-
-        .bubble {
-            display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75);
-            color: #3A3A4A; max-width: 75%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6);
-            cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.1s ease;
-            position: relative;
-        }
+        .bubble { display: inline-block; padding: 14px 20px; border-radius: 22px; font-size: 17px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: rgba(240,236,245,0.75); color: #3A3A4A; max-width: 75%; overflow-wrap: break-word; word-break: break-word; border: 1px solid rgba(255,255,255,0.6); cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform 0.1s ease; position: relative; }
         .bubble:active { transform: scale(0.98); }
         .bubble.releasing { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .sent .bubble { border-bottom-right-radius: 8px; }
         .received .bubble { border-bottom-left-radius: 8px; }
-
         .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding-left: 6px; color: #6A6A7A; }
         .sent .name { display: none; }
-        
-        .reply-in-bubble {
-            background: rgba(108, 99, 255, 0.08);
-            border-left: 3px solid #6C63FF;
-            padding: 4px 10px; margin-bottom: 8px; border-radius: 6px; font-size: 14px; color: #4A4A5A;
-            max-height: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
+        .reply-in-bubble { background: rgba(108, 99, 255, 0.08); border-left: 3px solid #6C63FF; padding: 4px 10px; margin-bottom: 8px; border-radius: 6px; font-size: 14px; color: #4A4A5A; max-height: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .reply-in-bubble .reply-owner { font-weight: 700; color: #6C63FF; font-size: 12px; margin-bottom: 2px; }
-
         .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
         .sent .msg-footer { flex-direction: row-reverse; }
         .received .msg-footer { flex-direction: row; }
-
-        .time { 
-            font-size: 11px; 
-            color: #4A4A5A; 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            background: rgba(255,255,255,0.5); 
-            border: 1px solid rgba(255,255,255,0.6); 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
-            white-space: nowrap; 
-            height: 23px; 
-            display: inline-flex; 
-            align-items: center; 
-        }
-
+        .time { font-size: 11px; color: #4A4A5A; padding: 4px 10px; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.08); white-space: nowrap; height: 23px; display: inline-flex; align-items: center; }
         .reactions-wrapper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-
-        .reaction-badge {
-            background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none; height: 23px;
-        }
+        .reaction-badge { background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.15s ease; user-select: none; height: 23px; }
         .reaction-badge:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); }
         .reaction-badge.active { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.4); box-shadow: 0 3px 10px rgba(108,99,255,0.15); }
         .reaction-count { font-size: 11px; font-weight: 700; color: #4A4A5A; }
         .reaction-badge.active .reaction-count { color: #6C63FF; }
-
-        .reaction-modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0, 0, 0, 0.45);
-            z-index: 999; 
-            display: flex; align-items: center; justify-content: center; 
-            opacity: 0; visibility: hidden;
-            will-change: opacity; 
-            transition: opacity 0.16s ease-out, visibility 0.16s ease-out;
-        }
+        .reaction-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.45); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; will-change: opacity; transition: opacity 0.16s ease-out, visibility 0.16s ease-out; }
         .reaction-modal-overlay.active { opacity: 1; visibility: visible; }
-
-        .reaction-modal-box {
-            background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center;
-            transform: translate3d(0, 10px, 0) scale(0.95); will-change: transform; width: 310px; height: 70px;
-            transition: transform 0.16s ease-out;
-        }
+        .reaction-modal-box { background: #F4F4F9; border: 1px solid rgba(255, 255, 255, 0.9); padding: 16px 22px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; justify-content: center; align-items: center; transform: translate3d(0, 10px, 0) scale(0.95); will-change: transform; width: 310px; height: 70px; transition: transform 0.16s ease-out; }
         .reaction-modal-overlay.active .reaction-modal-box { transform: translate3d(0, 0, 0) scale(1); }
         .emojis-row { display: flex; gap: 12px; }
         .picker-emoji { font-size: 24px; cursor: pointer; transition: transform 0.1s; user-select: none; }
         .picker-emoji:active { transform: scale(1.2); }
-
         .typing-container-wrapper { width: 100%; max-width: 800px; margin: 0 auto; position: relative; height: 0; display: flex; justify-content: center; z-index: 10; }
-        .typing-indicator-container {
-            display: none; align-items: center; gap: 10px; padding: 8px 18px; position: absolute; bottom: 8px;
-            background: rgba(255, 255, 255, 0.9); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.25); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            transform: translate3d(0, 0, 0); will-change: transform, opacity; animation: fadeInIndicator 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
-        }
+        .typing-indicator-container { display: none; align-items: center; gap: 10px; padding: 8px 18px; position: absolute; bottom: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.25); box-shadow: 0 8px 20px rgba(0,0,0,0.1); transform: translate3d(0, 0, 0); will-change: transform, opacity; animation: fadeInIndicator 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards; }
         @keyframes fadeInIndicator { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
         .typing-text { font-size: 13px; font-weight: 600; color: #4A4A5A; }
         .typing-sparkles { display: flex; align-items: center; gap: 5px; height: 16px; }
-        .typing-sparkle {
-            font-size: 11px; color: #6C63FF; opacity: 0.3; will-change: transform, opacity;
-            transform: translate3d(0, 0, 0) scale(0.6); animation: familySparkle 1.2s infinite ease-in-out;
-        }
+        .typing-sparkle { font-size: 11px; color: #6C63FF; opacity: 0.3; will-change: transform, opacity; transform: translate3d(0, 0, 0) scale(0.6); animation: familySparkle 1.2s infinite ease-in-out; }
         .typing-sparkle:nth-child(1) { animation-delay: 0s; }
         .typing-sparkle:nth-child(2) { animation-delay: 0.2s; }
         .typing-sparkle:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes familySparkle {
-            0%, 100% { transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg); opacity: 0.3; }
-            50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; }
-        }
-
-        .reply-bar {
-            display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto;
-            background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px;
-            border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none;
-            align-items: center; gap: 12px; position: relative; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
-            animation: slideUpReply 0.15s ease-out forwards;
-        }
+        @keyframes familySparkle { 0%, 100% { transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg); opacity: 0.3; } 50% { transform: translate3d(0, -3px, 0) scale(1.3) rotate(90deg); opacity: 1; } }
+        .reply-bar { display: none; width: calc(100% - 20px); max-width: 800px; margin: 0 auto -6px auto; background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-top-left-radius: 24px; border-top-right-radius: 24px; border: 1px solid rgba(108, 99, 255, 0.25); border-bottom: none; align-items: center; gap: 12px; position: relative; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.04); animation: slideUpReply 0.15s ease-out forwards; }
         @keyframes slideUpReply { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
         .reply-bar-accent { width: 3px; height: 36px; background: #6C63FF; border-radius: 2px; flex-shrink: 0; }
         .reply-bar-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -338,115 +116,37 @@
         .reply-bar-text { font-size: 14px; color: #5A5A6A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .reply-bar-close { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8A8A9A; transition: 0.15s; }
         .reply-bar-close:hover { color: #6C63FF; }
-
         .loading-spinner { display: none; justify-content: center; align-items: center; flex-direction: column; gap: 12px; padding: 40px; color: #6C63FF; font-size: 16px; width: 100%; }
         .loading-spinner.active { display: flex; }
         .spinner-circle { width: 40px; height: 40px; border: 4px solid rgba(108,99,255,0.2); border-top: 4px solid #6C63FF; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .input-area {
-            background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11;
-        }
+        .input-area { background: rgba(255,255,255,0.85); padding: 14px 20px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto 10px auto; display: flex; gap: 12px; align-items: flex-end; border-radius: 35px; box-shadow: 0 -5px 25px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8); border: 1px solid rgba(108,99,255,0.25); width: calc(100% - 20px); max-width: 800px; position: relative; z-index: 11; }
         .input-area.has-reply { border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: rgba(108,99,255,0.1); }
-
-        .input-area textarea {
-            flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 160px; max-width: 100%; word-wrap: break-word; word-break: break-word;
-        }
+        .input-area textarea { flex: 1; margin: 0; border-radius: 25px; padding: 15px 22px; font-size: 17px; line-height: 1.4; border: 1px solid #D0D0E0; background: #FFFFFF; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); resize: none; overflow-y: auto; font-family: inherit; min-height: 52px; max-height: 160px; max-width: 100%; word-wrap: break-word; word-break: break-word; }
         .input-area textarea:focus { border-color: #6C63FF; box-shadow: 0 0 0 4px rgba(108,99,255,0.15); }
-        
         .input-area button { width: 52px; height: 52px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6C63FF, #8B82FF); box-shadow: 0 8px 166px rgba(108,99,255,0.3); border: none; flex-shrink: 0; }
         .input-area button:hover { transform: scale(1.03); }
-
         .bubble a { color: #6C63FF; text-decoration: underline; word-break: break-all; }
         .bubble a:hover { color: #4A42D0; }
-
-        .swipe-reply-icon {
-            position: absolute; left: -40px; top: 50%; transform: translateY(-50%) scale(0.6);
-            opacity: 0; color: #6C63FF; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            background: rgba(108, 99, 255, 0.12); border-radius: 50%; will-change: transform, opacity; pointer-events: none;
-        }
-
-        .call-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(20, 20, 35, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
-        }
+        .swipe-reply-icon { position: absolute; left: -40px; top: 50%; transform: translateY(-50%) scale(0.6); opacity: 0; color: #6C63FF; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(108, 99, 255, 0.12); border-radius: 50%; will-change: transform, opacity; pointer-events: none; }
+        .call-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(20, 20, 35, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .call-overlay.active { display: flex; }
-        .call-box {
-            background: rgba(255, 255, 255, 0.85); border-radius: 40px; border: 1px solid rgba(255,255,255,0.5);
-            padding: 40px 30px; max-width: 340px; width: 100%; text-align: center;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.25);
-            display: flex; flex-direction: column; align-items: center;
-        }
+        .call-box { background: rgba(255, 255, 255, 0.85); border-radius: 40px; border: 1px solid rgba(255,255,255,0.5); padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,0.25); display: flex; flex-direction: column; align-items: center; }
         .call-name { font-size: 22px; font-weight: 700; color: #2A2A3A; margin-bottom: 6px; }
         .call-status { font-size: 15px; color: #7A7A8A; font-weight: 600; margin-bottom: 35px; min-height: 22px; }
-        
-        .call-actions { 
-            display: flex !important; 
-            gap: 24px !important; 
-            width: 100% !important; 
-            justify-content: center !important; 
-            align-items: center !important; 
-        }
-        
-        .call-btn-action {
-            width: 68px !important;
-            height: 68px !important;
-            border-radius: 50% !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none !important;
-            outline: none;
-            padding: 0;
-            box-shadow: none !important;
-        }
-
-        .call-btn-action svg {
-            width: 26px;
-            height: 26px;
-        }
-
-        .call-btn-action.mute {
-            background: rgba(142, 142, 147, 0.35) !important;
-            border: 1px solid rgba(255, 255, 255, 0.45) !important;
-            color: #ffffff !important;
-        }
-
-        .call-btn-action.mute.muted {
-            background: rgba(255, 255, 255, 0.45) !important;
-            border: 1px solid rgba(255, 255, 255, 0.55) !important;
-            color: #ff4b4b !important;
-        }
-
-        .call-btn-action.reject {
-            background: #ff4b4b !important;
-            color: #ffffff !important;
-            box-shadow: 0 12px 24px rgba(255, 75, 75, 0.5) !important;
-        }
-
-        .call-btn-action.accept {
-            background: #34C759 !important;
-            color: #ffffff !important;
-            box-shadow: 0 12px 24px rgba(52, 199, 89, 0.5) !important;
-        }
-
-        .call-btn-action:active {
-            transform: scale(0.95);
-        }
-
-        @media (max-width: 480px) {
-            .messages { padding: 5px 10px 75px 10px; gap: 12px; }
-            .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; }
-            .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; }
-            .side-panel { left: 16px; right: 16px; padding: 20px; }
-        }
+        .call-actions { display: flex !important; gap: 24px !important; width: 100% !important; justify-content: center !important; align-items: center !important; }
+        .call-btn-action { width: 68px !important; height: 68px !important; border-radius: 50% !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer; transition: all 0.2s ease; border: none !important; outline: none; padding: 0; box-shadow: none !important; }
+        .call-btn-action svg { width: 26px; height: 26px; }
+        .call-btn-action.mute { background: rgba(142, 142, 147, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.45) !important; color: #ffffff !important; }
+        .call-btn-action.mute.muted { background: rgba(255, 255, 255, 0.45) !important; border: 1px solid rgba(255, 255, 255, 0.55) !important; color: #ff4b4b !important; }
+        .call-btn-action.reject { background: #ff4b4b !important; color: #ffffff !important; box-shadow: 0 12px 24px rgba(255, 75, 75, 0.5) !important; }
+        .call-btn-action.accept { background: #34C759 !important; color: #ffffff !important; box-shadow: 0 12px 24px rgba(52, 199, 89, 0.5) !important; }
+        .call-btn-action:active { transform: scale(0.95); }
+        @media (max-width: 480px) { .messages { padding: 5px 10px 75px 10px; gap: 12px; } .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; } .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; } .side-panel { left: 16px; right: 16px; padding: 20px; } }
     </style>
 </head>
 <body>
-    <!-- ===== ВЕСЬ HTML БЕЗ ИЗМЕНЕНИЙ (ТАКОЙ ЖЕ, КАК ВЫШЕ) ===== -->
+    <!-- ===== ВЕСЬ HTML БЕЗ ИЗМЕНЕНИЙ (ваш оригинальный) ===== -->
     <div id="regScreen" class="screen active">
         <div class="box">
             <div class="logo-glass-container">
@@ -480,7 +180,6 @@
                 </svg>
             </div>
             <p id="regSubtitle">Семейный чат для самых близких</p>
-            
             <div id="freshForm">
                 <input type="text" id="nameInput" placeholder="Ваше имя">
                 <input type="text" id="usernameInput" placeholder="Придумайте юзернейм (например, ivan99)">
@@ -488,14 +187,12 @@
                 <button id="joinBtn">Создать аккаунт</button>
                 <button class="link-btn" id="toLoginBtn">Уже есть юзернейм? Войти</button>
             </div>
-
             <div id="loginForm" class="login-existing">
                 <input type="text" id="loginUsernameInput" placeholder="Введите ваш юзернейм">
                 <div class="error-msg" id="loginErrorMsg">Пользователь с таким юзернеймом не найден!</div>
                 <button id="loginBtn">Войти</button>
                 <button class="link-btn" id="toRegisterBtn">Создать новый аккаунт</button>
             </div>
-
             <div id="fastForm" class="welcome-back">
                 <div class="welcome-text" id="welcomeText">Привет!</div>
                 <p style="margin-bottom:10px;">Войти как <span id="savedUsernameLabel" style="color:#6C63FF;">@username</span>?</p>
@@ -637,55 +334,32 @@
     </div>
 
     <script type="module">
-        // ============================================================
-        // ЖЁСТКИЙ СБРОС КЭША И SERVICE WORKER (ВЫПОЛНЯЕТСЯ 1 РАЗ)
-        // ============================================================
+        // ===== ЖЁСТКИЙ СБРОС КЭША И SERVICE WORKER (1 РАЗ) =====
         (async function resetAll() {
-            // Проверяем, не был ли уже выполнен сброс
-            if (sessionStorage.getItem('semejka_reset_done')) {
-                return; // Уже сброшено в этой сессии
-            }
-
-            // Если в URL есть параметр reset=1, значит мы уже перезагрузились после сброса
+            if (sessionStorage.getItem('semejka_reset_done')) return;
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('reset') === '1') {
-                // Убираем параметр из URL, чтобы не мешал
                 const newUrl = window.location.pathname + window.location.hash;
                 window.history.replaceState({}, document.title, newUrl);
                 sessionStorage.setItem('semejka_reset_done', 'true');
-                // Продолжаем загрузку страницы, теперь уже с новым кодом
                 return;
             }
-
-            // Если мы здесь, значит нужно выполнить сброс
             try {
-                // 1. Удаляем все Service Worker'ы
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let reg of registrations) {
-                        await reg.unregister();
-                    }
+                    for (let reg of registrations) await reg.unregister();
                 }
-
-                // 2. Очищаем все кэши браузера (Cache API)
                 if ('caches' in window) {
                     const cacheKeys = await caches.keys();
                     await Promise.all(cacheKeys.map(key => caches.delete(key)));
                 }
-
-                // 3. Перезагружаем страницу с параметром reset=1 (чтобы избежать цикла)
                 window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
             } catch (e) {
-                console.warn('Ошибка при сбросе:', e);
-                // В случае ошибки всё равно перезагружаем
                 window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
             }
         })();
 
-        // ============================================================
-        // ОСНОВНОЙ КОД (импорты Firebase, логика чата)
-        // ============================================================
-
+        // ===== ОСНОВНОЙ КОД (Firebase, логика чата) =====
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -702,11 +376,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Обычное обновление PWA (периодическая проверка)
+        // PWA обновления
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
-                    setInterval(() => { reg.update(); }, 1000 * 60 * 5);
+                    setInterval(() => reg.update(), 1000 * 60 * 5);
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
@@ -717,17 +391,13 @@
                     });
                 }).catch(() => {});
             });
-
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!refreshing) {
-                    refreshing = true;
-                    window.location.reload();
-                }
+                if (!refreshing) { refreshing = true; window.location.reload(); }
             });
         }
 
-        // --- DOM-элементы ---
+        // DOM-элементы (все те же)
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const messagesDiv = document.getElementById('messages');
@@ -738,33 +408,27 @@
         const freshForm = document.getElementById('freshForm');
         const loginForm = document.getElementById('loginForm');
         const fastForm = document.getElementById('fastForm');
-
         const nameInput = document.getElementById('nameInput');
         const usernameInput = document.getElementById('usernameInput');
         const errorMsg = document.getElementById('errorMsg');
         const joinBtn = document.getElementById('joinBtn');
         const toLoginBtn = document.getElementById('toLoginBtn');
-
         const loginUsernameInput = document.getElementById('loginUsernameInput');
         const loginErrorMsg = document.getElementById('loginErrorMsg');
         const loginBtn = document.getElementById('loginBtn');
         const toRegisterBtn = document.getElementById('toRegisterBtn');
-
         const welcomeText = document.getElementById('welcomeText');
         const savedUsernameLabel = document.getElementById('savedUsernameLabel');
         const fastJoinBtn = document.getElementById('fastJoinBtn');
         const changeUserBtn = document.getElementById('changeUserBtn');
-
         const reactionModalOverlay = document.getElementById('reactionModalOverlay');
         const typingIndicator = document.getElementById('typingIndicator');
         const typingText = document.getElementById('typingText');
-        
         const replyBar = document.getElementById('replyBar');
         const replyBarTitle = document.getElementById('replyBarTitle');
         const replyBarText = document.getElementById('replyBarText');
         const replyBarClose = document.getElementById('replyBarClose');
         const inputArea = document.getElementById('inputArea');
-
         const newsBtn = document.getElementById('newsBtn');
         const membersBtn = document.getElementById('membersBtn');
         const sidePanelOverlay = document.getElementById('sidePanelOverlay');
@@ -773,7 +437,6 @@
         const closeNewsBtn = document.getElementById('closeNewsBtn');
         const closeMembersBtn = document.getElementById('closeMembersBtn');
         const membersContainer = document.getElementById('membersContainer');
-
         const callOverlay = document.getElementById('callOverlay');
         const callName = document.getElementById('callName');
         const callStatusText = document.getElementById('callStatusText');
@@ -782,14 +445,13 @@
         const callMuteBtn = document.getElementById('callMuteBtn');
         const remoteAudio = document.getElementById('remoteAudio');
 
-        // --- Состояние ---
+        // Состояние
         let currentUser = null;
         let activeReactionMessageId = null;
         let isTypingLocal = false;
         let typingTimeout = null;
         let currentTypersList = [];
         let currentReplyTarget = null;
-
         let peerConnection = null;
         let localStream = null;
         let currentCallId = null;
@@ -798,12 +460,10 @@
         let audioRing = null;
         let isMuted = false;
 
-        // --- Авторизация ---
+        // Авторизация
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
-        if (savedName && savedUsername) {
-            currentUser = { id: savedUsername, name: savedName };
-        }
+        if (savedName && savedUsername) { currentUser = { id: savedUsername, name: savedName }; }
 
         function checkSavedUser() {
             if (currentUser) {
@@ -820,39 +480,13 @@
         }
         checkSavedUser();
 
-        toLoginBtn.addEventListener('click', () => {
-            freshForm.style.display = 'none';
-            loginForm.style.display = 'flex';
-            loginUsernameInput.value = '';
-        });
+        toLoginBtn.addEventListener('click', () => { freshForm.style.display = 'none'; loginForm.style.display = 'flex'; loginUsernameInput.value = ''; });
+        toRegisterBtn.addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'block'; nameInput.value = ''; usernameInput.value = ''; });
+        changeUserBtn.addEventListener('click', () => { localStorage.removeItem('semejka_name'); localStorage.removeItem('semejka_username'); currentUser = null; checkSavedUser(); });
 
-        toRegisterBtn.addEventListener('click', () => {
-            loginForm.style.display = 'none';
-            freshForm.style.display = 'block';
-            nameInput.value = '';
-            usernameInput.value = '';
-        });
-
-        changeUserBtn.addEventListener('click', () => {
-            localStorage.removeItem('semejka_name');
-            localStorage.removeItem('semejka_username');
-            currentUser = null;
-            checkSavedUser();
-        });
-
-        // --- Панели ---
-        function openPanel(panel) {
-            sidePanelOverlay.classList.add('active');
-            panel.classList.add('active');
-            if(panel === membersPanel) loadMembersList();
-        }
-
-        function closeAllPanels() {
-            sidePanelOverlay.classList.remove('active');
-            newsPanel.classList.remove('active');
-            membersPanel.classList.remove('active');
-        }
-
+        // Панели
+        function openPanel(panel) { sidePanelOverlay.classList.add('active'); panel.classList.add('active'); if(panel === membersPanel) loadMembersList(); }
+        function closeAllPanels() { sidePanelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
         newsBtn.addEventListener('click', () => openPanel(newsPanel));
         membersBtn.addEventListener('click', () => openPanel(membersPanel));
         sidePanelOverlay.addEventListener('click', closeAllPanels);
@@ -864,14 +498,11 @@
                 membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
                 const usersSnapshot = await getDocs(collection(db, "users"));
                 membersContainer.innerHTML = '';
-                
                 usersSnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const isMe = data.username === currentUser?.id;
-                    
                     const item = document.createElement('div');
                     item.className = 'member-item';
-                    
                     let innerHTML = `
                         <div class="member-info">
                             <div class="member-text-block">
@@ -880,22 +511,12 @@
                             </div>
                             <div class="member-action-block">
                     `;
-                    
-                    if (isMe) {
-                        innerHTML += `<div class="member-me-badge">Вы</div>`;
-                    } else {
-                        innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Позвонить</button>`;
-                    }
-                    
-                    innerHTML += `
-                            </div>
-                        </div>
-                    `;
-                    
+                    if (isMe) innerHTML += `<div class="member-me-badge">Вы</div>`;
+                    else innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Позвонить</button>`;
+                    innerHTML += `</div></div>`;
                     item.innerHTML = innerHTML;
                     membersContainer.appendChild(item);
                 });
-
                 membersContainer.querySelectorAll('.member-call-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -909,21 +530,16 @@
             }
         }
 
-        // --- Регистрация / Вход ---
+        // Регистрация / Вход
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!name || !username) return;
-
             joinBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
                 const querySnapshot = await getDocs(uQuery);
-                if (!querySnapshot.empty) {
-                    errorMsg.style.display = 'block';
-                    joinBtn.disabled = false;
-                    return;
-                }
+                if (!querySnapshot.empty) { errorMsg.style.display = 'block'; joinBtn.disabled = false; return; }
                 await addDoc(collection(db, "users"), { name: name, username: username, created_at: serverTimestamp() });
                 localStorage.setItem('semejka_name', name);
                 localStorage.setItem('semejka_username', username);
@@ -935,16 +551,11 @@
         loginBtn.addEventListener('click', async () => {
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!username) return;
-
             loginBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
                 const querySnapshot = await getDocs(uQuery);
-                if (querySnapshot.empty) {
-                    loginErrorMsg.style.display = 'block';
-                    loginBtn.disabled = false;
-                    return;
-                }
+                if (querySnapshot.empty) { loginErrorMsg.style.display = 'block'; loginBtn.disabled = false; return; }
                 let foundName = '';
                 querySnapshot.forEach(doc => foundName = doc.data().name);
                 localStorage.setItem('semejka_name', foundName);
@@ -956,12 +567,10 @@
 
         fastJoinBtn.addEventListener('click', () => enterChat());
 
-        // --- Вспомогательные функции ---
+        // Вспомогательные функции
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
-            try {
-                await setDoc(doc(db, "status", currentUser.id), { name: currentUser.name, is_typing: typing, last_active: serverTimestamp() }, { merge: true });
-            } catch (e) {}
+            try { await setDoc(doc(db, "status", currentUser.id), { name: currentUser.name, is_typing: typing, last_active: serverTimestamp() }, { merge: true }); } catch (e) {}
         }
 
         function renderTypingUI() {
@@ -975,59 +584,25 @@
             }
         }
 
-        function autoResize() {
-            msgInput.style.height = 'auto';
-            const scrollHeight = msgInput.scrollHeight;
-            msgInput.style.height = (scrollHeight > 160 ? 160 : scrollHeight) + 'px';
-        }
+        function autoResize() { msgInput.style.height = 'auto'; const scrollHeight = msgInput.scrollHeight; msgInput.style.height = (scrollHeight > 160 ? 160 : scrollHeight) + 'px'; }
 
         msgInput.addEventListener('input', () => {
             autoResize();
             if (msgInput.value.length > 0) {
-                if (!isTypingLocal) {
-                    isTypingLocal = true;
-                    updateTypingStatus(true);
-                }
+                if (!isTypingLocal) { isTypingLocal = true; updateTypingStatus(true); }
             } else {
-                if (isTypingLocal) {
-                    isTypingLocal = false;
-                    updateTypingStatus(false);
-                }
+                if (isTypingLocal) { isTypingLocal = false; updateTypingStatus(false); }
             }
             clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                if (isTypingLocal) {
-                    isTypingLocal = false;
-                    updateTypingStatus(false);
-                }
-            }, 2500);
+            typingTimeout = setTimeout(() => { if (isTypingLocal) { isTypingLocal = false; updateTypingStatus(false); } }, 2500);
         });
 
-        function resetTextarea() {
-            msgInput.value = '';
-            msgInput.style.height = 'auto';
-            if (isTypingLocal) {
-                isTypingLocal = false;
-                updateTypingStatus(false);
-            }
-        }
+        function resetTextarea() { msgInput.value = ''; msgInput.style.height = 'auto'; if (isTypingLocal) { isTypingLocal = false; updateTypingStatus(false); } }
 
-        function linkify(text) {
-            return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-        }
+        function linkify(text) { return text.replace(/(https?:\/\/[^\s<]+)/gi, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`); }
 
-        function openReactionPicker(msgId) {
-            activeReactionMessageId = msgId;
-            requestAnimationFrame(() => {
-                reactionModalOverlay.classList.add('active');
-            });
-        }
-
-        function closeReactionPicker() {
-            reactionModalOverlay.classList.remove('active');
-            activeReactionMessageId = null;
-        }
-
+        function openReactionPicker(msgId) { activeReactionMessageId = msgId; requestAnimationFrame(() => { reactionModalOverlay.classList.add('active'); }); }
+        function closeReactionPicker() { reactionModalOverlay.classList.remove('active'); activeReactionMessageId = null; }
         reactionModalOverlay.addEventListener('click', (e) => { if (e.target === reactionModalOverlay) closeReactionPicker(); });
         reactionModalOverlay.querySelectorAll('.picker-emoji').forEach(emojiEl => {
             emojiEl.addEventListener('click', async (e) => {
@@ -1060,12 +635,7 @@
             msgInput.focus();
         }
 
-        function cancelReply() {
-            currentReplyTarget = null;
-            replyBar.style.display = 'none';
-            inputArea.classList.remove('has-reply');
-        }
-
+        function cancelReply() { currentReplyTarget = null; replyBar.style.display = 'none'; inputArea.classList.remove('has-reply'); }
         replyBarClose.addEventListener('click', cancelReply);
 
         async function toggleReaction(msgId, emoji) {
@@ -1073,10 +643,8 @@
             const msgRef = doc(db, "messages", msgId);
             const msgDiv = document.getElementById('msg-' + msgId);
             if (!msgDiv) return;
-            
             let currentReactions = JSON.parse(msgDiv.getAttribute('data-reactions') || '{}');
             if (!currentReactions[emoji]) currentReactions[emoji] = [];
-            
             const userIndex = currentReactions[emoji].indexOf(currentUser.id);
             if (userIndex > -1) {
                 currentReactions[emoji].splice(userIndex, 1);
@@ -1084,10 +652,7 @@
             } else {
                 for (let e in currentReactions) {
                     const idx = currentReactions[e].indexOf(currentUser.id);
-                    if (idx > -1) {
-                        currentReactions[e].splice(idx, 1);
-                        if (currentReactions[e].length === 0) delete currentReactions[e];
-                    }
+                    if (idx > -1) { currentReactions[e].splice(idx, 1); if (currentReactions[e].length === 0) delete currentReactions[e]; }
                 }
                 currentReactions[emoji].push(currentUser.id);
             }
@@ -1097,17 +662,14 @@
         function updateReactionsUI(msgId, reactions) {
             const msgDiv = document.getElementById('msg-' + msgId);
             if (!msgDiv) return;
-
             msgDiv.setAttribute('data-reactions', JSON.stringify(reactions || {}));
             const wrapper = msgDiv.querySelector('.reactions-wrapper');
             if (!wrapper) return;
-            
             wrapper.innerHTML = '';
             for (let emoji in reactions) {
                 const userList = reactions[emoji] || [];
                 if (userList.length === 0) continue;
                 const isMyReaction = userList.includes(currentUser?.id);
-                
                 const badge = document.createElement('div');
                 badge.className = `reaction-badge ${isMyReaction ? 'active' : ''}`;
                 badge.innerHTML = `<span>${emoji}</span><span class="reaction-count">${userList.length}</span>`;
@@ -1116,24 +678,17 @@
             }
         }
 
-        // === НОВЫЕ ФУНКЦИИ ДЛЯ ДАТ (ГРУППИРОВКА ПО UTC) ===
-        function formatDateSeparatorFromUTC(dateKey) {
-            // dateKey = "2026-07-05"
-            const parts = dateKey.split('-');
-            const year = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1; // месяцы в JS 0-11
-            const day = parseInt(parts[2], 10);
+        // === ФУНКЦИИ ДЛЯ ДАТ (ЛОКАЛЬНАЯ ГРУППИРОВКА) ===
+        function formatDateSeparatorFromDateObj(dateObj) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            return `${day} ${months[month]} ${year} г.`;
+            return `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()} г.`;
         }
 
         function insertDateSeparatorWithText(text) {
-            // Проверяем, нет ли уже такого разделителя
             const existing = Array.from(messagesDiv.querySelectorAll('.date-separator')).find(
                 sep => sep.textContent.trim() === text
             );
             if (existing) return;
-            
             const sep = document.createElement('div');
             sep.className = 'date-separator';
             sep.innerHTML = `<span>${text}</span>`;
@@ -1144,24 +699,20 @@
         function renderMessage(msg, forceScroll = true) {
             let msgDiv = document.getElementById('msg-' + msg.id);
             const isMyMsg = (msg.user_id === currentUser?.id);
-            
             if (msgDiv) {
                 msgDiv.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
                 updateReactionsUI(msg.id, msg.reactions);
                 return;
             }
-            
             const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-
             const div = document.createElement('div');
-            div.id = 'msg-' + msg.id; 
+            div.id = 'msg-' + msg.id;
             div.className = 'msg ' + (isMyMsg ? 'sent' : 'received');
             div.setAttribute('data-sender-name', msg.user_name || 'Кто-то');
             div.setAttribute('data-text', msg.text || '');
 
             let html = isMyMsg ? '' : `<div class="name">${escapeHtml(msg.user_name || '')} (@${escapeHtml(msg.user_id || '')})</div>`;
             let replyHTML = msg.reply_to ? `<div class="reply-in-bubble"><div class="reply-owner">${escapeHtml(msg.reply_to.name)}</div><div>${escapeHtml(msg.reply_to.text)}</div></div>` : '';
-            
             html += `
                 <div class="swipe-reply-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg></div>
                 <div class="bubble">${replyHTML}<div>${linkify(escapeHtml(msg.text || ''))}</div></div>
@@ -1170,24 +721,17 @@
                     <div class="reactions-wrapper"></div>
                 </div>
             `;
-
-            div.innerHTML = html; 
-            
+            div.innerHTML = html;
             requestAnimationFrame(() => {
                 messagesDiv.appendChild(div);
                 updateReactionsUI(msg.id, msg.reactions);
-                if (forceScroll) {
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }
+                if (forceScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
 
-            // Обработчики свайпов и кликов (без изменений)
+            // Обработчики свайпов и кликов
             const bubbleElement = div.querySelector('.bubble');
             const iconElement = div.querySelector('.swipe-reply-icon');
-
-            let startX = 0, startY = 0;
-            let currentTranslateX = 0, currentTranslateY = 0;
-            let swipeDirection = null;
+            let startX = 0, startY = 0, currentTranslateX = 0, currentTranslateY = 0, swipeDirection = null;
 
             bubbleElement.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
@@ -1201,22 +745,16 @@
             bubbleElement.addEventListener('touchmove', (e) => {
                 const diffX = e.touches[0].clientX - startX;
                 const diffY = e.touches[0].clientY - startY;
-
                 if (!swipeDirection) {
-                    if (Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)) {
-                        swipeDirection = 'horizontal';
-                    } else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) {
-                        swipeDirection = 'vertical';
-                    }
+                    if (Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)) swipeDirection = 'horizontal';
+                    else if (Math.abs(diffY) > 8 && Math.abs(diffY) > Math.abs(diffX)) swipeDirection = 'vertical';
                 }
-
                 if (swipeDirection === 'horizontal' && diffX > 0) {
                     currentTranslateX = Math.min(diffX * 0.5, 60);
                     bubbleElement.style.transform = `translate3d(${currentTranslateX}px, 0, 0)`;
                     iconElement.style.opacity = Math.min(currentTranslateX / 40, 1);
                     iconElement.style.transform = `translate3d(0, -50%, 0) scale(${Math.min(0.6 + (currentTranslateX / 100), 1)})`;
                 }
-
                 if (swipeDirection === 'vertical' && diffY > 0) {
                     if (e.cancelable) e.preventDefault();
                     currentTranslateY = Math.min(diffY * 0.55, 65);
@@ -1229,21 +767,15 @@
                 bubbleElement.style.transform = '';
                 iconElement.style.opacity = 0;
                 iconElement.style.transform = '';
-
                 if (swipeDirection === 'horizontal' && currentTranslateX >= 40) {
                     initiateReply(msg.id, msg.user_name || 'Кто-то', msg.text || '');
-                } 
-                else if (swipeDirection === 'vertical' && currentTranslateY >= 30) {
+                } else if (swipeDirection === 'vertical' && currentTranslateY >= 30) {
                     openReactionPicker(msg.id);
                 }
-
                 swipeDirection = null;
             }, { passive: true });
 
-            bubbleElement.addEventListener('click', (e) => { 
-                if (e.target.tagName !== 'A' && window.innerWidth > 768) openReactionPicker(msg.id); 
-            });
-
+            bubbleElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && window.innerWidth > 768) openReactionPicker(msg.id); });
             updateReactionsUI(msg.id, msg.reactions);
         }
 
@@ -1257,45 +789,33 @@
             });
         }
 
-        // --- WebRTC звонки ---
+        // --- WebRTC звонки (код без изменений, скопируйте из вашего файла) ---
+        // Здесь оставлю заглушку, но вы скопируйте свои реализации fetchIceServers, playRingTone, setupPeerConnection, startAudioCall, listenIncomingCalls, accept/reject, endCall
+        // Они не влияют на даты, поэтому я их сократил для краткости, но в вашем финальном файле они должны быть полными.
+        // Ниже я вставлю ваш код звонков из предыдущих версий, чтобы не потерять функциональность.
+
         async function fetchIceServers() {
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
-                if (response.ok) {
-                    return await response.json();
-                }
-            } catch (err) {
-                console.warn("Не удалось получить TURN, используем STUN:", err);
-            }
+                if (response.ok) return await response.json();
+            } catch (err) { console.warn("Не удалось получить TURN, используем STUN:", err); }
             return [{ urls: "stun:stun.l.google.com:19302" }];
         }
 
         function playRingTone(type) {
             stopRingTone();
             audioRing = new Audio();
-            if (type === 'dial') {
-                audioRing.src = 'https://assets.mixkit.co/active_storage/sfx/1647/1647-84.wav';
-                audioRing.loop = true;
-            } else if (type === 'ring') {
-                audioRing.src = 'https://assets.mixkit.co/active_storage/sfx/1359/1359-84.wav';
-                audioRing.loop = true;
-            }
+            if (type === 'dial') { audioRing.src = 'https://assets.mixkit.co/active_storage/sfx/1647/1647-84.wav'; audioRing.loop = true; }
+            else if (type === 'ring') { audioRing.src = 'https://assets.mixkit.co/active_storage/sfx/1359/1359-84.wav'; audioRing.loop = true; }
             audioRing.play().catch(() => {});
         }
 
-        function stopRingTone() {
-            if (audioRing) {
-                audioRing.pause();
-                audioRing = null;
-            }
-        }
+        function stopRingTone() { if (audioRing) { audioRing.pause(); audioRing = null; } }
 
         callMuteBtn.addEventListener('click', () => {
             if (!localStream) return;
             isMuted = !isMuted;
-            localStream.getAudioTracks().forEach(track => {
-                track.enabled = !isMuted;
-            });
+            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
             if (isMuted) {
                 callMuteBtn.classList.add('muted');
                 callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/><line x1="2" y1="2" x2="22" y2="22" stroke="#ff4b4b" stroke-width="2.5" stroke-linecap="round"/></svg>';
@@ -1308,20 +828,17 @@
         async function setupPeerConnection() {
             const iceServers = await fetchIceServers();
             peerConnection = new RTCPeerConnection({ iceServers });
-
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate && currentCallId) {
                     const candidatesCol = collection(db, "calls", currentCallId, isCaller ? "callerCandidates" : "calleeCandidates");
                     addDoc(candidatesCol, event.candidate.toJSON()).catch(()=>{});
                 }
             };
-
             peerConnection.ontrack = (event) => {
                 if (event.streams && event.streams[0]) {
                     remoteAudio.srcObject = event.streams[0];
                 }
             };
-
             try {
                 remoteAudio.play().catch(() => {});
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -1329,31 +846,23 @@
                 isMuted = false;
                 callMuteBtn.classList.remove('muted');
                 callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
-            } catch (err) {
-                alert("Ошибка доступа к микрофону!");
-                endCall();
-            }
+            } catch (err) { alert("Ошибка доступа к микрофону!"); endCall(); }
         }
 
         async function startAudioCall(targetUsername, targetName) {
             if (peerConnection) return;
-            
             isCaller = true;
             currentCallId = currentUser.id + "_" + targetUsername + "_" + Date.now();
-            
             callName.textContent = targetName;
             callStatusText.textContent = "Вызов...";
             callAcceptBtn.style.setProperty("display", "none", "important");
             callMuteBtn.style.display = "none";
             callOverlay.classList.add("active");
-            
             playRingTone('dial');
             await setupPeerConnection();
-
             const callDocRef = doc(db, "calls", currentCallId);
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
-
             await setDoc(callDocRef, {
                 id: currentCallId,
                 callerId: currentUser.id,
@@ -1362,12 +871,8 @@
                 status: "ringing",
                 offer: { type: offer.type, sdp: offer.sdp }
             });
-
             callUnsubscribe = onSnapshot(callDocRef, async (snapshot) => {
-                if (!snapshot.exists()) {
-                    endCall();
-                    return;
-                }
+                if (!snapshot.exists()) { endCall(); return; }
                 const data = snapshot.data();
                 if (data.status === "accepted" && data.answer && !peerConnection.currentRemoteDescription) {
                     stopRingTone();
@@ -1375,11 +880,8 @@
                     callMuteBtn.style.display = "block";
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                 }
-                if (data.status === "rejected") {
-                    endCall();
-                }
+                if (data.status === "rejected") { endCall(); }
             });
-
             onSnapshot(collection(db, "calls", currentCallId, "calleeCandidates"), (snapshot) => {
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === "added" && peerConnection) {
@@ -1405,9 +907,7 @@
                     callOverlay.classList.add("active");
                     playRingTone('ring');
                     callUnsubscribe = onSnapshot(doc(db, "calls", currentCallId), (snap) => {
-                        if (!snap.exists() || snap.data().status === "rejected") {
-                            endCall();
-                        }
+                        if (!snap.exists() || snap.data().status === "rejected") { endCall(); }
                     });
                 });
             });
@@ -1417,25 +917,20 @@
             stopRingTone();
             callAcceptBtn.style.setProperty("display", "none", "important");
             callStatusText.textContent = "Соединение...";
-
             const callDocRef = doc(db, "calls", currentCallId);
             const callSnap = await getDoc(callDocRef);
             if (!callSnap.exists()) { endCall(); return; }
-            
             const callData = callSnap.data();
             await setupPeerConnection();
             await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
-
             await updateDoc(callDocRef, {
                 status: "accepted",
                 answer: { type: answer.type, sdp: answer.sdp }
             });
-
             callStatusText.textContent = "Разговор...";
             callMuteBtn.style.display = "block";
-
             onSnapshot(collection(db, "calls", currentCallId, "callerCandidates"), (snapshot) => {
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === "added" && peerConnection) {
@@ -1448,10 +943,7 @@
         async function rejectOrHangUp() {
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
-                try {
-                    await updateDoc(callDocRef, { status: "rejected" });
-                    await deleteDoc(callDocRef);
-                } catch(e){}
+                try { await updateDoc(callDocRef, { status: "rejected" }); await deleteDoc(callDocRef); } catch(e){}
             }
             endCall();
         }
@@ -1472,58 +964,62 @@
             callOverlay.classList.remove("active");
         }
 
-        // --- ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ГРУППИРОВКОЙ ПО UTC) ---
+        // --- ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ЛОКАЛЬНОЙ ГРУППИРОВКОЙ) ---
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
-                
+
                 const isFocused = (document.activeElement === msgInput);
                 const selectionStart = msgInput.selectionStart;
                 const selectionEnd = msgInput.selectionEnd;
                 const shouldScroll = (messagesDiv.scrollTop + messagesDiv.clientHeight >= messagesDiv.scrollHeight - 150);
 
-                // Очищаем чат
                 messagesDiv.innerHTML = '';
-                
-                // 1. Собираем все сообщения
+
                 const messages = [];
                 snapshot.docs.forEach(doc => {
                     messages.push({ id: doc.id, ...doc.data() });
                 });
-                
-                // 2. Сортируем по времени (строго)
+
+                // Сортировка по времени
                 messages.sort((a, b) => {
                     const timeA = a.created_at ? a.created_at.toDate().getTime() : 0;
                     const timeB = b.created_at ? b.created_at.toDate().getTime() : 0;
                     return timeA - timeB;
                 });
-                
-                // 3. Группируем по UTC-дате (ключ – "YYYY-MM-DD")
+
+                // Группировка по ЛОКАЛЬНОЙ дате (без UTC)
                 const groups = {};
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-                    const dateKey = timestamp.toISOString().split('T')[0]; // "2026-07-05"
+                    // Используем локальную дату в формате "ДД.ММ.ГГГГ" для группировки
+                    const dateKey = timestamp.toLocaleDateString('ru-RU');
                     if (!groups[dateKey]) {
                         groups[dateKey] = [];
                     }
                     groups[dateKey].push(msg);
                 });
-                
-                // 4. Сортируем ключи (лексикографически, что соответствует хронологии)
-                const sortedDateKeys = Object.keys(groups).sort();
-                
-                // 5. Рендерим группы
+
+                // Сортируем ключи по дате (преобразуем в "ГГГГММДД" для сравнения)
+                const sortedDateKeys = Object.keys(groups).sort((a, b) => {
+                    const partsA = a.split('.').reverse().join('');
+                    const partsB = b.split('.').reverse().join('');
+                    return partsA.localeCompare(partsB);
+                });
+
                 sortedDateKeys.forEach(dateKey => {
-                    const separatorText = formatDateSeparatorFromUTC(dateKey);
+                    // Создаём объект даты из ключа для форматирования
+                    const parts = dateKey.split('.');
+                    const dateObj = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+                    const separatorText = formatDateSeparatorFromDateObj(dateObj);
                     insertDateSeparatorWithText(separatorText);
-                    
+
                     groups[dateKey].forEach(msg => {
                         renderMessage(msg, false);
                     });
                 });
 
-                // Восстанавливаем фокус и скролл
                 if (isFocused) {
                     msgInput.focus();
                     msgInput.setSelectionRange(selectionStart, selectionEnd);
@@ -1534,18 +1030,17 @@
                 }
             });
             listenTypingStatus();
-            listenIncomingCalls(); 
+            listenIncomingCalls();
         }
 
         // --- Отправка сообщения ---
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!currentUser || !text) return;
-
             sendBtn.disabled = true;
             let replyData = currentReplyTarget ? { message_id: currentReplyTarget.id, name: currentReplyTarget.name, text: currentReplyTarget.text } : null;
-            cancelReply(); resetTextarea();
-
+            cancelReply();
+            resetTextarea();
             try {
                 await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
             } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
