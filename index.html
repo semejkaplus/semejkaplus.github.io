@@ -13,6 +13,7 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
+        /* ===== ВЕСЬ CSS БЕЗ ИЗМЕНЕНИЙ (кроме .date-separator – смещён влево) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
@@ -333,7 +334,7 @@
     </div>
 
     <script type="module">
-        // ===== ОСНОВНОЙ КОД (БЕЗ ВСТРОЕННОГО МЕХАНИЗМА СБРОСА) =====
+        // ===== ОСНОВНОЙ КОД (БЕЗ ВСТРОЕННОГО СБРОСА) С ГРУППИРОВКОЙ ПО UTC =====
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -652,10 +653,15 @@
             }
         }
 
-        // ===== ФУНКЦИИ ДЛЯ ДАТ (ЛОКАЛЬНАЯ ГРУППИРОВКА) =====
-        function formatDateSeparatorFromDateObj(dateObj) {
+        // ===== ФУНКЦИИ ДЛЯ ДАТ (ГРУППИРОВКА ПО UTC) =====
+        function formatDateSeparatorFromUTC(dateKey) {
+            // dateKey = "2026-07-05"
+            const parts = dateKey.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            return `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()} г.`;
+            return `${day} ${months[month]} ${year} г.`;
         }
 
         function insertDateSeparatorWithText(text) {
@@ -934,7 +940,7 @@
             callOverlay.classList.remove("active");
         }
 
-        // ===== ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ЛОКАЛЬНОЙ ГРУППИРОВКОЙ) =====
+        // ===== ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ГРУППИРОВКОЙ ПО UTC) =====
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
@@ -960,11 +966,11 @@
                     return timeA - timeB;
                 });
 
-                // 3. Группируем по локальной дате (ключ – "ДД.ММ.ГГГГ")
+                // 3. Группируем по UTC-дате (ключ – "YYYY-MM-DD")
                 const groups = {};
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-                    const dateKey = timestamp.toLocaleDateString('ru-RU');
+                    const dateKey = timestamp.toISOString().split('T')[0]; // UTC-дата
                     if (!groups[dateKey]) {
                         groups[dateKey] = [];
                     }
@@ -972,27 +978,21 @@
                 });
 
                 // 4. Отладочный вывод в консоль
-                console.log('=== ГРУППЫ ДАТ ===');
+                console.log('=== ГРУППЫ ДАТ (UTC) ===');
                 Object.keys(groups).forEach(key => {
                     console.log(`Дата: ${key}, сообщений: ${groups[key].length}`);
                     groups[key].forEach(msg => {
                         const date = msg.created_at.toDate();
-                        console.log(`  ${msg.text} (${date.toLocaleString('ru-RU')})`);
+                        console.log(`  ${msg.text} (${date.toISOString()})`);
                     });
                 });
 
-                // 5. Сортируем ключи по дате
-                const sortedDateKeys = Object.keys(groups).sort((a, b) => {
-                    const partsA = a.split('.').reverse().join('');
-                    const partsB = b.split('.').reverse().join('');
-                    return partsA.localeCompare(partsB);
-                });
+                // 5. Сортируем ключи (лексикографически, что соответствует хронологии)
+                const sortedDateKeys = Object.keys(groups).sort();
 
                 // 6. Рендерим группы
                 sortedDateKeys.forEach(dateKey => {
-                    const parts = dateKey.split('.');
-                    const dateObj = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
-                    const separatorText = formatDateSeparatorFromDateObj(dateObj);
+                    const separatorText = formatDateSeparatorFromUTC(dateKey);
                     insertDateSeparatorWithText(separatorText);
 
                     groups[dateKey].forEach(msg => {
