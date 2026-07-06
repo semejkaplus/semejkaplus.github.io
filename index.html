@@ -13,7 +13,6 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
-        /* ===== ВСЁ вот ТОТ ЖЕ CSS, НО С ИЗМЕНЁННЫМ .date-separator ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
@@ -67,27 +66,8 @@
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
         .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
         .messages { flex: 1 1 auto; overflow-y: auto; padding: 10px 20px 80px 20px; display: flex; flex-direction: column; gap: 14px; margin: 20px auto 0 auto; width: 100%; max-width: 800px; align-items: stretch; position: relative; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
-
-        /* ===== ИЗМЕНЁННЫЙ СТИЛЬ ДЛЯ ПЛАШКИ ДАТЫ ===== */
-        .date-separator {
-            display: flex;
-            justify-content: flex-start;  /* прижимаем к левому краю */
-            align-items: center;
-            margin: 10px 0;
-            padding-left: 16px;          /* отступ от левого края, чтобы не прилипала */
-            width: 100%;
-        }
-        .date-separator span {
-            background: rgba(255,255,255,0.5);
-            padding: 6px 18px;
-            border-radius: 15px;
-            font-size: 13px;
-            color: #5A5A6A;
-            border: 1px solid rgba(255,255,255,0.6);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            white-space: nowrap;
-        }
-
+        .date-separator { display: flex; justify-content: flex-start; align-items: center; margin: 10px 0; padding-left: 16px; width: 100%; }
+        .date-separator span { background: rgba(255,255,255,0.5); padding: 6px 18px; border-radius: 15px; font-size: 13px; color: #5A5A6A; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); white-space: nowrap; }
         .msg { max-width: 100%; display: flex; flex-direction: column; margin-bottom: 2px; position: relative; }
         .msg.sent { align-items: flex-end; }
         .msg.received { align-items: flex-start; }
@@ -165,7 +145,7 @@
     </style>
 </head>
 <body>
-    <!-- ===== ВЕСЬ HTML БЕЗ ИЗМЕНЕНИЙ (ваш оригинал) ===== -->
+    <!-- ===== HTML ===== -->
     <div id="regScreen" class="screen active">
         <div class="box">
             <div class="logo-glass-container">
@@ -353,32 +333,7 @@
     </div>
 
     <script type="module">
-        // ===== ЖЁСТКИЙ СБРОС КЭША И SERVICE WORKER (1 РАЗ) =====
-        (async function resetAll() {
-            if (sessionStorage.getItem('semejka_reset_done')) return;
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('reset') === '1') {
-                const newUrl = window.location.pathname + window.location.hash;
-                window.history.replaceState({}, document.title, newUrl);
-                sessionStorage.setItem('semejka_reset_done', 'true');
-                return;
-            }
-            try {
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let reg of registrations) await reg.unregister();
-                }
-                if ('caches' in window) {
-                    const cacheKeys = await caches.keys();
-                    await Promise.all(cacheKeys.map(key => caches.delete(key)));
-                }
-                window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
-            } catch (e) {
-                window.location.href = window.location.pathname + '?reset=1' + window.location.hash;
-            }
-        })();
-
-        // ===== ОСНОВНОЙ КОД (Firebase, логика чата) =====
+        // ===== ОСНОВНОЙ КОД (БЕЗ ВСТРОЕННОГО МЕХАНИЗМА СБРОСА) =====
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -395,7 +350,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // PWA обновления
+        // ===== PWA обновления (стандартные) =====
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js').then(reg => {
@@ -416,7 +371,7 @@
             });
         }
 
-        // DOM-элементы
+        // ===== DOM-элементы =====
         const regScreen = document.getElementById('regScreen');
         const chatScreen = document.getElementById('chatScreen');
         const messagesDiv = document.getElementById('messages');
@@ -464,7 +419,7 @@
         const callMuteBtn = document.getElementById('callMuteBtn');
         const remoteAudio = document.getElementById('remoteAudio');
 
-        // Состояние
+        // ===== Состояние =====
         let currentUser = null;
         let activeReactionMessageId = null;
         let isTypingLocal = false;
@@ -479,7 +434,7 @@
         let audioRing = null;
         let isMuted = false;
 
-        // Авторизация
+        // ===== Авторизация =====
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
         if (savedName && savedUsername) { currentUser = { id: savedUsername, name: savedName }; }
@@ -503,7 +458,7 @@
         toRegisterBtn.addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'block'; nameInput.value = ''; usernameInput.value = ''; });
         changeUserBtn.addEventListener('click', () => { localStorage.removeItem('semejka_name'); localStorage.removeItem('semejka_username'); currentUser = null; checkSavedUser(); });
 
-        // Панели
+        // ===== Панели =====
         function openPanel(panel) { sidePanelOverlay.classList.add('active'); panel.classList.add('active'); if(panel === membersPanel) loadMembersList(); }
         function closeAllPanels() { sidePanelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
         newsBtn.addEventListener('click', () => openPanel(newsPanel));
@@ -549,7 +504,7 @@
             }
         }
 
-        // Регистрация / Вход
+        // ===== Регистрация / Вход =====
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -586,7 +541,7 @@
 
         fastJoinBtn.addEventListener('click', () => enterChat());
 
-        // Вспомогательные функции
+        // ===== Вспомогательные функции =====
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try { await setDoc(doc(db, "status", currentUser.id), { name: currentUser.name, is_typing: typing, last_active: serverTimestamp() }, { merge: true }); } catch (e) {}
@@ -697,7 +652,7 @@
             }
         }
 
-        // === ФУНКЦИИ ДЛЯ ДАТ (ЛОКАЛЬНАЯ ГРУППИРОВКА) ===
+        // ===== ФУНКЦИИ ДЛЯ ДАТ (ЛОКАЛЬНАЯ ГРУППИРОВКА) =====
         function formatDateSeparatorFromDateObj(dateObj) {
             const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
             return `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()} г.`;
@@ -714,7 +669,7 @@
             messagesDiv.appendChild(sep);
         }
 
-        // --- Рендер сообщения (без вставки дат!) ---
+        // ===== Рендер сообщения (без вставки дат) =====
         function renderMessage(msg, forceScroll = true) {
             let msgDiv = document.getElementById('msg-' + msg.id);
             const isMyMsg = (msg.user_id === currentUser?.id);
@@ -747,7 +702,7 @@
                 if (forceScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
 
-            // Обработчики свайпов и кликов
+            // ===== Обработчики свайпов и кликов =====
             const bubbleElement = div.querySelector('.bubble');
             const iconElement = div.querySelector('.swipe-reply-icon');
             let startX = 0, startY = 0, currentTranslateX = 0, currentTranslateY = 0, swipeDirection = null;
@@ -798,7 +753,7 @@
             updateReactionsUI(msg.id, msg.reactions);
         }
 
-        // --- Слушатель статуса печатания ---
+        // ===== Слушатель статуса печатания =====
         function listenTypingStatus() {
             onSnapshot(collection(db, "status"), (snapshot) => {
                 let networkTypers = [];
@@ -808,7 +763,7 @@
             });
         }
 
-        // --- WebRTC звонки (полный код) ---
+        // ===== WebRTC звонки (полный код) =====
         async function fetchIceServers() {
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
@@ -979,7 +934,7 @@
             callOverlay.classList.remove("active");
         }
 
-        // --- ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ЛОКАЛЬНОЙ ГРУППИРОВКОЙ) ---
+        // ===== ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА (С ЛОКАЛЬНОЙ ГРУППИРОВКОЙ) =====
         function startLiveChat() {
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
@@ -992,38 +947,49 @@
 
                 messagesDiv.innerHTML = '';
 
+                // 1. Собираем все сообщения
                 const messages = [];
                 snapshot.docs.forEach(doc => {
                     messages.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Сортировка по времени
+                // 2. Сортируем по времени
                 messages.sort((a, b) => {
                     const timeA = a.created_at ? a.created_at.toDate().getTime() : 0;
                     const timeB = b.created_at ? b.created_at.toDate().getTime() : 0;
                     return timeA - timeB;
                 });
 
-                // Группировка по ЛОКАЛЬНОЙ дате (без UTC)
+                // 3. Группируем по локальной дате (ключ – "ДД.ММ.ГГГГ")
                 const groups = {};
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
-                    const dateKey = timestamp.toLocaleDateString('ru-RU'); // "ДД.ММ.ГГГГ"
+                    const dateKey = timestamp.toLocaleDateString('ru-RU');
                     if (!groups[dateKey]) {
                         groups[dateKey] = [];
                     }
                     groups[dateKey].push(msg);
                 });
 
-                // Сортируем ключи по дате
+                // 4. Отладочный вывод в консоль
+                console.log('=== ГРУППЫ ДАТ ===');
+                Object.keys(groups).forEach(key => {
+                    console.log(`Дата: ${key}, сообщений: ${groups[key].length}`);
+                    groups[key].forEach(msg => {
+                        const date = msg.created_at.toDate();
+                        console.log(`  ${msg.text} (${date.toLocaleString('ru-RU')})`);
+                    });
+                });
+
+                // 5. Сортируем ключи по дате
                 const sortedDateKeys = Object.keys(groups).sort((a, b) => {
                     const partsA = a.split('.').reverse().join('');
                     const partsB = b.split('.').reverse().join('');
                     return partsA.localeCompare(partsB);
                 });
 
+                // 6. Рендерим группы
                 sortedDateKeys.forEach(dateKey => {
-                    // Создаём объект даты из ключа для форматирования
                     const parts = dateKey.split('.');
                     const dateObj = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
                     const separatorText = formatDateSeparatorFromDateObj(dateObj);
@@ -1034,6 +1000,7 @@
                     });
                 });
 
+                // Восстанавливаем фокус и скролл
                 if (isFocused) {
                     msgInput.focus();
                     msgInput.setSelectionRange(selectionStart, selectionEnd);
@@ -1047,7 +1014,7 @@
             listenIncomingCalls();
         }
 
-        // --- Отправка сообщения ---
+        // ===== Отправка сообщения =====
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!currentUser || !text) return;
@@ -1065,7 +1032,7 @@
 
         function enterChat() { regScreen.classList.remove('active'); chatScreen.classList.add('active'); startLiveChat(); }
 
-        // --- Утилиты ---
+        // ===== Утилиты =====
         function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); }
         function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
 
