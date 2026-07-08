@@ -937,7 +937,7 @@
                 const data = snapshot.data();
                 if (data.status === "accepted" && data.answer && !peerConnection.currentRemoteDescription) {
                     stopRingTone();
-                    callStatusText.textContent = "Разговор...";
+                    callStatusText.textContent = "Звонок идёт";
                     callMuteBtn.style.display = "block";
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                 }
