@@ -1124,6 +1124,7 @@
             resetTextarea();
             try {
                 await addDoc(collection(db, "messages"), { user_id: currentUser.id, user_name: currentUser.name, text: text, reactions: {}, reply_to: replyData, created_at: serverTimestamp() });
+                await sendPushToFamily(currentUser.name, text, currentUser.id);
             } catch (err) {} finally { sendBtn.disabled = false; msgInput.focus(); }
         }
 
@@ -1135,6 +1136,31 @@
             chatScreen.classList.add('active'); 
             startLiveChat(); 
             subscribeUserToPush(); // Автоматический запрос на уведомления и оформление подписки
+        }
+
+        // ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
+        const RENDER_SERVER_URL = "https://semejka-push.onrender.com"; // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ С RENDER!
+
+        async function sendPushToFamily(senderName, messageText, senderId) {
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                usersSnapshot.forEach((userDoc) => {
+                    const userData = userDoc.data();
+                    if (userData.username !== senderId && userData.pushSubscription) {
+                        fetch(`${RENDER_SERVER_URL}/send-push`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                subscription: userData.pushSubscription,
+                                title: `Семейка+: ${senderName}`,
+                                body: messageText
+                            })
+                        }).catch(e => console.error("Ошибка отправки пуша:", e));
+                    }
+                });
+            } catch (e) {
+                console.error("Ошибка рассылки пушей:", e);
+            }
         }
 
         // ===== ПОДПИСКА НА PUSH-УВЕДОМЛЕНИЯ =====
@@ -1150,7 +1176,7 @@
                     return;
                 }
                 const registration = await navigator.serviceWorker.ready;
-                const convertedVapidKey = urlBase64ToUint8Array('BEl6934n89D6R78wNn397uHn9w87XNxD_h4n9_8uDxC9nN4C89w7nX4n98wNxD87nN9w_x4C8nwX9N7w_xD8neA');
+                const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
                 
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
