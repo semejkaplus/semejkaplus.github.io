@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v38'; // Подняли версию для сброса старого кэша
+const CACHE_NAME = 'semejka-v39'; // Подняли версию для сброса старого кэша
 const ASSETS = [
   '.',
   'index.html',
