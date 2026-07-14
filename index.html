@@ -919,6 +919,8 @@
             callMuteBtn.style.display = "none";
             callOverlay.classList.add("active");
             playRingTone('dial');
+            // Триггер пуш-уведомления о звонке:
+            await sendPushToFamily(currentUser.name, "📞 Вызывает вас по видеосвязи!", currentUser.id);
             await setupPeerConnection();
             const callDocRef = doc(db, "calls", currentCallId);
             const offer = await peerConnection.createOffer();
@@ -1138,8 +1140,8 @@
             subscribeUserToPush(); // Автоматический запрос на уведомления и оформление подписки
         }
 
-        // ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
-        const RENDER_SERVER_URL = "https://semejka-push.onrender.com/"; // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ С RENDER!
+// ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
+        const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
         async function sendPushToFamily(senderName, messageText, senderId) {
             try {
@@ -1176,6 +1178,14 @@
                     return;
                 }
                 const registration = await navigator.serviceWorker.ready;
+
+                // Принудительный сброс старой подписки при обновлении ключей
+                const oldSubscription = await registration.pushManager.getSubscription();
+                if (oldSubscription) {
+                    await oldSubscription.unsubscribe();
+                    console.log('Старая локальная подписка успешно сброшена');
+                }
+
                 const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
                 
                 const subscription = await registration.pushManager.subscribe({
