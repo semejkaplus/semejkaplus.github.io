@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v48'; // Версия v47 заставит телефоны сбросить старый кэш картинок
+const CACHE_NAME = 'semejka-v49'; // Подняли версию кэша
 const ASSETS = [
   '.',
   'index.html',
@@ -61,13 +61,13 @@ self.addEventListener('push', event => {
     const options = {
       body: payload.body,
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
-      badge: 'semejkapluspush.png', // Теперь здесь расширение .png!
+      badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
       tag: 'semejka-msg',
       data: { url: './' }
     };
 
-    // Если это входящий вызов
+    // Если это входящий вызов (реагирует на "входящий", "вызов", "звон")
     if (
       text.includes('📞') || 
       text.includes('звон') || 
@@ -86,9 +86,11 @@ self.addEventListener('push', event => {
   }
 });
 
-// Действие при клике
+// ===== ЖЕСТКОЕ ЗАКРЫТИЕ ПРИ КЛИКЕ =====
 self.addEventListener('notificationclick', event => {
+  // Закрываем уведомление немедленно в самом начале функции, предотвращая зависание плашки
   event.notification.close();
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
