@@ -1,9 +1,8 @@
-const CACHE_NAME = 'semejka-v40'; // Подняли версию для принудительного обновления у пользователей
+const CACHE_NAME = 'semejka-v41'; // Снова подняли версию, чтобы сбросить старый кэш
 const ASSETS = [
   '.',
   'index.html',
   'manifest.json',
-  'дляувдм.png', // Кэшируем новую трафаретную иконку
   'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
 ];
 
@@ -47,21 +46,28 @@ self.addEventListener('push', event => {
 
   try {
     const payload = event.data.json();
+    const messageBody = (payload.body || '').toLowerCase(); // Переводим текст в нижний регистр для надежного поиска
     
-    // Базовые настройки
+    // Базовые настройки для обычного сообщения
     const options = {
       body: payload.body,
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', // Цветной логотип
-      badge: 'дляувдм.png', // Ваш новый белый трафарет 96x96 для строки состояния Android
-      vibrate: [200, 100, 200], // Стандартная короткая вибрация для сообщений
+      badge: 'дляувдм.png', // Пробуем использовать локальный файл буквы
+      vibrate: [200, 100, 200], // Короткая двойная вибрация для СМС
       tag: 'semejka-msg',
       data: { url: './' }
     };
 
-    // Если это входящий звонок — настраиваем долгую вибрацию и отдельный тег
-    if (payload.body.includes('📞') || payload.body.includes('вызывает')) {
-      options.vibrate = [1500, 300, 1500, 300, 1500]; // Мощная пульсация
-      options.tag = 'semejka-call'; // Отдельный тег, чтобы звонок не перекрывался сообщениями
+    // Если в тексте пуша есть слова "звон", "вызов", "вызывает" или значок трубки
+    if (
+      messageBody.includes('📞') || 
+      messageBody.includes('звон') || 
+      messageBody.includes('вызов') || 
+      messageBody.includes('вызывает')
+    ) {
+      // ПУЛЬСИРУЮЩАЯ ВИБРАЦИЯ: вибрирует 500мс, пауза 250мс, вибрирует 500мс... и так по кругу
+      options.vibrate = [500, 250, 500, 250, 500, 250, 500, 250, 500]; 
+      options.tag = 'semejka-call'; // Отдельный тег для звонков
     }
 
     event.waitUntil(
@@ -74,7 +80,7 @@ self.addEventListener('push', event => {
 
 // Действие при клике на уведомление (открывает чат)
 self.addEventListener('notificationclick', event => {
-  event.notification.close(); // Закрываем шторку уведомления
+  event.notification.close();
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
