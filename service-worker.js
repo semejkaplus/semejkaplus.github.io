@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v51'; // Подняли версию кэша для обновления у всех пользователей
+const CACHE_NAME = 'semejka-v52'; // Подняли версию до v50 для принудительного обновления!
 const ASSETS = [
   '.',
   'index.html',
@@ -46,10 +46,15 @@ self.addEventListener('push', event => {
 
   try {
     const payload = event.data.json();
-    const text = (payload.body || '').toLowerCase(); 
+    
+    // Исходные значения из пришедшего пуша
+    let displayTitle = payload.title || 'Семейка+';
+    let displayBody = payload.body || '';
+
+    const textLow = displayBody.toLowerCase(); 
     
     // === ЛОГИКА АВТО-ОТМЕНЫ ЗВОНКА ===
-    if (text.includes('сброс') || text.includes('завершен') || text.includes('отмена')) {
+    if (textLow.includes('сброс') || textLow.includes('завершен') || textLow.includes('отмена')) {
       event.waitUntil(
         self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
           notifications.forEach(notification => notification.close());
@@ -58,34 +63,43 @@ self.addEventListener('push', event => {
       return; 
     }
 
-    // Базовые настройки для ОБЫЧНЫХ СООБЩЕНИЙ
+    // === УМНОЕ РАЗДЕЛЕНИЕ НА ИМЯ И СООБЩЕНИЕ НА СТОРОНЕ КЛИЕНТА ===
+    // Если заголовок пришел дефолтный ("Семейка+"), но в тексте сообщения есть двоеточие ":"
+    if ((displayTitle === 'Семейка+' || !displayTitle) && displayBody.includes(':')) {
+      const parts = displayBody.split(':');
+      displayTitle = parts[0].trim(); // Имя становится жирным ЗАГОЛОВКОМ
+      displayBody = parts.slice(1).join(':').trim(); // Само сообщение уходит в текст снизу
+    }
+
+    // Базовые настройки уведомления
     const options = {
-      body: payload.body,
+      body: displayBody,
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
       tag: 'semejka-msg',
-      renotify: true,             // Будить экран и вибрировать при каждом новом сообщении
-      silent: false,              // Уведомление со звуком/вибрацией
+      renotify: true,             // Будить экран при каждом новом пуше
+      silent: false,              // Со звуком
       data: { url: './' }
     };
 
-    // Если это входящий ВЫЗОВ (повышаем приоритет до абсолютного максимума)
+    // Если это входящий ВЫЗОВ
     if (
-      text.includes('звон') || 
-      text.includes('вызов') || 
-      text.includes('входящий')
+      textLow.includes('звон') || 
+      textLow.includes('вызов') || 
+      textLow.includes('входящий')
     ) {
       options.vibrate = [3000]; 
       options.tag = 'semejka-call'; 
-      options.requireInteraction = true; // Уведомление не пропадет само по себе, пока на него не нажмут
+      options.requireInteraction = true; // Чтобы плашка звонка не исчезала сама
+      displayTitle = "Входящий вызов";
     }
 
     event.waitUntil(
-      self.registration.showNotification(payload.title, options)
+      self.registration.showNotification(displayTitle, options)
     );
   } catch (error) {
-    console.error('Ошибка при разборе push-уведомления:', error);
+    console.error('Ошибка при обработке push-уведомления в SW:', error);
   }
 });
 
