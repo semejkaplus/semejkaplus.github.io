@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v49'; // Подняли версию кэша
+const CACHE_NAME = 'semejka-v49'; // Подняли версию кэша для обновления у всех пользователей
 const ASSETS = [
   '.',
   'index.html',
@@ -58,24 +58,27 @@ self.addEventListener('push', event => {
       return; 
     }
 
+    // Базовые настройки для ОБЫЧНЫХ СООБЩЕНИЙ
     const options = {
       body: payload.body,
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
       tag: 'semejka-msg',
+      renotify: true,             // Будить экран и вибрировать при каждом новом сообщении
+      silent: false,              // Уведомление со звуком/вибрацией
       data: { url: './' }
     };
 
-    // Если это входящий вызов (реагирует на "входящий", "вызов", "звон")
+    // Если это входящий ВЫЗОВ (повышаем приоритет до абсолютного максимума)
     if (
-      text.includes('📞') || 
       text.includes('звон') || 
       text.includes('вызов') || 
       text.includes('входящий')
     ) {
       options.vibrate = [3000]; 
       options.tag = 'semejka-call'; 
+      options.requireInteraction = true; // Уведомление не пропадет само по себе, пока на него не нажмут
     }
 
     event.waitUntil(
@@ -86,9 +89,8 @@ self.addEventListener('push', event => {
   }
 });
 
-// ===== ЖЕСТКОЕ ЗАКРЫТИЕ ПРИ КЛИКЕ =====
+// ===== ЗАКРЫТИЕ ПРИ КЛИКЕ =====
 self.addEventListener('notificationclick', event => {
-  // Закрываем уведомление немедленно в самом начале функции, предотвращая зависание плашки
   event.notification.close();
 
   event.waitUntil(
