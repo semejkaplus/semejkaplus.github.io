@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v52'; // Подняли версию до v50 для принудительного обновления!
+const CACHE_NAME = 'semejka-v53'; // Подняли версию до v53
 const ASSETS = [
   '.',
   'index.html',
@@ -6,7 +6,6 @@ const ASSETS = [
   'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
 ];
 
-// Установка сервис-воркера
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -14,7 +13,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Активация
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -25,7 +23,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Перехват сетевых запросов
 self.addEventListener('fetch', event => {
   if (
     event.request.url.includes('supabase.co') || 
@@ -46,14 +43,9 @@ self.addEventListener('push', event => {
 
   try {
     const payload = event.data.json();
+    const textLow = (payload.body || '').toLowerCase(); 
     
-    // Исходные значения из пришедшего пуша
-    let displayTitle = payload.title || 'Семейка+';
-    let displayBody = payload.body || '';
-
-    const textLow = displayBody.toLowerCase(); 
-    
-    // === ЛОГИКА АВТО-ОТМЕНЫ ЗВОНКА ===
+    // Логика отмены звонка
     if (textLow.includes('сброс') || textLow.includes('завершен') || textLow.includes('отмена')) {
       event.waitUntil(
         self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
@@ -63,27 +55,19 @@ self.addEventListener('push', event => {
       return; 
     }
 
-    // === УМНОЕ РАЗДЕЛЕНИЕ НА ИМЯ И СООБЩЕНИЕ НА СТОРОНЕ КЛИЕНТА ===
-    // Если заголовок пришел дефолтный ("Семейка+"), но в тексте сообщения есть двоеточие ":"
-    if ((displayTitle === 'Семейка+' || !displayTitle) && displayBody.includes(':')) {
-      const parts = displayBody.split(':');
-      displayTitle = parts[0].trim(); // Имя становится жирным ЗАГОЛОВКОМ
-      displayBody = parts.slice(1).join(':').trim(); // Само сообщение уходит в текст снизу
-    }
-
     // Базовые настройки уведомления
     const options = {
-      body: displayBody,
+      body: payload.body, // Текст сообщения (в нем уже лежит имя жирным Юникодом от сервера)
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
       tag: 'semejka-msg',
-      renotify: true,             // Будить экран при каждом новом пуше
-      silent: false,              // Со звуком
+      renotify: true,
+      silent: false,
       data: { url: './' }
     };
 
-    // Если это входящий ВЫЗОВ
+    // Если это входящий вызов
     if (
       textLow.includes('звон') || 
       textLow.includes('вызов') || 
@@ -91,15 +75,14 @@ self.addEventListener('push', event => {
     ) {
       options.vibrate = [3000]; 
       options.tag = 'semejka-call'; 
-      options.requireInteraction = true; // Чтобы плашка звонка не исчезала сама
-      displayTitle = "Входящий вызов";
+      options.requireInteraction = true;
     }
 
     event.waitUntil(
-      self.registration.showNotification(displayTitle, options)
+      self.registration.showNotification(payload.title || 'Семейка+', options)
     );
   } catch (error) {
-    console.error('Ошибка при обработке push-уведомления в SW:', error);
+    console.error('Ошибка push в SW:', error);
   }
 });
 
