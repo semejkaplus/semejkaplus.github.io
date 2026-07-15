@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v47'; // Подняли версию
+const CACHE_NAME = 'semejka-v48'; // Версия v47 заставит телефоны сбросить старый кэш картинок
 const ASSETS = [
   '.',
   'index.html',
@@ -49,27 +49,25 @@ self.addEventListener('push', event => {
     const text = (payload.body || '').toLowerCase(); 
     
     // === ЛОГИКА АВТО-ОТМЕНЫ ЗВОНКА ===
-    // Если пришел сигнал о том, что звонок сброшен
     if (text.includes('сброс') || text.includes('завершен') || text.includes('отмена')) {
       event.waitUntil(
         self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
-          // Находим висящее уведомление звонка и закрываем его
           notifications.forEach(notification => notification.close());
         })
       );
-      return; // Выходим из функции, новое уведомление "Звонок сброшен" показывать не нужно
+      return; 
     }
 
     const options = {
       body: payload.body,
-      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
-      badge: 'semejkapluspush.jpg', 
+      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
+      badge: 'semejkapluspush.png', // Теперь здесь расширение .png!
       vibrate: [200, 100, 200], 
       tag: 'semejka-msg',
       data: { url: './' }
     };
 
-    // Если это входящий звонок
+    // Если это входящий вызов
     if (
       text.includes('📞') || 
       text.includes('звон') || 
@@ -77,7 +75,7 @@ self.addEventListener('push', event => {
       text.includes('входящий')
     ) {
       options.vibrate = [3000]; 
-      options.tag = 'semejka-call'; // Важно! Одинаковый тег позволяет нам управлять этим пушем
+      options.tag = 'semejka-call'; 
     }
 
     event.waitUntil(
