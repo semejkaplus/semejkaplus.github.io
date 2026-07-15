@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v41'; // Снова подняли версию, чтобы сбросить старый кэш
+const CACHE_NAME = 'semejka-v45'; // Подняли версию, чтобы все телефоны принудительно обновили кэш
 const ASSETS = [
   '.',
   'index.html',
@@ -6,15 +6,15 @@ const ASSETS = [
   'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
 ];
 
-// Установка сервис-воркера и кэширование ресурсов PWA
+// Установка сервис-воркера
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting(); // Автоматическая активация новой версии
+  self.skipWaiting();
 });
 
-// Активация и удаление старого кэша
+// Активация
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -29,9 +29,9 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (
     event.request.url.includes('supabase.co') || 
-    event.request.url.includes('cdn.jsdelivr.net') ||
-    event.request.url.includes('firebase') ||
-    event.request.url.includes('googleapis.com') ||
+    event.request.url.includes('cdn.jsdelivr.net') || 
+    event.request.url.includes('firebase') || 
+    event.request.url.includes('googleapis.com') || 
     event.request.url.includes('metered.live')
   ) return;
 
@@ -46,28 +46,27 @@ self.addEventListener('push', event => {
 
   try {
     const payload = event.data.json();
-    const messageBody = (payload.body || '').toLowerCase(); // Переводим текст в нижний регистр для надежного поиска
+    // Приводим текст к нижнему регистру для надежного поиска совпадений
+    const text = (payload.body || '').toLowerCase(); 
     
-    // Базовые настройки для обычного сообщения
     const options = {
       body: payload.body,
-      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', // Цветной логотип
-      badge: 'дляувдм.png', // Пробуем использовать локальный файл буквы
-      vibrate: [200, 100, 200], // Короткая двойная вибрация для СМС
+      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', // Наша цветная аватарка в шторке
+      badge: 'semejkapluspush.jpg', // Имя вашего файла с буквой (JPG-формат)
+      vibrate: [200, 100, 200], // Обычная двойная вибрация для сообщений
       tag: 'semejka-msg',
       data: { url: './' }
     };
 
-    // Если в тексте пуша есть слова "звон", "вызов", "вызывает" или значок трубки
+    // Проверяем, относится ли пуш к звонку по ключевым словам ("входящий", "вызов", "звон" или значок 📞)
     if (
-      messageBody.includes('📞') || 
-      messageBody.includes('звон') || 
-      messageBody.includes('вызов') || 
-      messageBody.includes('вызывает')
+      text.includes('📞') || 
+      text.includes('звон') || 
+      text.includes('вызов') || 
+      text.includes('входящий')
     ) {
-      // ПУЛЬСИРУЮЩАЯ ВИБРАЦИЯ: вибрирует 500мс, пауза 250мс, вибрирует 500мс... и так по кругу
-      options.vibrate = [500, 250, 500, 250, 500, 250, 500, 250, 500]; 
-      options.tag = 'semejka-call'; // Отдельный тег для звонков
+      options.vibrate = [3000]; // Ровно 3 секунды непрерывной вибрации
+      options.tag = 'semejka-call'; // Группируем отдельно от сообщений
     }
 
     event.waitUntil(
