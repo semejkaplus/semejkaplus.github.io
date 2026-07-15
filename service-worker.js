@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v53'; // Подняли версию до v53
+const CACHE_NAME = 'semejka-v54'; // Версия v54
 const ASSETS = [
   '.',
   'index.html',
@@ -37,27 +37,15 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ===== ОБРАБОТКА ВХОДЯЩИХ PUSH-УВЕДОМЛЕНИЙ =====
+// ===== ПРОСТАЯ ОБРАБОТКА PUSH =====
 self.addEventListener('push', event => {
   if (!event.data) return;
 
   try {
     const payload = event.data.json();
-    const textLow = (payload.body || '').toLowerCase(); 
-    
-    // Логика отмены звонка
-    if (textLow.includes('сброс') || textLow.includes('завершен') || textLow.includes('отмена')) {
-      event.waitUntil(
-        self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
-          notifications.forEach(notification => notification.close());
-        })
-      );
-      return; 
-    }
 
-    // Базовые настройки уведомления
     const options = {
-      body: payload.body, // Текст сообщения (в нем уже лежит имя жирным Юникодом от сервера)
+      body: payload.body || '',
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
@@ -67,26 +55,15 @@ self.addEventListener('push', event => {
       data: { url: './' }
     };
 
-    // Если это входящий вызов
-    if (
-      textLow.includes('звон') || 
-      textLow.includes('вызов') || 
-      textLow.includes('входящий')
-    ) {
-      options.vibrate = [3000]; 
-      options.tag = 'semejka-call'; 
-      options.requireInteraction = true;
-    }
-
     event.waitUntil(
       self.registration.showNotification(payload.title || 'Семейка+', options)
     );
   } catch (error) {
-    console.error('Ошибка push в SW:', error);
+    console.error('Ошибка в SW:', error);
   }
 });
 
-// ===== ЗАКРЫТИЕ ПРИ КЛИКЕ =====
+// ===== КЛИК ПО УВЕДОМЛЕНИЮ =====
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
