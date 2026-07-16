@@ -565,6 +565,10 @@
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!name || !username) return;
+
+            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
+            await subscribeUserToPush();
+
             joinBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
@@ -574,13 +578,17 @@
                 localStorage.setItem('semejka_name', name);
                 localStorage.setItem('semejka_username', username);
                 currentUser = { id: username, name: name };
-                enterChat();
+                await enterChat();
             } catch (err) { joinBtn.disabled = false; }
         });
 
         loginBtn.addEventListener('click', async () => {
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!username) return;
+
+            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
+            await subscribeUserToPush();
+
             loginBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
@@ -591,11 +599,15 @@
                 localStorage.setItem('semejka_name', foundName);
                 localStorage.setItem('semejka_username', username);
                 currentUser = { id: username, name: foundName };
-                enterChat();
+                await enterChat();
             } catch (err) { loginBtn.disabled = false; }
         });
 
-        fastJoinBtn.addEventListener('click', () => enterChat());
+        fastJoinBtn.addEventListener('click', async () => {
+            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
+            await subscribeUserToPush();
+            await enterChat();
+        });
 
         // ===== УПРАВЛЕНИЕ СТАТУСОМ =====
         async function updateTypingStatus(typing) {
@@ -1133,14 +1145,33 @@
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
 
-        function enterChat() { 
+        // ===== ФУНКЦИЯ ВХОДА В ЧАТ =====
+        async function enterChat() { 
             regScreen.classList.remove('active'); 
             chatScreen.classList.add('active'); 
             startLiveChat(); 
-            subscribeUserToPush(); // Автоматический запрос на уведомления и оформление подписки
+
+            // Если подписка была сгенерирована при клике по кнопке, но Firebase еще не знал currentUser,
+            // прикрепляем её сейчас, когда вход полностью завершен
+            if (window.lastPushSubscription && currentUser && currentUser.id) {
+                try {
+                    const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
+                    const querySnapshot = await getDocs(userQuery);
+                    if (!querySnapshot.empty) {
+                        const userDocId = querySnapshot.docs[0].id;
+                        const userRef = doc(db, "users", userDocId);
+                        await updateDoc(userRef, {
+                            pushSubscription: window.lastPushSubscription.toJSON()
+                        });
+                        console.log('Отложенная push-подписка успешно привязана к пользователю в Firestore!');
+                    }
+                } catch (e) {
+                    console.error('Ошибка отложенного сохранения подписки:', e);
+                }
+            }
         }
 
-// ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
+        // ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
         const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
         async function sendPushToFamily(senderName, messageText, senderId) {
@@ -1172,6 +1203,7 @@
                 return;
             }
             try {
+                // Запрашиваем разрешения
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     console.log('Пользователь отклонил запрос на уведомления');
@@ -1186,6 +1218,7 @@
                     console.log('Старая локальная подписка успешно сброшена');
                 }
 
+                // Преобразуем VAPID-ключ (критично для Safari на iPhone)
                 const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
                 
                 const subscription = await registration.pushManager.subscribe({
@@ -1193,6 +1226,11 @@
                     applicationServerKey: convertedVapidKey
                 });
 
+                // Временно сохраняем в глобальную переменную
+                window.lastPushSubscription = subscription;
+                console.log('Push-подписка успешно сгенерирована в локальном окружении.');
+
+                // Если currentUser уже инициализирован (например, при быстром входе), записываем сразу
                 if (currentUser && currentUser.id) {
                     const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
                     const querySnapshot = await getDocs(userQuery);
@@ -1202,7 +1240,7 @@
                         await updateDoc(userRef, {
                             pushSubscription: subscription.toJSON()
                         });
-                        console.log('Push-подписка успешно сохранена в Firestore!');
+                        console.log('Push-подписка успешно записана в Firestore!');
                     }
                 }
             } catch (error) {
