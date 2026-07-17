@@ -459,6 +459,9 @@
         // Кэш статусов
         const statusCache = {};
 
+        // ===== ОПРЕДЕЛЕНИЕ ПЛАТФОРМЫ =====
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
         // ===== АВТОРИЗАЦИЯ =====
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
@@ -566,8 +569,10 @@
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!name || !username) return;
 
-            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
-            await subscribeUserToPush();
+            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
+            if (isIOS) {
+                await subscribeUserToPush();
+            }
 
             joinBtn.disabled = true;
             try {
@@ -586,8 +591,10 @@
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!username) return;
 
-            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
-            await subscribeUserToPush();
+            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
+            if (isIOS) {
+                await subscribeUserToPush();
+            }
 
             loginBtn.disabled = true;
             try {
@@ -604,8 +611,10 @@
         });
 
         fastJoinBtn.addEventListener('click', async () => {
-            // КРИТИЧЕСКИ ДЛЯ iPHONE: Сразу же запрашиваем пуши, пока активен жест пользователя
-            await subscribeUserToPush();
+            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
+            if (isIOS) {
+                await subscribeUserToPush();
+            }
             await enterChat();
         });
 
@@ -1151,23 +1160,31 @@
             chatScreen.classList.add('active'); 
             startLiveChat(); 
 
-            // Если подписка была сгенерирована при клике по кнопке, но Firebase еще не знал currentUser,
-            // прикрепляем её сейчас, когда вход полностью завершен
-            if (window.lastPushSubscription && currentUser && currentUser.id) {
-                try {
-                    const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
-                    const querySnapshot = await getDocs(userQuery);
-                    if (!querySnapshot.empty) {
-                        const userDocId = querySnapshot.docs[0].id;
-                        const userRef = doc(db, "users", userDocId);
-                        await updateDoc(userRef, {
-                            pushSubscription: window.lastPushSubscription.toJSON()
-                        });
-                        console.log('Отложенная push-подписка успешно привязана к пользователю в Firestore!');
+            if (isIOS) {
+                // iOS: Проверяем временную подписку
+                if (window.lastPushSubscription && currentUser && currentUser.id) {
+                    try {
+                        const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
+                        const querySnapshot = await getDocs(userQuery);
+                        if (!querySnapshot.empty) {
+                            const userDocId = querySnapshot.docs[0].id;
+                            const userRef = doc(db, "users", userDocId);
+                            await updateDoc(userRef, {
+                                pushSubscription: window.lastPushSubscription.toJSON()
+                            });
+                            console.log('iOS: Отложенная push-подписка успешно привязана к профилю!');
+                        }
+                    } catch (e) {
+                        console.error('iOS: Ошибка отложенного сохранения подписки:', e);
                     }
-                } catch (e) {
-                    console.error('Ошибка отложенного сохранения подписки:', e);
                 }
+            } else {
+                // Android/ПК: Спокойно запускаем подписку в фоне через секунду после входа в чат,
+                // чтобы не блокировать процесс авторизации.
+                console.log('Android/PC: Запуск стандартного фонового процесса подписки...');
+                setTimeout(async () => {
+                    await subscribeUserToPush();
+                }, 1000);
             }
         }
 
@@ -1203,7 +1220,6 @@
                 return;
             }
             try {
-                // Запрашиваем разрешения
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     console.log('Пользователь отклонил запрос на уведомления');
@@ -1211,7 +1227,7 @@
                 }
                 const registration = await navigator.serviceWorker.ready;
 
-                // Принудительный сброс старой подписки при обновлении ключей
+                // Сброс старой подписки при обновлении токена
                 const oldSubscription = await registration.pushManager.getSubscription();
                 if (oldSubscription) {
                     await oldSubscription.unsubscribe();
@@ -1226,21 +1242,23 @@
                     applicationServerKey: convertedVapidKey
                 });
 
-                // Временно сохраняем в глобальную переменную
-                window.lastPushSubscription = subscription;
-                console.log('Push-подписка успешно сгенерирована в локальном окружении.');
-
-                // Если currentUser уже инициализирован (например, при быстром входе), записываем сразу
-                if (currentUser && currentUser.id) {
-                    const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
-                    const querySnapshot = await getDocs(userQuery);
-                    if (!querySnapshot.empty) {
-                        const userDocId = querySnapshot.docs[0].id;
-                        const userRef = doc(db, "users", userDocId);
-                        await updateDoc(userRef, {
-                            pushSubscription: subscription.toJSON()
-                        });
-                        console.log('Push-подписка успешно записана в Firestore!');
+                if (isIOS) {
+                    // На iOS временно складываем в глобальный контекст
+                    window.lastPushSubscription = subscription;
+                    console.log('iOS: Push-подписка сгенерирована и сохранена во временную переменную.');
+                } else {
+                    // На Android/PC сразу записываем токен в Firestore
+                    if (currentUser && currentUser.id) {
+                        const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
+                        const querySnapshot = await getDocs(userQuery);
+                        if (!querySnapshot.empty) {
+                            const userDocId = querySnapshot.docs[0].id;
+                            const userRef = doc(db, "users", userDocId);
+                            await updateDoc(userRef, {
+                                pushSubscription: subscription.toJSON()
+                            });
+                            console.log('Android/PC: Push-подписка успешно сохранена в Firestore!');
+                        }
                     }
                 }
             } catch (error) {
