@@ -13,7 +13,6 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
-        /* === ВЕСЬ CSS – ТОТ ЖЕ, ЧТО В ПРЕДЫДУЩЕЙ ВЕРСИИ === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
@@ -64,28 +63,10 @@
         .member-call-btn:hover { background: #6C63FF; transform: translateY(-1px); }
         .member-call-btn:active { transform: translateY(0); }
         .member-me-badge { font-size: 13px; color: #6A6A7A; font-weight: 700; padding: 6px 14px; background: #EAEAEA; border-radius: 12px; display: inline-block; }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            transition: background 0.2s ease;
-        }
-        .status-indicator.online {
-            background: #4CAF50;
-            animation: pulse-online 1.5s ease-in-out infinite;
-        }
-        .status-indicator.offline {
-            background: #f44336;
-        }
-        @keyframes pulse-online {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.85); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
+        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; transition: background 0.2s ease; }
+        .status-indicator.online { background: #4CAF50; animation: pulse-online 1.5s ease-in-out infinite; }
+        .status-indicator.offline { background: #f44336; }
+        @keyframes pulse-online { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } 100% { opacity: 1; transform: scale(1); } }
         .news-card { background: #F8F9FD; padding: 15px; border-radius: 20px; border: 1px solid #EAECEF; margin-bottom: 12px; }
         .news-card h4 { font-size: 15px; font-weight: 700; color: #3A3A4A; margin-bottom: 5px; }
         .news-card p { font-size: 13px; color: #6A6A7A; margin-bottom: 0; font-weight: normal; opacity: 1; }
@@ -356,7 +337,6 @@
     </div>
 
     <script type="module">
-        // ===== ИМПОРТЫ =====
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -456,7 +436,6 @@
         let audioRing = null;
         let isMuted = false;
         let heartbeatInterval = null;
-        // Кэш статусов
         const statusCache = {};
 
         // ===== ОПРЕДЕЛЕНИЕ ПЛАТФОРМЫ =====
@@ -495,7 +474,6 @@
         closeNewsBtn.addEventListener('click', closeAllPanels);
         closeMembersBtn.addEventListener('click', closeAllPanels);
 
-        // ===== ЗАГРУЗКА СПИСКА УЧАСТНИКОВ (с обновлением из кэша) =====
         async function loadMembersList() {
             try {
                 membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #9A9A9A;">Секунду...</div>';
@@ -505,7 +483,6 @@
                 usersSnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const isMe = data.username === currentUser?.id;
-                    
                     const item = document.createElement('div');
                     item.className = 'member-item';
                     
@@ -520,23 +497,16 @@
                             </div>
                             <div class="member-action-block">
                     `;
-                    
                     if (isMe) {
                         innerHTML += `<div class="member-me-badge">Вы</div>`;
                     } else {
                         innerHTML += `<button class="member-call-btn" data-username="${escapeHtml(data.username)}" data-name="${escapeHtml(data.name)}">Позвонить</button>`;
                     }
-                    
-                    innerHTML += `
-                            </div>
-                        </div>
-                    `;
-                    
+                    innerHTML += `</div></div>`;
                     item.innerHTML = innerHTML;
                     membersContainer.appendChild(item);
                 });
 
-                // После создания всех индикаторов – обновляем их из кэша статусов
                 updateAllIndicators();
 
                 membersContainer.querySelectorAll('.member-call-btn').forEach(btn => {
@@ -547,12 +517,10 @@
                     });
                 });
             } catch(e) {
-                console.error(e);
                 membersContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #FF3B30;">Ошибка загрузки</div>';
             }
         }
 
-        // ===== ОБНОВЛЕНИЕ ВСЕХ ИНДИКАТОРОВ ИЗ КЭША =====
         function updateAllIndicators() {
             Object.keys(statusCache).forEach(userId => {
                 const indicator = document.getElementById(`status-indicator-${userId}`);
@@ -563,17 +531,11 @@
             });
         }
 
-        // ===== РЕГИСТРАЦИЯ / ВХОД =====
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!name || !username) return;
-
-            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
-            if (isIOS) {
-                await subscribeUserToPush();
-            }
-
+            if (isIOS) await subscribeUserToPush();
             joinBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
@@ -590,12 +552,7 @@
         loginBtn.addEventListener('click', async () => {
             let username = loginUsernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!username) return;
-
-            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
-            if (isIOS) {
-                await subscribeUserToPush();
-            }
-
+            if (isIOS) await subscribeUserToPush();
             loginBtn.disabled = true;
             try {
                 const uQuery = query(collection(db, "users"), where("username", "==", username));
@@ -611,14 +568,10 @@
         });
 
         fastJoinBtn.addEventListener('click', async () => {
-            // На iOS запрашиваем пуши СРАЗУ по клику из-за политики User Gesture
-            if (isIOS) {
-                await subscribeUserToPush();
-            }
+            if (isIOS) await subscribeUserToPush();
             await enterChat();
         });
 
-        // ===== УПРАВЛЕНИЕ СТАТУСОМ =====
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try {
@@ -627,10 +580,7 @@
                     is_typing: typing, 
                     last_active: serverTimestamp() 
                 }, { merge: true });
-                console.log(`✅ Статус обновлён для ${currentUser.id}: is_typing=${typing}`);
-            } catch (e) {
-                console.error('Ошибка обновления статуса:', e);
-            }
+            } catch (e) {}
         }
 
         function startHeartbeat() {
@@ -648,12 +598,7 @@
             }, 30000);
         }
 
-        function stopHeartbeat() {
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-        }
+        function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; } }
 
         function renderTypingUI() {
             if (currentTypersList.length > 0) {
@@ -666,7 +611,6 @@
             }
         }
 
-        // ===== ОСТАЛЬНЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
         function autoResize() { msgInput.style.height = 'auto'; const scrollHeight = msgInput.scrollHeight; msgInput.style.height = (scrollHeight > 160 ? 160 : scrollHeight) + 'px'; }
 
         msgInput.addEventListener('input', () => {
@@ -761,7 +705,6 @@
             }
         }
 
-        // ===== РЕНДЕР СООБЩЕНИЯ =====
         function renderMessage(msg, forceScroll = true) {
             let msgDiv = document.getElementById('msg-' + msg.id);
             const isMyMsg = (msg.user_id === currentUser?.id);
@@ -792,7 +735,6 @@
             updateReactionsUI(msg.id, msg.reactions);
             if (forceScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            // Обработчики свайпов и кликов (такие же как раньше)
             const bubbleElement = div.querySelector('.bubble');
             const iconElement = div.querySelector('.swipe-reply-icon');
             let startX = 0, startY = 0, currentTranslateX = 0, currentTranslateY = 0, swipeDirection = null;
@@ -843,28 +785,22 @@
             updateReactionsUI(msg.id, msg.reactions);
         }
 
-        // ===== СЛУШАТЕЛЬ СТАТУСОВ (заполняет кэш и обновляет индикаторы) =====
         function listenTypingStatus() {
             onSnapshot(collection(db, "status"), (snapshot) => {
                 let networkTypers = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const userId = doc.id;
-                    
-                    // Определяем онлайн
                     const lastActive = data.last_active?.toDate() || new Date(0);
                     const now = new Date();
                     const diff = (now - lastActive) / 1000;
-                    const isOnline = diff < 300; // 5 минут
+                    const isOnline = diff < 300;
                     statusCache[userId] = isOnline;
 
-                    // Обновляем индикатор, если он уже есть в DOM
                     const indicator = document.getElementById(`status-indicator-${userId}`);
                     if (indicator) {
                         indicator.className = 'status-indicator ' + (isOnline ? 'online' : 'offline');
                     }
-
-                    // Собираем тех, кто печатает
                     if (data.is_typing === true && userId !== currentUser?.id) {
                         networkTypers.push(data.name);
                     }
@@ -874,12 +810,11 @@
             });
         }
 
-        // ===== WEBRTC (без изменений) =====
         async function fetchIceServers() {
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
                 if (response.ok) return await response.json();
-            } catch (err) { console.warn("Не удалось получить TURN, используем STUN:", err); }
+            } catch (err) {}
             return [{ urls: "stun:stun.l.google.com:19302" }];
         }
 
@@ -926,7 +861,6 @@
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
                 isMuted = false;
                 callMuteBtn.classList.remove('muted');
-                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
             } catch (err) { alert("Ошибка доступа к микрофону!"); endCall(); }
         }
 
@@ -940,8 +874,13 @@
             callMuteBtn.style.display = "none";
             callOverlay.classList.add("active");
             playRingTone('dial');
-            // Триггер пуш-уведомления о звонке:
-            await sendPushToFamily(currentUser.name, "📞 Вызывает вас по видеосвязи!", currentUser.id);
+
+            // Отправляем пуш-уведомление с типом 'call' и ID звонка
+            await sendPushToFamily(currentUser.name, "📞 Звонит вам...", currentUser.id, {
+                type: 'call',
+                callId: currentCallId
+            });
+
             await setupPeerConnection();
             const callDocRef = doc(db, "calls", currentCallId);
             const offer = await peerConnection.createOffer();
@@ -952,8 +891,10 @@
                 callerName: currentUser.name,
                 calleeId: targetUsername,
                 status: "ringing",
-                offer: { type: offer.type, sdp: offer.sdp }
+                offer: { type: offer.type, sdp: offer.sdp },
+                created_at: serverTimestamp() // Метка времени для отсечения старых звонков
             });
+
             callUnsubscribe = onSnapshot(callDocRef, async (snapshot) => {
                 if (!snapshot.exists()) { endCall(); return; }
                 const data = snapshot.data();
@@ -965,6 +906,7 @@
                 }
                 if (data.status === "rejected") { endCall(); }
             });
+
             onSnapshot(collection(db, "calls", currentCallId, "calleeCandidates"), (snapshot) => {
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === "added" && peerConnection) {
@@ -981,6 +923,18 @@
                 if (peerConnection || isCaller) return;
                 snapshot.forEach(async (changeDoc) => {
                     const callData = changeDoc.data();
+                    
+                    // УСТРАНЕНИЕ ОШИБКИ ИЗ ПРОШЛОГО: Проверяем время создания звонка
+                    const serverTime = callData.created_at ? callData.created_at.toDate() : new Date();
+                    const timeDiffSeconds = (new Date() - serverTime) / 1000;
+                    
+                    if (timeDiffSeconds > 45) { 
+                        // Звонок старый (совершён более 45 сек назад), игнорируем его и очищаем зависшую запись
+                        console.log("Пропущен старый зависший звонок из прошлого:", callData.id);
+                        try { await deleteDoc(doc(db, "calls", callData.id)); } catch(e){}
+                        return; 
+                    }
+
                     currentCallId = callData.id;
                     isCaller = false;
                     callName.textContent = callData.callerName;
@@ -1026,7 +980,17 @@
         async function rejectOrHangUp() {
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
-                try { await updateDoc(callDocRef, { status: "rejected" }); await deleteDoc(callDocRef); } catch(e){}
+                const isRinging = callStatusText.textContent.includes("Вызов") || callStatusText.textContent.includes("Входящий");
+                
+                try { 
+                    await updateDoc(callDocRef, { status: "rejected" }); 
+                    await deleteDoc(callDocRef); 
+                } catch(e){}
+
+                // ИСЧЕЗНОВЕНИЕ УВЕДОМЛЕНИЙ ПРИ СБРОСЕ: Если звонящий бросил трубку раньше ответа
+                if (isCaller && isRinging) {
+                    await sendCancelCallPush(currentCallId);
+                }
             }
             endCall();
         }
@@ -1047,28 +1011,22 @@
             callOverlay.classList.remove("active");
         }
 
-        // ===== ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА ЧАТА =====
         async function startLiveChat() {
             if (currentUser) {
                 await updateTypingStatus(false);
                 startHeartbeat();
             }
-
             loadingSpinner.classList.add('active');
             onSnapshot(query(collection(db, "messages"), orderBy("created_at", "asc")), (snapshot) => {
                 loadingSpinner.classList.remove('active');
-
                 const isFocused = (document.activeElement === msgInput);
                 const selectionStart = msgInput.selectionStart;
                 const selectionEnd = msgInput.selectionEnd;
                 const shouldScroll = (messagesDiv.scrollTop + messagesDiv.clientHeight >= messagesDiv.scrollHeight - 150);
 
                 messagesDiv.innerHTML = '';
-
                 const messages = [];
-                snapshot.docs.forEach(doc => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
+                snapshot.docs.forEach(doc => { messages.push({ id: doc.id, ...doc.data() }); });
 
                 messages.sort((a, b) => {
                     const timeA = a.created_at ? a.created_at.toDate().getTime() : 0;
@@ -1080,19 +1038,8 @@
                 messages.forEach(msg => {
                     const timestamp = msg.created_at ? msg.created_at.toDate() : new Date();
                     const dateKey = timestamp.toLocaleDateString('ru-RU');
-                    if (!groups[dateKey]) {
-                        groups[dateKey] = [];
-                    }
+                    if (!groups[dateKey]) groups[dateKey] = [];
                     groups[dateKey].push(msg);
-                });
-
-                console.log('=== ГРУППЫ ДАТ (ЛОКАЛЬНЫЕ) ===');
-                Object.keys(groups).forEach(key => {
-                    console.log(`Дата: ${key}, сообщений: ${groups[key].length}`);
-                    groups[key].forEach(msg => {
-                        const date = msg.created_at.toDate();
-                        console.log(`  ${msg.text} (${date.toLocaleString('ru-RU')})`);
-                    });
                 });
 
                 const sortedDateKeys = Object.keys(groups).sort((a, b) => {
@@ -1102,9 +1049,6 @@
                 });
 
                 sortedDateKeys.forEach(dateKey => {
-                    const oldSeparators = messagesDiv.querySelectorAll(`.date-separator[data-date="${dateKey}"]`);
-                    oldSeparators.forEach(el => el.remove());
-
                     const parts = dateKey.split('.');
                     const dateObj = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
                     const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -1112,23 +1056,18 @@
                     
                     const sep = document.createElement('div');
                     sep.className = 'date-separator';
-                    sep.setAttribute('data-date', dateKey);
                     const span = document.createElement('span');
                     span.textContent = separatorText;
                     sep.appendChild(span);
                     messagesDiv.appendChild(sep);
-                    console.log(`✅ Вставлен разделитель: ${separatorText}`);
 
-                    groups[dateKey].forEach(msg => {
-                        renderMessage(msg, false);
-                    });
+                    groups[dateKey].forEach(msg => { renderMessage(msg, false); });
                 });
 
                 if (isFocused) {
                     msgInput.focus();
                     msgInput.setSelectionRange(selectionStart, selectionEnd);
                 }
-
                 if (shouldScroll || snapshot.docChanges().some(c => c.type === 'added' && c.doc.data().user_id === currentUser?.id)) {
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 }
@@ -1137,7 +1076,6 @@
             listenIncomingCalls();
         }
 
-        // ===== ОТПРАВКА =====
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!currentUser || !text) return;
@@ -1154,44 +1092,30 @@
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
 
-        // ===== ФУНКЦИЯ ВХОДА В ЧАТ =====
         async function enterChat() { 
             regScreen.classList.remove('active'); 
             chatScreen.classList.add('active'); 
             startLiveChat(); 
-
             if (isIOS) {
-                // iOS: Проверяем временную подписку
                 if (window.lastPushSubscription && currentUser && currentUser.id) {
                     try {
                         const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
                         const querySnapshot = await getDocs(userQuery);
                         if (!querySnapshot.empty) {
                             const userDocId = querySnapshot.docs[0].id;
-                            const userRef = doc(db, "users", userDocId);
-                            await updateDoc(userRef, {
-                                pushSubscription: window.lastPushSubscription.toJSON()
-                            });
-                            console.log('iOS: Отложенная push-подписка успешно привязана к профилю!');
+                            await updateDoc(doc(db, "users", userDocId), { pushSubscription: window.lastPushSubscription.toJSON() });
                         }
-                    } catch (e) {
-                        console.error('iOS: Ошибка отложенного сохранения подписки:', e);
-                    }
+                    } catch (e) {}
                 }
             } else {
-                // Android/ПК: Спокойно запускаем подписку в фоне через секунду после входа в чат,
-                // чтобы не блокировать процесс авторизации.
-                console.log('Android/PC: Запуск стандартного фонового процесса подписки...');
-                setTimeout(async () => {
-                    await subscribeUserToPush();
-                }, 1000);
+                setTimeout(async () => { await subscribeUserToPush(); }, 1000);
             }
         }
 
-        // ===== НАСТРОЙКА КЛЮЧЕЙ И СЕРВЕРА PUSH =====
         const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
-        async function sendPushToFamily(senderName, messageText, senderId) {
+        // Обновленная функция отправки пуша с поддержкой payloadData
+        async function sendPushToFamily(senderName, messageText, senderId, payloadData = null) {
             try {
                 const usersSnapshot = await getDocs(collection(db, "users"));
                 usersSnapshot.forEach((userDoc) => {
@@ -1203,67 +1127,61 @@
                             body: JSON.stringify({
                                 subscription: userData.pushSubscription,
                                 title: `Семейка+: ${senderName}`,
-                                body: messageText
+                                body: messageText,
+                                payloadData: payloadData
                             })
-                        }).catch(e => console.error("Ошибка отправки пуша:", e));
+                        }).catch(()=>{});
                     }
                 });
-            } catch (e) {
-                console.error("Ошибка рассылки пушей:", e);
-            }
+            } catch (e) {}
         }
 
-        // ===== ПОДПИСКА НА PUSH-УВЕДОМЛЕНИЯ =====
+        // Специальная функция для отправки "тихого пуша" отмены звонка
+        async function sendCancelCallPush(callId) {
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                usersSnapshot.forEach((userDoc) => {
+                    const userData = userDoc.data();
+                    if (userData.username !== currentUser.id && userData.pushSubscription) {
+                        fetch(`${RENDER_SERVER_URL}/send-push`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                subscription: userData.pushSubscription,
+                                title: 'Семейка+',
+                                body: 'Вызов завершен',
+                                payloadData: { action: 'cancel_call', type: 'call' }
+                            })
+                        }).catch(()=>{});
+                    }
+                });
+            } catch(e){}
+        }
+
         async function subscribeUserToPush() {
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                console.log('Push-уведомления не поддерживаются на этом устройстве');
-                return;
-            }
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
             try {
                 const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.log('Пользователь отклонил запрос на уведомления');
-                    return;
-                }
+                if (permission !== 'granted') return;
                 const registration = await navigator.serviceWorker.ready;
-
-                // Сброс старой подписки при обновлении токена
                 const oldSubscription = await registration.pushManager.getSubscription();
-                if (oldSubscription) {
-                    await oldSubscription.unsubscribe();
-                    console.log('Старая локальная подписка успешно сброшена');
-                }
-
-                // Преобразуем VAPID-ключ (критично для Safari на iPhone)
-                const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
+                if (oldSubscription) await oldSubscription.unsubscribe();
                 
-                const subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: convertedVapidKey
-                });
+                const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
+                const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: convertedVapidKey });
 
                 if (isIOS) {
-                    // На iOS временно складываем в глобальный контекст
                     window.lastPushSubscription = subscription;
-                    console.log('iOS: Push-подписка сгенерирована и сохранена во временную переменную.');
                 } else {
-                    // На Android/PC сразу записываем токен в Firestore
                     if (currentUser && currentUser.id) {
                         const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
                         const querySnapshot = await getDocs(userQuery);
                         if (!querySnapshot.empty) {
-                            const userDocId = querySnapshot.docs[0].id;
-                            const userRef = doc(db, "users", userDocId);
-                            await updateDoc(userRef, {
-                                pushSubscription: subscription.toJSON()
-                            });
-                            console.log('Android/PC: Push-подписка успешно сохранена в Firestore!');
+                            await updateDoc(doc(db, "users", querySnapshot.docs[0].id), { pushSubscription: subscription.toJSON() });
                         }
                     }
                 }
-            } catch (error) {
-                console.error('Ошибка при оформлении push-подписки:', error);
-            }
+            } catch (error) {}
         }
 
         function urlBase64ToUint8Array(base64String) {
@@ -1271,16 +1189,12 @@
             const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
             const rawData = window.atob(base64);
             const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
             return outputArray;
         }
 
-        // ===== УТИЛИТЫ =====
         function formatTime(dateObj) { return dateObj.getHours().toString().padStart(2,'0') + ':' + dateObj.getMinutes().toString().padStart(2,'0'); }
         function escapeHtml(text) { const el = document.createElement('div'); el.textContent = text; return el.innerHTML; }
-
     </script>
 </body>
 </html>
