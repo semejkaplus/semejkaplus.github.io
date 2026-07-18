@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v55'; // Подняли версию кэша
+const CACHE_NAME = 'semejka-v56'; // Подняли версию кэша
 const ASSETS = [
   '.',
   'index.html',
@@ -58,12 +58,15 @@ self.addEventListener('push', event => {
       return; 
     }
 
+    // Приоритет отдаем уникальному тегу от сервера. Если его нет, делаем уникальный сами
+    let finalTag = payload.tag || `semejka-msg-${Date.now()}`;
+
     const options = {
       body: payload.body,
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'semejkapluspush.png', 
       vibrate: [200, 100, 200], 
-      tag: 'semejka-msg',
+      tag: finalTag, // Уникальный тег не дает сообщениям скапливаться в одной плашке
       data: { url: './' }
     };
 
@@ -75,20 +78,31 @@ self.addEventListener('push', event => {
       text.includes('входящий')
     ) {
       options.vibrate = [3000]; 
-      options.tag = 'semejka-call'; 
+      options.tag = 'semejka-call'; // Для вызовов сохраняем общий тег для возможности отмены
     }
 
     event.waitUntil(
       self.registration.showNotification(payload.title, options)
     );
   } catch (error) {
-    console.error('Ошибка при разборе push-уведомления:', error);
+    // Фоллбэк-обработка на случай, если сервер прислал обычную строку вместо JSON
+    console.error('Ошибка при разборе push-уведомления, применяем фоллбэк:', error);
+    try {
+      const rawText = event.data.text();
+      const isCall = rawText.includes('📞') || rawText.includes('звон') || rawText.includes('вызов');
+      
+      self.registration.showNotification('Семейка+', {
+        body: rawText,
+        icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
+        tag: isCall ? 'semejka-call' : `semejka-msg-${Date.now()}`,
+        vibrate: isCall ? [3000] : [200, 100, 200]
+      });
+    } catch(e) {}
   }
 });
 
 // ===== ЖЕСТКОЕ ЗАКРЫТИЕ ПРИ КЛИКЕ =====
 self.addEventListener('notificationclick', event => {
-  // Закрываем уведомление немедленно в самом начале функции, предотвращая зависание плашки
   event.notification.close();
 
   event.waitUntil(
