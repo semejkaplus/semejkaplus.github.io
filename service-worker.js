@@ -1,119 +1,52 @@
-const CACHE_NAME = 'semejka-v58'; // Подняли версию кэша
-const ASSETS = [
-  '.',
-  'index.html',
-  'manifest.json',
-  'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg'
-];
+// === SERVICE WORKER ДЛЯ PWA СЕМЕЙКА+ ===
 
-// Установка сервис-воркера
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
-});
+// 1. Событие получения Push-уведомления (Фоновый режим и закрытое приложение)
+self.addEventListener('push', (event) => {
+  let data = { title: 'Семейка+', body: 'Новое сообщение' };
 
-// Активация
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
-  );
-});
-
-// Перехват сетевых запросов
-self.addEventListener('fetch', event => {
-  if (
-    event.request.url.includes('supabase.co') || 
-    event.request.url.includes('cdn.jsdelivr.net') || 
-    event.request.url.includes('firebase') || 
-    event.request.url.includes('googleapis.com') || 
-    event.request.url.includes('metered.live')
-  ) return;
-
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
-});
-
-// ===== ОБРАБОТКА ВХОДЯЩИХ PUSH-УВЕДОМЛЕНИЙ =====
-self.addEventListener('push', event => {
-  if (!event.data) return;
-
-  try {
-    const payload = event.data.json();
-    const text = (payload.body || '').toLowerCase(); 
-    
-    // === ЛОГИКА АВТО-ОТМЕНЫ ЗВОНКА ===
-    if (text.includes('сброс') || text.includes('завершен') || text.includes('отмена')) {
-      event.waitUntil(
-        self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
-          notifications.forEach(notification => notification.close());
-        })
-      );
-      return; 
-    }
-
-    // Приоритет отдаем уникальному тегу от сервера. Если его нет, делаем уникальный сами
-    let finalTag = payload.tag || `semejka-msg-${Date.now()}`;
-
-    const options = {
-      body: payload.body,
-      icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
-      badge: 'semejkapluspush.png', 
-      vibrate: [200, 100, 200], 
-      tag: finalTag, // Уникальный тег не дает сообщениям скапливаться в одной плашке
-      data: { url: './' }
-    };
-
-    // Если это входящий вызов (реагирует на "входящий", "вызов", "звон")
-    if (
-      text.includes('📞') || 
-      text.includes('звон') || 
-      text.includes('вызов') || 
-      text.includes('входящий')
-    ) {
-      options.vibrate = [3000]; 
-      options.tag = 'semejka-call'; // Для вызовов сохраняем общий тег для возможности отмены
-    }
-
-    event.waitUntil(
-      self.registration.showNotification(payload.title, options)
-    );
-  } catch (error) {
-    // Фоллбэк-обработка на случай, если сервер прислал обычную строку вместо JSON
-    console.error('Ошибка при разборе push-уведомления, применяем фоллбэк:', error);
+  if (event.data) {
     try {
-      const rawText = event.data.text();
-      const isCall = rawText.includes('📞') || rawText.includes('звон') || rawText.includes('вызов');
-      
-      self.registration.showNotification('Семейка+', {
-        body: rawText,
-        icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg',
-        tag: isCall ? 'semejka-call' : `semejka-msg-${Date.now()}`,
-        vibrate: isCall ? [3000] : [200, 100, 200]
-      });
-    } catch(e) {}
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
   }
+
+  const title = data.title || 'Семейка+';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',      // Убедитесь, что иконка лежит в корне
+    badge: '/icon-192.png',     // Иконка для шторки уведомления
+    tag: data.tag || 'semejka-general', // Тэг разделения (звонок/сообщение)
+    renotify: true,             // Принудительно вибрировать и звучать при новом сообщении
+    vibrate: [200, 100, 200],   // Вибрация для привлечения внимания в фоне
+    data: {
+      url: self.location.origin // Ссылка для открытия приложения по клику
+    }
+  };
+
+  // Обязательное ожидание отрисовки плашки
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
-// ===== ЖЕСТКОЕ ЗАКРЫТИЕ ПРИ КЛИКЕ =====
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
+// 2. Обработка клика по уведомлению (Переход в приложение из фона)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close(); // Закрываем плашку
 
+  // Будим или разворачиваем уже открытую вкладку/PWA из фона
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Если PWA уже открыто в фоне — фокусируемся на нем
       for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
+      // Если PWA было полностью закрыто — открываем его
       if (clients.openWindow) {
-        return clients.openWindow('./');
+        return clients.openWindow('/');
       }
     })
   );
