@@ -1167,7 +1167,7 @@
                 const oldSubscription = await registration.pushManager.getSubscription();
                 if (oldSubscription) await oldSubscription.unsubscribe();
                 
-                const convertedVapidKey = urlBase64ToUint8Array('BMptFkRb6Y0DMJFWN47h4f_jNmFGGtsKPmKXZD35RQxK6x8tXwlRppgwhqUlovsgfOcuoUNkrHtu-FiVv8KmNJc');
+                const convertedVapidKey = urlBase64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa40yY102P21i2p4-P7qS9u_0J811n3z-1_6Rz9');
                 const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: convertedVapidKey });
 
                 if (isIOS) {
