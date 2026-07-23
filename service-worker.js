@@ -1,4 +1,4 @@
-const CACHE_NAME = 'semejka-v59'; // Подняли версию кэша для гарантированного обновления
+const CACHE_NAME = 'semejka-v59'; 
 const ASSETS = [
   '.',
   'index.html',
@@ -14,7 +14,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Активация
+// Активация и сброс старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -48,7 +48,7 @@ self.addEventListener('push', event => {
     const payload = event.data.json();
     const text = (payload.body || '').toLowerCase(); 
     
-    // === ЛОГИКА АВТО-ОТМЕНЫ ЗВОНКА ===
+    // Авто-отмена вызова
     if (text.includes('сброс') || text.includes('завершен') || text.includes('отмена')) {
       event.waitUntil(
         self.registration.getNotifications({ tag: 'semejka-call' }).then(notifications => {
@@ -58,20 +58,17 @@ self.addEventListener('push', event => {
       return; 
     }
 
-    // Приоритет отдаем уникальному тегу от сервера. Если его нет, делаем уникальный сами
-    let finalTag = payload.tag || `semejka-msg-${Date.now()}`;
-    
-    // Проверка на входящий вызов
     const isCall = text.includes('📞') || text.includes('звон') || text.includes('вызов') || text.includes('входящий');
+    let finalTag = payload.tag || `semejka-msg-${Date.now()}`;
 
     const options = {
       body: payload.body || '',
       icon: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       badge: 'https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg', 
       vibrate: isCall ? [3000] : [200, 100, 200], 
-      tag: isCall ? 'semejka-call' : finalTag, // Уникальный тег не дает сообщениям скапливаться в одной плашке
-      renotify: true, // Повторный сигнал и вибрация даже при повторных пушах
-      requireInteraction: isCall, // Для звонков держим плашку открытой постоянно
+      tag: isCall ? 'semejka-call' : finalTag,
+      renotify: true,               // Гарантирует звук и вибрацию при новых уведомлениях
+      requireInteraction: isCall,   // Держит плашку звонка активной
       data: { url: './' }
     };
 
@@ -79,8 +76,7 @@ self.addEventListener('push', event => {
       self.registration.showNotification(payload.title || 'Семейка+', options)
     );
   } catch (error) {
-    // Фоллбэк-обработка на случай, если сервер прислал обычную строку вместо JSON
-    console.error('Ошибка при разборе push-уведомления, применяем фоллбэк:', error);
+    console.error('Ошибка при разборе push-уведомления:', error);
     try {
       const rawText = event.data.text();
       const isCall = rawText.includes('📞') || rawText.includes('звон') || rawText.includes('вызов') || rawText.includes('входящий');
@@ -105,17 +101,14 @@ self.addEventListener('notificationclick', event => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Ищем открытую фоновую вкладку/окно PWA и фокусируемся на нем
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
-      // Если PWA было полностью закрыто — открываем заново
       if (clients.openWindow) {
         return clients.openWindow('./');
       }
     })
   );
 });
-
