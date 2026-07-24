@@ -924,12 +924,10 @@
                 snapshot.forEach(async (changeDoc) => {
                     const callData = changeDoc.data();
                     
-                    // УСТРАНЕНИЕ ОШИБКИ ИЗ ПРОШЛОГО: Проверяем время создания звонка
                     const serverTime = callData.created_at ? callData.created_at.toDate() : new Date();
                     const timeDiffSeconds = (new Date() - serverTime) / 1000;
                     
                     if (timeDiffSeconds > 45) { 
-                        // Звонок старый (совершён более 45 сек назад), игнорируем его и очищаем зависшую запись
                         console.log("Пропущен старый зависший звонок из прошлого:", callData.id);
                         try { await deleteDoc(doc(db, "calls", callData.id)); } catch(e){}
                         return; 
@@ -987,7 +985,6 @@
                     await deleteDoc(callDocRef); 
                 } catch(e){}
 
-                // ИСЧЕЗНОВЕНИЕ УВЕДОМЛЕНИЙ ПРИ СБРОСЕ: Если звонящий бросил трубку раньше ответа
                 if (isCaller && isRinging) {
                     await sendCancelCallPush(currentCallId);
                 }
@@ -1114,7 +1111,6 @@
 
         const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
-        // Обновленная функция отправки пуша с поддержкой payloadData
         async function sendPushToFamily(senderName, messageText, senderId, payloadData = null) {
             try {
                 const usersSnapshot = await getDocs(collection(db, "users"));
@@ -1136,7 +1132,6 @@
             } catch (e) {}
         }
 
-        // Специальная функция для отправки "тихого пуша" отмены звонка
         async function sendCancelCallPush(callId) {
             try {
                 const usersSnapshot = await getDocs(collection(db, "users"));
@@ -1167,7 +1162,8 @@
                 const oldSubscription = await registration.pushManager.getSubscription();
                 if (oldSubscription) await oldSubscription.unsubscribe();
                 
-                const convertedVapidKey = urlBase64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa40yY102P21i2p4-P7qS9u_0J811n3z-1_6Rz9');
+                // ВАШ НОВЫЙ ВАЛИДНЫЙ VAPID КЛЮЧ
+                const convertedVapidKey = urlBase64ToUint8Array('BLYoSDe8OjCv89siN48jZhNpJyNKshAbclUxE03aaquNv7l6sxHf9i_vqDVedUQ4S0zmK6sol-E0ks_y5N8naRE');
                 const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: convertedVapidKey });
 
                 if (isIOS) {
