@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>SEMEJKA PLUS</title>
-    <link class="icon" type="image/jpeg" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
+    <title>SEMEYKA</title>
+    <link class="icon" type="image/png" href="semeykalogo.png">
     <meta name="theme-color" content="#6C63FF">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Семейка+">
-    <link rel="apple-touch-icon" href="https://s10.iimage.su/s/09/th_gvMJ97Lx8OAzBYuHL1UHLtuA0yebaDQnB8Uie9Xwd.jpg">
+    <meta name="apple-mobile-web-app-title" content="Семейка">
+    <link rel="apple-touch-icon" href="semeykalogo.png">
     <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
 
     <style>
+        /* ===== ВЕСЬ ВАШ CSS (без изменений) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
@@ -150,6 +152,7 @@
     </style>
 </head>
 <body>
+    <!-- ===== ЭКРАН РЕГИСТРАЦИИ ===== -->
     <div id="regScreen" class="screen active">
         <div class="box">
             <div class="logo-glass-container">
@@ -170,15 +173,9 @@
                             <stop offset="45%" stop-color="#F2796D" />
                             <stop offset="100%" stop-color="#C93D36" />
                         </linearGradient>
-                        <linearGradient id="glassPlus" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#FFAA85" />
-                            <stop offset="50%" stop-color="#ED5D52" />
-                            <stop offset="100%" stop-color="#A61C17" />
-                        </linearGradient>
                     </defs>
                     <g filter="url(#liquidGlassEffect)">
-                        <text x="200" y="65" font-family="'Arial Rounded MT Bold', 'Comic Sans MS', system-ui, sans-serif" font-weight="900" font-size="56" text-anchor="middle" letter-spacing="3" fill="url(#glassSemejka)">SEMEJKA</text>
-                        <text x="200" y="138" font-family="'Arial Rounded MT Bold', 'Comic Sans MS', system-ui, sans-serif" font-weight="900" font-size="62" text-anchor="middle" letter-spacing="4" fill="url(#glassPlus)">PLUS</text>
+                        <text x="200" y="100" font-family="'Comfortaa', system-ui, sans-serif" font-weight="700" font-size="70" text-anchor="middle" letter-spacing="3" fill="url(#glassSemejka)">SEMEYKA</text>
                     </g>
                 </svg>
             </div>
@@ -205,6 +202,7 @@
         </div>
     </div>
 
+    <!-- ===== ЭКРАН ЧАТА (без изменений) ===== -->
     <div id="chatScreen" class="screen">
         <div class="control-capsule">
             <button class="capsule-btn" id="newsBtn" title="Много фишек">
@@ -294,6 +292,7 @@
         </div>
     </div>
 
+    <!-- ===== ОВЕРЛЕЙ ЗВОНКА ===== -->
     <div class="call-overlay" id="callOverlay">
         <div class="call-box">
             <div class="call-name" id="callName">Пользователь</div>
@@ -437,8 +436,6 @@
         let isMuted = false;
         let heartbeatInterval = null;
         const statusCache = {};
-
-        // ===== ОПРЕДЕЛЕНИЕ ПЛАТФОРМЫ ИЗМЕНЕНИЯ ДЛЯ АЙФОНОВ =====
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
         // ===== АВТОРИЗАЦИЯ =====
@@ -531,6 +528,7 @@
             });
         }
 
+        // ===== РЕГИСТРАЦИЯ / ВХОД =====
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -572,6 +570,7 @@
             await enterChat();
         });
 
+        // ===== УПРАВЛЕНИЕ СТАТУСОМ =====
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try {
@@ -875,7 +874,6 @@
             callOverlay.classList.add("active");
             playRingTone('dial');
 
-            // Отправляем пуш-уведомление с типом 'call' и ID звонка
             await sendPushToFamily(currentUser.name, "📞 Звонит вам...", currentUser.id, {
                 type: 'call',
                 callId: currentCallId
@@ -892,7 +890,7 @@
                 calleeId: targetUsername,
                 status: "ringing",
                 offer: { type: offer.type, sdp: offer.sdp },
-                created_at: serverTimestamp() // Метка времени для отсечения старых звонков
+                created_at: serverTimestamp()
             });
 
             callUnsubscribe = onSnapshot(callDocRef, async (snapshot) => {
@@ -923,16 +921,12 @@
                 if (peerConnection || isCaller) return;
                 snapshot.forEach(async (changeDoc) => {
                     const callData = changeDoc.data();
-                    
                     const serverTime = callData.created_at ? callData.created_at.toDate() : new Date();
                     const timeDiffSeconds = (new Date() - serverTime) / 1000;
-                    
-                    if (timeDiffSeconds > 45) { 
-                        console.log("Пропущен старый зависший звонок из прошлого:", callData.id);
+                    if (timeDiffSeconds > 45) {
                         try { await deleteDoc(doc(db, "calls", callData.id)); } catch(e){}
-                        return; 
+                        return;
                     }
-
                     currentCallId = callData.id;
                     isCaller = false;
                     callName.textContent = callData.callerName;
@@ -979,12 +973,10 @@
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
                 const isRinging = callStatusText.textContent.includes("Вызов") || callStatusText.textContent.includes("Входящий");
-                
-                try { 
-                    await updateDoc(callDocRef, { status: "rejected" }); 
-                    await deleteDoc(callDocRef); 
+                try {
+                    await updateDoc(callDocRef, { status: "rejected" });
+                    await deleteDoc(callDocRef);
                 } catch(e){}
-
                 if (isCaller && isRinging) {
                     await sendCancelCallPush(currentCallId);
                 }
@@ -1089,10 +1081,10 @@
         msgInput.addEventListener('keypress', async (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); await sendMessage(); } });
         sendBtn.addEventListener('click', sendMessage);
 
-        async function enterChat() { 
-            regScreen.classList.remove('active'); 
-            chatScreen.classList.add('active'); 
-            startLiveChat(); 
+        async function enterChat() {
+            regScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+            startLiveChat();
             if (isIOS) {
                 if (window.lastPushSubscription && currentUser && currentUser.id) {
                     try {
@@ -1122,7 +1114,7 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 subscription: userData.pushSubscription,
-                                title: `Семейка+: ${senderName}`,
+                                title: `Семейка: ${senderName}`,
                                 body: messageText,
                                 payloadData: payloadData
                             })
@@ -1143,7 +1135,7 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 subscription: userData.pushSubscription,
-                                title: 'Семейка+',
+                                title: 'Семейка',
                                 body: 'Вызов завершен',
                                 payloadData: { action: 'cancel_call', type: 'call' }
                             })
@@ -1161,11 +1153,8 @@
                 const registration = await navigator.serviceWorker.ready;
                 const oldSubscription = await registration.pushManager.getSubscription();
                 if (oldSubscription) await oldSubscription.unsubscribe();
-                
-                // ВАШ НОВЫЙ ВАЛИДНЫЙ VAPID КЛЮЧ
                 const convertedVapidKey = urlBase64ToUint8Array('BLYoSDe8OjCv89siN48jZhNpJyNKshAbclUxE03aaquNv7l6sxHf9i_vqDVedUQ4S0zmK6sol-E0ks_y5N8naRE');
                 const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: convertedVapidKey });
-
                 if (isIOS) {
                     window.lastPushSubscription = subscription;
                 } else {
