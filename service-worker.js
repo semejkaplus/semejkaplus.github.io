@@ -1,5 +1,3 @@
-// service-worker.js
-
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -8,9 +6,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// ОБРАБОТЧИК ВХОДЯЩИХ PUSH-УВЕДОМЛЕНИЙ
 self.addEventListener('push', (event) => {
-  let data = { title: 'Семейка+', body: 'Новое сообщение!' };
+  let data = { title: 'Семейка', body: 'Новое сообщение!' };
 
   if (event.data) {
     try {
@@ -22,9 +19,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || '',
-    // Использование загруженного файла с сервера
-    icon: '/semejkapluspush.png',
-    badge: '/semejkapluspush.png',
+    icon: '/semeykalogo.png',
+    badge: '/semeykalogo.png',
     tag: data.tag || 'semejka-notification',
     renotify: true,
     vibrate: [200, 100, 200],
@@ -32,11 +28,10 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Семейка+', options)
+    self.registration.showNotification(data.title || 'Семейка', options)
   );
 });
 
-// Клик по уведомлению — открывает или разворачивает PWA
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
