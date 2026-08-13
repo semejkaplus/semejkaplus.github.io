@@ -28,7 +28,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Семейка', options)
+    self.registration.showNotification(data.title || 'SEMEYKA', options)
   );
 });
 
