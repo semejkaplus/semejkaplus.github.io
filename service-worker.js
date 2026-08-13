@@ -20,7 +20,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || '',
     icon: '/semeykalogo.png',
-    badge: '/semeykalogo.png',
+    badge: '/semeykapush.png',
     tag: data.tag || 'semejka-notification',
     renotify: true,
     vibrate: [200, 100, 200],
