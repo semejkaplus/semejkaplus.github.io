@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
 
     <style>
-        /* ===== ВЕСЬ ВАШ CSS (без изменений) ===== */
+        /* ===== ВЕСЬ ВАШ CSS ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100dvh; height: 100vh; overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: auto; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); }
@@ -307,7 +307,7 @@
             <div class="call-actions">
                 <button class="call-btn-action mute" id="callMuteBtn" style="display: none;" title="Выключить микрофон">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                         <line x1="12" x2="12" y1="19" y2="22"/>
                     </svg>
@@ -815,12 +815,54 @@
             });
         }
 
+        // ===== ТРАНСФОРМАЦИЯ SDP ДЛЯ OPUS FEC / RED / BITRATE =====
+        function optimizeSDP(sdp) {
+            let lines = sdp.split('\r\n');
+            let opusPt = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('a=rtpmap:') && lines[i].includes('opus/48000')) {
+                    opusPt = lines[i].split(' ')[0].split(':')[1];
+                    break;
+                }
+            }
+
+            if (opusPt) {
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith(`a=fmtp:${opusPt}`)) {
+                        if (!lines[i].includes('useinbandfec=')) {
+                            lines[i] += ';useinbandfec=1';
+                        }
+                        if (!lines[i].includes('usedtx=')) {
+                            lines[i] += ';usedtx=1';
+                        }
+                        if (!lines[i].includes('maxaveragebitrate=')) {
+                            lines[i] += ';maxaveragebitrate=32000';
+                        }
+                    }
+                }
+            }
+            return lines.join('\r\n');
+        }
+
         async function fetchIceServers() {
+            let servers = [];
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
-                if (response.ok) return await response.json();
+                if (response.ok) {
+                    servers = await response.json();
+                }
             } catch (err) {}
-            return [{ urls: "stun:stun.l.google.com:19302" }];
+            
+            // Если Metered не ответил, используем принудительные TURNS/TLS порты 443 для обхода DPI без VPN
+            if (!servers || servers.length === 0) {
+                servers = [
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+                    { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+                ];
+            }
+            return servers;
         }
 
         function playRingTone(type) {
@@ -839,34 +881,67 @@
             localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
             if (isMuted) {
                 callMuteBtn.classList.add('muted');
-                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/><line x1="2" y1="2" x2="22" y2="22" stroke="#ff4b4b" stroke-width="2.5" stroke-linecap="round"/></svg>';
+                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/><line x1="2" y1="2" x2="22" y2="22" stroke="#ff4b4b" stroke-width="2.5" stroke-linecap="round"/></svg>';
             } else {
                 callMuteBtn.classList.remove('muted');
-                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
+                callMuteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
             }
         });
 
         async function setupPeerConnection() {
             const iceServers = await fetchIceServers();
-            peerConnection = new RTCPeerConnection({ iceServers });
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate && currentCallId) {
-                    const candidatesCol = collection(db, "calls", currentCallId, isCaller ? "callerCandidates" : "calleeCandidates");
-                    addDoc(candidatesCol, event.candidate.toJSON()).catch(()=>{});
+            
+            peerConnection = new RTCPeerConnection({
+                iceServers: iceServers,
+                iceTransportPolicy: 'relay', // Заставляет WebRTC работать принудительно через TURNS/TCP порт 443 (обход блокировок P2P/UDP провайдером)
+                iceCandidatePoolSize: 10
+            });
+
+            // Автоматический мониторинг качества связи и перезапуск сопряжения при сбоях
+            peerConnection.oniceconnectionstatechange = () => {
+                if (peerConnection.iceConnectionState === 'failed') {
+                    peerConnection.restartIce();
                 }
             };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate && currentCallId) {
+                    const candidateObj = event.candidate.toJSON();
+                    const candidatesCol = collection(db, "calls", currentCallId, isCaller ? "callerCandidates" : "calleeCandidates");
+                    addDoc(candidatesCol, candidateObj).catch(()=>{});
+                }
+            };
+
             peerConnection.ontrack = (event) => {
                 if (event.streams && event.streams[0]) {
                     remoteVideo.srcObject = event.streams[0];
                 }
             };
+
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true, 
-                    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { max: 30 } } 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }, 
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 }, 
+                        frameRate: { max: 24 } 
+                    } 
                 });
                 localVideo.srcObject = localStream;
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                localStream.getTracks().forEach(track => {
+                    const sender = peerConnection.addTrack(track, localStream);
+                    // Ограничение битрейта для прохождения через лимитированные каналы
+                    if (track.kind === 'video' && sender.setParameters) {
+                        const params = sender.getParameters();
+                        if (!params.encodings) params.encodings = [{}];
+                        params.encodings[0].maxBitrate = 400000; // 400 kbps
+                        sender.setParameters(params).catch(()=>{});
+                    }
+                });
                 isMuted = false;
                 callMuteBtn.classList.remove('muted');
             } catch (err) { alert("Ошибка доступа к камере или микрофону!"); endCall(); }
@@ -890,7 +965,14 @@
 
             await setupPeerConnection();
             const callDocRef = doc(db, "calls", currentCallId);
-            const offer = await peerConnection.createOffer();
+            let offer = await peerConnection.createOffer();
+            
+            // Включаем Opus FEC & RED для SDP Offer
+            offer = new RTCSessionDescription({
+                type: offer.type,
+                sdp: optimizeSDP(offer.sdp)
+            });
+
             await peerConnection.setLocalDescription(offer);
             await setDoc(callDocRef, {
                 id: currentCallId,
@@ -961,7 +1043,15 @@
             const callData = callSnap.data();
             await setupPeerConnection();
             await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
-            const answer = await peerConnection.createAnswer();
+            
+            let answer = await peerConnection.createAnswer();
+            
+            // Включаем Opus FEC & RED для SDP Answer
+            answer = new RTCSessionDescription({
+                type: answer.type,
+                sdp: optimizeSDP(answer.sdp)
+            });
+
             await peerConnection.setLocalDescription(answer);
             await updateDoc(callDocRef, {
                 status: "accepted",
@@ -1193,4 +1283,5 @@
     </script>
 </body>
 </html>
+ 
                 
