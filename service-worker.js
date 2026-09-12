@@ -1,5 +1,5 @@
 // ========== КЭШИРОВАНИЕ И ВЕРСИОНИРОВАНИЕ ==========
-const CACHE_VERSION = 'v5';  // Увеличиваем версию, чтобы обновленный SW вступил в силу
+const CACHE_VERSION = 'v6';  // Увеличили версию для применения всех фиксов
 const CACHE_FILES = [
   '/',
   '/index.html',
@@ -61,12 +61,16 @@ self.addEventListener('push', (event) => {
     badge: '/semeykapush.png',
     tag: data.tag || 'semejka-notification',
     renotify: true,
-    vibrate: [200, 100, 200],
     
-    // Параметры для показа баннера поверх экрана
-    requireInteraction: true, // Уведомление не исчезает автоматически
+    // Агрессивный паттерн вибрации: заставляет Android показывать Heads-Up плашку
+    vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 110, 450],
     
-    // Строка действий (Actions)
+    // Принудительный показ поверх других окон
+    requireInteraction: true,
+    timestamp: Date.now(),
+    silent: false,
+    
+    // Кнопки действия (Actions)
     actions: [
       {
         action: 'open_chat',
@@ -90,12 +94,12 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // Если нажали "Закрыть", ничего не открываем
+  // Если нажата кнопка "Закрыть", просто гасим уведомление
   if (event.action === 'dismiss') {
     return;
   }
 
-  // Если кликнули на "Открыть" или по самому уведомлению
+  // Нажата кнопка "Открыть" или сам баннер
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (let client of clientList) {
