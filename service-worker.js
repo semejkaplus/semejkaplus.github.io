@@ -1,5 +1,5 @@
 // ========== КЭШИРОВАНИЕ И ВЕРСИОНИРОВАНИЕ ==========
-const CACHE_VERSION = 'v4';  // Увеличивайте при любых изменениях ресурсов
+const CACHE_VERSION = 'v5';  // Увеличиваем версию, чтобы обновленный SW вступил в силу
 const CACHE_FILES = [
   '/',
   '/index.html',
@@ -10,7 +10,6 @@ const CACHE_FILES = [
 
 // ========== УСТАНОВКА ==========
 self.addEventListener('install', (event) => {
-  // Принудительно активируем новый Service Worker
   self.skipWaiting();
 
   event.waitUntil(
@@ -24,9 +23,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      // Захватываем все клиенты сразу
       self.clients.claim(),
-      // Удаляем старые кэши
       caches.keys().then((keys) => {
         return Promise.all(
           keys.filter((key) => key !== CACHE_VERSION)
@@ -37,7 +34,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ========== ПЕРЕХВАТ ЗАПРОСОВ (отвечаем из кэша) ==========
+// ========== ПЕРЕХВАТ ЗАПРОСОВ ==========
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
@@ -60,13 +57,27 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || '',
-    // Основная иконка (цветная, большая)
     icon: '/semeykalogo.png',
-    // Маленький значок в статус-баре (монохромный, белый на прозрачном)
     badge: '/semeykapush.png',
     tag: data.tag || 'semejka-notification',
     renotify: true,
     vibrate: [200, 100, 200],
+    
+    // Параметры для показа баннера поверх экрана
+    requireInteraction: true, // Уведомление не исчезает автоматически
+    
+    // Строка действий (Actions)
+    actions: [
+      {
+        action: 'open_chat',
+        title: 'Открыть'
+      },
+      {
+        action: 'dismiss',
+        title: 'Закрыть'
+      }
+    ],
+
     data: data
   };
 
@@ -75,9 +86,16 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// ========== КЛИК ПО УВЕДОМЛЕНИЮ ==========
+// ========== КЛИК ПО УВЕДОМЛЕНИЮ И КНОПКАМ ==========
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  // Если нажали "Закрыть", ничего не открываем
+  if (event.action === 'dismiss') {
+    return;
+  }
+
+  // Если кликнули на "Открыть" или по самому уведомлению
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (let client of clientList) {
