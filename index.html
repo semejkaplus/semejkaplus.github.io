@@ -906,11 +906,10 @@
             
             peerConnection = new RTCPeerConnection({
                 iceServers: iceServers,
-                iceTransportPolicy: 'relay', // Заставляет WebRTC работать принудительно через TURNS/TCP порт 443 (обход блокировок P2P/UDP провайдером)
+                iceTransportPolicy: 'relay',
                 iceCandidatePoolSize: 10
             });
 
-            // Автоматический мониторинг качества связи и перезапуск сопряжения при сбоях
             peerConnection.oniceconnectionstatechange = () => {
                 if (peerConnection.iceConnectionState === 'failed') {
                     peerConnection.restartIce();
@@ -947,11 +946,10 @@
                 localVideo.srcObject = localStream;
                 localStream.getTracks().forEach(track => {
                     const sender = peerConnection.addTrack(track, localStream);
-                    // Ограничение битрейта для прохождения через лимитированные каналы
                     if (track.kind === 'video' && sender.setParameters) {
                         const params = sender.getParameters();
                         if (!params.encodings) params.encodings = [{}];
-                        params.encodings[0].maxBitrate = 400000; // 400 kbps
+                        params.encodings[0].maxBitrate = 400000;
                         sender.setParameters(params).catch(()=>{});
                     }
                 });
@@ -971,7 +969,8 @@
             callOverlay.classList.add("active");
             playRingTone('dial');
 
-            await sendPushToFamily(currentUser.name, "📹 Звонит вам (видеовызов)...", currentUser.id, {
+            // ✅ ИСПРАВЛЕНИЕ: Отправка Push строго адресату (targetUsername)
+            await sendPushToUser(targetUsername, currentUser.name, "📹 Звонит вам (видеовызов)...", {
                 type: 'call',
                 callId: currentCallId
             });
@@ -980,7 +979,6 @@
             const callDocRef = doc(db, "calls", currentCallId);
             let offer = await peerConnection.createOffer();
             
-            // Включаем Opus FEC & RED для SDP Offer
             offer = new RTCSessionDescription({
                 type: offer.type,
                 sdp: optimizeSDP(offer.sdp)
@@ -1059,7 +1057,6 @@
             
             let answer = await peerConnection.createAnswer();
             
-            // Включаем Opus FEC & RED для SDP Answer
             answer = new RTCSessionDescription({
                 type: answer.type,
                 sdp: optimizeSDP(answer.sdp)
@@ -1085,12 +1082,18 @@
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
                 const isRinging = callStatusText.textContent.includes("Вызов") || callStatusText.textContent.includes("Входящий");
+                
+                const parts = currentCallId.split('_');
+                const targetCallee = parts[1];
+
                 try {
                     await updateDoc(callDocRef, { status: "rejected" });
                     await deleteDoc(callDocRef);
                 } catch(e){}
-                if (isCaller && isRinging) {
-                    await sendCancelCallPush(currentCallId);
+
+                // ✅ ИСПРАВЛЕНИЕ: Отправка PUSH об отмене строго получателю звонка
+                if (isCaller && isRinging && targetCallee) {
+                    await sendPushToUser(targetCallee, currentUser.name, "Вызов завершен", { action: 'cancel_call', type: 'call' });
                 }
             }
             endCall();
@@ -1216,6 +1219,30 @@
 
         const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
+        // ✅ ТОЧЕЧНАЯ ОТПРАВКА PUSH (ТОЛЬКО ОДНОМУ ПОЛЬЗОВАТЕЛЮ)
+        async function sendPushToUser(targetUsername, senderName, messageText, payloadData = null) {
+            try {
+                const userQuery = query(collection(db, "users"), where("username", "==", targetUsername));
+                const querySnapshot = await getDocs(userQuery);
+                if (!querySnapshot.empty) {
+                    const userData = querySnapshot.docs[0].data();
+                    if (userData.pushSubscription) {
+                        fetch(`${RENDER_SERVER_URL}/send-push`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                subscription: userData.pushSubscription,
+                                title: `Семейка: ${senderName}`,
+                                body: messageText,
+                                payloadData: payloadData
+                            })
+                        }).catch(()=>{});
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // МАССОВАЯ ОТПРАВКА PUSH (ИСПОЛЬЗУЕТСЯ ТОЛЬКО ДЛЯ ОБЩИХ СООБЩЕНИЙ В ЧАТЕ)
         async function sendPushToFamily(senderName, messageText, senderId, payloadData = null) {
             try {
                 const usersSnapshot = await getDocs(collection(db, "users"));
@@ -1235,27 +1262,6 @@
                     }
                 });
             } catch (e) {}
-        }
-
-        async function sendCancelCallPush(callId) {
-            try {
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                usersSnapshot.forEach((userDoc) => {
-                    const userData = userDoc.data();
-                    if (userData.username !== currentUser.id && userData.pushSubscription) {
-                        fetch(`${RENDER_SERVER_URL}/send-push`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                subscription: userData.pushSubscription,
-                                title: 'Семейка',
-                                body: 'Вызов завершен',
-                                payloadData: { action: 'cancel_call', type: 'call' }
-                            })
-                        }).catch(()=>{});
-                    }
-                });
-            } catch(e){}
         }
 
         async function subscribeUserToPush() {
