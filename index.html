@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="Семейка">
     <link rel="apple-touch-icon" href="semeykalogo.png">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         /* ===== ВЕСЬ ВАШ CSS ===== */
@@ -152,9 +152,35 @@
         .call-btn-action.accept { background: #34C759 !important; color: #ffffff !important; box-shadow: 0 12px 24px rgba(52, 199, 89, 0.5) !important; }
         .call-btn-action:active { transform: scale(0.95); }
         @media (max-width: 480px) { .messages { padding: 5px 10px 75px 10px; gap: 12px; } .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; } .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; } .side-panel { left: 16px; right: 16px; padding: 20px; } }
+    
+        /* Анимация пульсации для плашки переезда */
+        @keyframes pulseRed {
+            0% { 
+                background-color: #ff4b5c; 
+                box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4);
+            }
+            50% { 
+                background-color: #d93847; 
+                box-shadow: 0 8px 30px rgba(217, 56, 71, 0.7);
+            }
+            100% { 
+                background-color: #ff4b5c; 
+                box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Скруглённая верхняя плашка миграции (Comfortaa) -->
+    <div id="migrationBanner" style="position: fixed; top: 16px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; background: #ff4b5c; color: white; padding: 14px 20px; border-radius: 16px; box-sizing: border-box; z-index: 999999; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-family: 'Comfortaa', cursive, sans-serif; box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4); animation: pulseRed 2s infinite;">
+        <div style="font-size: 14px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; flex: 1; min-width: 200px;">
+            🚀 Мессенджер «Семейка» переезжает на новый адрес!
+        </div>
+        <button id="startMigrationBtn" onclick="executeMigration()" style="background: white; color: #ff4b5c; border: none; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Comfortaa', cursive, sans-serif; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            Перейти
+        </button>
+    </div>
+
     <!-- ===== ЭКРАН РЕГИСТРАЦИИ ===== -->
     <div id="regScreen" class="screen active">
         <div class="box">
@@ -356,6 +382,46 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        // ===== ФУНКЦИЯ ПРИНУДИТЕЛЬНОЙ МИГРАЦИИ СО СТАРОГО ДОМЕНА =====
+        async function executeMigration() {
+            const btn = document.getElementById('startMigrationBtn');
+            btn.innerText = 'Перенос...';
+            btn.disabled = true;
+
+            const NEW_DOMAIN = 'https://ваш-новый-домен.pages.dev'; // ЗАМЕНИТЕ НА СВОЙ НОВЫЙ URL
+
+            try {
+                // 1. Если пользователь авторизован, стираем его подписку в Firestore
+                if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+                    const userQuery = query(collection(db, "users"), where("username", "==", currentUser.id));
+                    const querySnapshot = await getDocs(userQuery);
+                    
+                    if (!querySnapshot.empty) {
+                        const userDocId = querySnapshot.docs[0].id;
+                        await updateDoc(doc(db, "users", userDocId), { 
+                            pushSubscription: null 
+                        });
+                    }
+                }
+
+                // 2. Отписываем браузер от уведомлений старого домена и удаляем старый Service Worker
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = await registration.pushManager.getSubscription();
+                    if (subscription) {
+                        await subscription.unsubscribe();
+                    }
+                    await registration.unregister();
+                }
+            } catch (error) {
+                console.error("Ошибка при миграции:", error);
+            } finally {
+                // 3. Жесткий редирект на новый домен
+                window.location.href = NEW_DOMAIN;
+            }
+        }
+        window.executeMigration = executeMigration;
 
         // ===== PWA =====
         if ('serviceWorker' in navigator) {
@@ -848,7 +914,6 @@
         async function fetchIceServers() {
             let servers = [];
             
-            // 1. ПОЛУЧАЕМ ПЕРВЫЙ ТУРН СЕРВЕР ИЗ METERED
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
                 if (response.ok) {
@@ -857,7 +922,6 @@
                 }
             } catch (err) {}
             
-            // 2. ПОЛУЧАЕМ ВТОРОЙ ТУРН СЕРВЕР ИЗ METERED
             try {
                 const response2 = await fetch("https://semeykainternational.metered.live/api/v1/turn/credentials?apiKey=63a607b6e705a0e00d76cc5f69828e528631");
                 if (response2.ok) {
@@ -866,7 +930,6 @@
                 }
             } catch (err) {}
 
-            // Резервный список, если ни один API не вернул данные
             if (!Array.isArray(servers) || servers.length === 0) {
                 servers = [
                     { urls: "stun:stun.l.google.com:19302" },
@@ -969,7 +1032,6 @@
             callOverlay.classList.add("active");
             playRingTone('dial');
 
-            // ✅ ИСПРАВЛЕНИЕ: Отправка Push строго адресату (targetUsername)
             await sendPushToUser(targetUsername, currentUser.name, "📹 Звонит вам (видеовызов)...", {
                 type: 'call',
                 callId: currentCallId
@@ -1091,7 +1153,6 @@
                     await deleteDoc(callDocRef);
                 } catch(e){}
 
-                // ✅ ИСПРАВЛЕНИЕ: Отправка PUSH об отмене строго получателю звонка
                 if (isCaller && isRinging && targetCallee) {
                     await sendPushToUser(targetCallee, currentUser.name, "Вызов завершен", { action: 'cancel_call', type: 'call' });
                 }
@@ -1219,7 +1280,6 @@
 
         const RENDER_SERVER_URL = "https://semejka-push.onrender.com";
 
-        // ✅ ТОЧЕЧНАЯ ОТПРАВКА PUSH (ТОЛЬКО ОДНОМУ ПОЛЬЗОВАТЕЛЮ)
         async function sendPushToUser(targetUsername, senderName, messageText, payloadData = null) {
             try {
                 const userQuery = query(collection(db, "users"), where("username", "==", targetUsername));
@@ -1242,7 +1302,6 @@
             } catch (e) {}
         }
 
-        // МАССОВАЯ ОТПРАВКА PUSH (ИСПОЛЬЗУЕТСЯ ТОЛЬКО ДЛЯ ОБЩИХ СООБЩЕНИЙ В ЧАТЕ)
         async function sendPushToFamily(senderName, messageText, senderId, payloadData = null) {
             try {
                 const usersSnapshot = await getDocs(collection(db, "users"));
