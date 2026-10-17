@@ -425,45 +425,47 @@
         const db = getFirestore(app);
         const NEW_DOMAIN = 'https://semeyka-msgr.gitlab.io';
 
-        // ===== ФУНКЦИЯ ПОЛНОЙ БЛОКИРОВКИ СТАРОГО ПРИЛОЖЕНИЯ =====
+        // ===== ФУНКЦИЯ ПОЛНОЙ БЛОКИРОВКИ СТАРОГО ПРИЛОЖЕНИЯ С ИНСТРУКЦИЕЙ УСТАНОВКИ =====
         function lockOldAppCompletely() {
-            // 1. Показываем зеленое уведомление об успешном переходе на плашке
             const banner = document.getElementById('migrationBanner');
             if (banner) {
                 banner.style.animation = 'none';
                 banner.style.backgroundColor = '#4CAF50';
+                banner.style.maxHeight = '85vh';
+                banner.style.overflowY = 'auto';
                 banner.innerHTML = `
-                    <div style="font-size: 15px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; margin-bottom: 6px;">
-                        ✅ Вы успешно перешли на новый домен!
+                    <div style="font-size: 16px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; margin-bottom: 6px;">
+                        🔒 Приложение перенесено на новый адрес!
                     </div>
-                    <div style="font-size: 13px; font-family: 'Comfortaa', cursive, sans-serif; opacity: 0.95; line-height: 1.4;">
-                        Это старая версия приложения. Весь функционал здесь заблокирован. Вы можете спокойно удалить этот значок с экрана вашего устройства.
+                    <div style="font-size: 13px; font-family: 'Comfortaa', cursive, sans-serif; opacity: 0.95; line-height: 1.4; margin-bottom: 12px;">
+                        Этот старый адрес больше не поддерживается, функции чата и звонков здесь отключены. Перейдите по ссылке ниже и установите новую версию на главный экран вашего телефона:
                     </div>
-                    <a href="${NEW_DOMAIN}" style="display: inline-block; margin-top: 8px; background: white; color: #4CAF50; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold; font-family: 'Comfortaa', cursive, sans-serif;">Перейти на новый сайт</a>
+                    <a href="${NEW_DOMAIN}" style="display: block; width: 100%; text-align: center; margin-bottom: 14px; background: white; color: #4CAF50; padding: 12px 16px; border-radius: 14px; text-decoration: none; font-size: 14px; font-weight: bold; font-family: 'Comfortaa', cursive, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">Перейти на новый сайт SEMEYKA</a>
+                    
+                    <!-- ИНСТРУКЦИЯ ПО УСТАНОВКЕ (PWA) -->
+                    <div style="background: rgba(0, 0, 0, 0.18); padding: 12px 14px; border-radius: 16px; font-size: 12px; font-family: 'Comfortaa', cursive, sans-serif; display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                        <div style="font-weight: 700; font-size: 13px; margin-bottom: 2px; text-align: center;">📱 Как установить новое приложение:</div>
+                        
+                        <div style="background: rgba(255,255,255,0.15); padding: 8px 10px; border-radius: 10px;">
+                            <strong>🍏 Для iPhone / iPad (Safari):</strong>
+                            <div style="margin-top: 3px; opacity: 0.9; line-height: 1.3;">1. Откройте новый сайт в Safari.<br>2. Нажмите кнопку <strong>«Поделиться»</strong> (квадрат со стрелкой вверх).<br>3. Выберите <strong>«На экран «Домой»»</strong> и нажмите «Добавить».</div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.15); padding: 8px 10px; border-radius: 10px;">
+                            <strong>🤖 Для Android (Chrome):</strong>
+                            <div style="margin-top: 3px; opacity: 0.9; line-height: 1.3;">1. Откройте новый сайт в Chrome.<br>2. Нажмите на <strong>три точки</strong> в правом верхнем углу.<br>3. Выберите <strong>«Установить приложение»</strong> или <strong>«Добавить на главный экран»</strong>.</div>
+                        </div>
+                    </div>
                 `;
             }
 
-            // 2. Скрываем экраны приложения (авторизацию и чат)
             const regScreen = document.getElementById('regScreen');
             const chatScreen = document.getElementById('chatScreen');
             if (regScreen) regScreen.classList.remove('active');
             if (chatScreen) chatScreen.classList.remove('active');
-
-            // 3. Выводим блокирующий экран-заглушку вместо приложения
-            const body = document.body;
-            const blockScreen = document.createElement('div');
-            blockScreen.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:'Comfortaa', cursive, sans-serif;";
-            blockScreen.innerHTML = `
-                <div style="background:white; padding:40px 30px; border-radius:32px; max-width:420px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.1);">
-                    <h2 style="color:#2A2A3A; font-size:22px; margin-bottom:15px;">🔒 Приложение перенесено</h2>
-                    <p style="color:#6A6A7A; font-size:15px; line-height:1.6; margin-bottom:25px;">Этот старый адрес больше не поддерживается. Функции чата и звонков здесь отключены.</p>
-                    <a href="${NEW_DOMAIN}" style="display:block; width:100%; padding:16px; background:#6C63FF; color:white; border-radius:20px; text-decoration:none; font-size:18px; font-weight:bold; box-shadow:0 8px 20px rgba(108,99,255,0.3);">Перейти на новый сайт</a>
-                </div>
-            `;
-            body.appendChild(blockScreen);
         }
 
-        // Если пользователь уже подтверждал переход ранее и вернулся на старый адрес — блокируем сразу
+        // Если пользователь уже подтверждал переход ранее и вернулся — сразу блокируем и показываем инструкцию
         if (localStorage.getItem('semejka_migrated') === 'true') {
             window.addEventListener('DOMContentLoaded', lockOldAppCompletely);
         }
