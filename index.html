@@ -153,72 +153,75 @@
         .call-btn-action:active { transform: scale(0.95); }
         @media (max-width: 480px) { .messages { padding: 5px 10px 75px 10px; gap: 12px; } .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; } .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; } .side-panel { left: 16px; right: 16px; padding: 20px; } }
     
-        /* ===== ФИЗИКА И АНИМАЦИЯ ЖИДКОГО СТЕКЛА ДЛЯ ПЛАШКИ ===== */
+        /* ===== ФИЗИКА И АНИМАЦИЯ ЖИДКОГО СТЕКЛА ДЛЯ ЦЕНТРАЛЬНОЙ ПЛАШКИ ===== */
         @keyframes liquidPulse {
             0% { 
                 background-color: #ff4b5c; 
-                box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45), inset 0 0 0 1px rgba(255,255,255,0.3);
+                box-shadow: 0 20px 60px rgba(255, 75, 92, 0.5), inset 0 0 0 1px rgba(255,255,255,0.3);
             }
             50% { 
                 background-color: #e63946; 
-                box-shadow: 0 12px 45px rgba(230, 57, 70, 0.7), inset 0 0 0 1px rgba(255,255,255,0.5);
+                box-shadow: 0 20px 80px rgba(230, 57, 70, 0.75), inset 0 0 0 1px rgba(255,255,255,0.5);
             }
             100% { 
                 background-color: #ff4b5c; 
-                box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45), inset 0 0 0 1px rgba(255,255,255,0.3);
+                box-shadow: 0 20px 60px rgba(255, 75, 92, 0.5), inset 0 0 0 1px rgba(255,255,255,0.3);
             }
         }
 
         #migrationBanner {
             position: fixed; 
-            top: 20px; 
+            top: 50%; 
             left: 50%; 
-            transform: translateX(-50%) scale(1); 
+            transform: translate(-50%, -50%) scale(1); 
             width: 92%; 
-            max-width: 640px; 
+            max-width: 600px; 
+            max-height: 90vh;
+            overflow-y: auto;
             background: #ff4b5c; 
             color: white; 
-            padding: 18px 24px; 
-            border-radius: 28px; 
+            padding: 24px; 
+            border-radius: 36px; 
             box-sizing: border-box; 
             z-index: 999999; 
             display: flex; 
             flex-direction: column; 
-            gap: 12px; 
+            gap: 14px; 
             font-family: 'Comfortaa', cursive, sans-serif; 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45); 
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            box-shadow: 0 20px 60px rgba(255, 75, 92, 0.5); 
             animation: liquidPulse 2.5s infinite ease-in-out;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.25), box-shadow 0.3s ease;
+            /* Пружинящая физика при перетаскивании/отпускании */
+            transition: box-shadow 0.3s ease;
             user-select: none;
-            cursor: pointer;
+            touch-action: none; /* Для гладкого перетаскивания пальцем */
+            cursor: grab;
         }
 
         #migrationBanner:active {
-            transform: translateX(-50%) scale(0.96) translateY(2px) !important;
-            box-shadow: 0 6px 18px rgba(255, 75, 92, 0.6) !important;
+            cursor: grabbing;
         }
     </style>
 </head>
 <body>
-    <!-- Скруглённая верхняя плашка миграции с физикой жидкого стекла и виш-листом -->
+    <!-- Крупная центральная плашка миграции с физикой перетаскивания («пинания») -->
     <div id="migrationBanner">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-            <div style="font-size: 14px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; flex: 1; min-width: 220px;">
+            <div style="font-size: 16px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; flex: 1; min-width: 220px;">
                 🚀 Мессенджер SEMEYKA переезжает на новый защищенный адрес!
             </div>
-            <button id="startMigrationBtn" onclick="executeMigration()" style="background: white; color: #ff4b5c; border: none; padding: 10px 18px; border-radius: 14px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Comfortaa', cursive, sans-serif; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <button id="startMigrationBtn" onclick="executeMigration()" style="background: white; color: #ff4b5c; border: none; padding: 12px 20px; border-radius: 16px; font-size: 14px; font-weight: bold; cursor: pointer; font-family: 'Comfortaa', cursive, sans-serif; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                 Подтвердить переход
             </button>
         </div>
         
         <!-- Виш-лист (Чек-лист того, что сделает мессенджер при подтверждении) -->
-        <div style="background: rgba(0, 0, 0, 0.15); padding: 10px 14px; border-radius: 16px; font-size: 12px; font-family: 'Comfortaa', cursive, sans-serif; display: flex; flex-direction: column; gap: 4px;">
+        <div style="background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 20px; font-size: 13px; font-family: 'Comfortaa', cursive, sans-serif; display: flex; flex-direction: column; gap: 6px;">
             <div style="font-weight: 700; margin-bottom: 2px; opacity: 0.9;">Что сделает мессенджер при подтверждении:</div>
-            <div id="step1Text" style="opacity: 0.8; transition: opacity 0.3s;">🔹 1. Отключение старых уведомлений в базе данных</div>
-            <div id="step2Text" style="opacity: 0.8; transition: opacity 0.3s;">🔹 2. Сброс старой памяти и настроек уведомлений</div>
-            <div id="step3Text" style="opacity: 0.8; transition: opacity 0.3s;">🔹 3. Безопасное перемещение на новый адрес</div>
+            <div id="step1Text" style="opacity: 0.85; transition: opacity 0.3s;">🔹 1. Отключение старых уведомлений в базе данных</div>
+            <div id="step2Text" style="opacity: 0.85; transition: opacity 0.3s;">🔹 2. Сброс старой памяти и настроек уведомлений</div>
+            <div id="step3Text" style="opacity: 0.85; transition: opacity 0.3s;">🔹 3. Безопасное перемещение на новый адрес</div>
         </div>
     </div>
 
@@ -425,14 +428,93 @@
         const db = getFirestore(app);
         const NEW_DOMAIN = 'https://semeyka-msgr.gitlab.io';
 
+        // ===== ФИЗИКА «ПИНАНИЯ» И ПЕРЕТАСКИВАНИЯ ПЛАШКИ (DRAG & INERTIA) =====
+        const banner = document.getElementById('migrationBanner');
+        let isDragging = false;
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0;
+        let velocityX = 0, velocityY = 0;
+        let lastX = 0, lastY = 0;
+        let lastTime = 0;
+        let animationFrameId = null;
+
+        function onDragStart(e) {
+            // Если кликнули на кнопку или ссылку внутри плашки — не начинаем перетаскивание
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) return;
+            
+            isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            startX = clientX - currentX;
+            startY = clientY - currentY;
+            lastX = clientX;
+            lastY = clientY;
+            lastTime = performance.now();
+            
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            banner.style.transition = 'none';
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const now = performance.now();
+            const dt = now - lastTime;
+            if (dt > 0) {
+                velocityX = (clientX - lastX) / dt * 15; // Расчет скорости для инерции («пинка»)
+                velocityY = (clientY - lastY) / dt * 15;
+            }
+            lastX = clientX;
+            lastY = clientY;
+            lastTime = now;
+
+            currentX = clientX - startX;
+            currentY = clientY - startY;
+
+            banner.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) scale(1.02)`;
+        }
+
+        function onDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // Запускаем физику инерции и упругого пружинящего возврата к центру
+            banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.25)';
+            
+            // Если плашку сильно «пнули», дадим ей пролететь по инерции, а затем плавно вернем в центр
+            currentX += velocityX * 5;
+            currentY += velocityY * 5;
+
+            // Ограничим вылет в пределах экрана
+            const maxX = window.innerWidth / 3;
+            const maxY = window.innerHeight / 3;
+            if (Math.abs(currentX) > maxX) currentX = Math.sign(currentX) * maxX;
+            if (Math.abs(currentY) > maxY) currentY = Math.sign(currentY) * maxY;
+
+            // Плавный возврат в исходную центральную позицию с пружинящим эффектом
+            setTimeout(() => {
+                currentX = 0;
+                currentY = 0;
+                banner.style.transform = `translate(-50%, -50%) scale(1)`;
+            }, 50);
+        }
+
+        banner.addEventListener('mousedown', onDragStart);
+        window.addEventListener('mousemove', onDragMove);
+        window.addEventListener('mouseup', onDragEnd);
+
+        banner.addEventListener('touchstart', onDragStart, { passive: true });
+        window.addEventListener('touchmove', onDragMove, { passive: true });
+        window.addEventListener('touchend', onDragEnd);
+
         // ===== ФУНКЦИЯ ПОЛНОЙ БЛОКИРОВКИ СТАРОГО ПРИЛОЖЕНИЯ С ИНСТРУКЦИЕЙ УСТАНОВКИ =====
         function lockOldAppCompletely() {
-            const banner = document.getElementById('migrationBanner');
             if (banner) {
                 banner.style.animation = 'none';
                 banner.style.backgroundColor = '#4CAF50';
-                banner.style.maxHeight = '85vh';
-                banner.style.overflowY = 'auto';
                 banner.innerHTML = `
                     <div style="font-size: 16px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; margin-bottom: 6px;">
                         🔒 Приложение перенесено на новый адрес!
@@ -465,7 +547,6 @@
             if (chatScreen) chatScreen.classList.remove('active');
         }
 
-        // Если пользователь уже подтверждал переход ранее и вернулся — сразу блокируем и показываем инструкцию
         if (localStorage.getItem('semejka_migrated') === 'true') {
             window.addEventListener('DOMContentLoaded', lockOldAppCompletely);
         }
@@ -520,13 +601,11 @@
                 step3.innerHTML = '🔄 Шаг 3/3: Перенаправляем на новый адрес SEMEYKA...';
                 btn.innerText = 'Перенос завершен!';
 
-                // Устанавливаем метку, что пользователь успешно прошел миграцию
                 localStorage.setItem('semejka_migrated', 'true');
 
             } catch (error) {
                 console.error("Ошибка при миграции:", error);
             } finally {
-                // Жесткий редирект через секунду
                 setTimeout(() => {
                     window.location.href = NEW_DOMAIN;
                 }, 900);
@@ -621,7 +700,6 @@
         const statusCache = {};
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        // ===== АВТОРИЗАЦИЯ =====
         const savedName = localStorage.getItem('semejka_name');
         const savedUsername = localStorage.getItem('semejka_username');
         if (savedName && savedUsername) { currentUser = { id: savedUsername, name: savedName }; }
@@ -646,7 +724,6 @@
         toRegisterBtn.addEventListener('click', () => { loginForm.style.display = 'none'; freshForm.style.display = 'block'; nameInput.value = ''; usernameInput.value = ''; });
         changeUserBtn.addEventListener('click', () => { localStorage.removeItem('semejka_name'); localStorage.removeItem('semejka_username'); currentUser = null; checkSavedUser(); });
 
-        // ===== ПАНЕЛИ =====
         function openPanel(panel) { sidePanelOverlay.classList.add('active'); panel.classList.add('active'); if(panel === membersPanel) loadMembersList(); }
         function closeAllPanels() { sidePanelOverlay.classList.remove('active'); newsPanel.classList.remove('active'); membersPanel.classList.remove('active'); }
         newsBtn.addEventListener('click', () => openPanel(newsPanel));
@@ -712,7 +789,6 @@
             });
         }
 
-        // ===== РЕГИСТРАЦИЯ / ВХОД =====
         joinBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             let username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -754,7 +830,6 @@
             await enterChat();
         });
 
-        // ===== УПРАВЛЕНИЕ СТАТУСОМ =====
         async function updateTypingStatus(typing) {
             if (!currentUser) return;
             try {
@@ -993,7 +1068,6 @@
             });
         }
 
-        // ===== ТРАНСФОРМАЦИЯ SDP ДЛЯ OPUS FEC / RED / BITRATE =====
         function optimizeSDP(sdp) {
             let lines = sdp.split('\r\n');
             let opusPt = null;
@@ -1025,21 +1099,13 @@
 
         async function fetchIceServers() {
             let servers = [];
-            
             try {
                 const response = await fetch("https://semejka-plus.metered.live/api/v1/turn/credentials?apiKey=481f686ca87febd8beaafdec2a6412c97c79");
-                if (response.ok) {
-                    const firstServers = await response.json();
-                    servers = servers.concat(firstServers);
-                }
+                if (response.ok) servers = servers.concat(await response.json());
             } catch (err) {}
-            
             try {
                 const response2 = await fetch("https://semeykainternational.metered.live/api/v1/turn/credentials?apiKey=63a607b6e705a0e00d76cc5f69828e528631");
-                if (response2.ok) {
-                    const secondServers = await response2.json();
-                    servers = servers.concat(secondServers);
-                }
+                if (response2.ok) servers = servers.concat(await response2.json());
             } catch (err) {}
 
             if (!Array.isArray(servers) || servers.length === 0) {
@@ -1049,7 +1115,6 @@
                     { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
                 ];
             }
-
             return servers;
         }
 
@@ -1078,17 +1143,10 @@
 
         async function setupPeerConnection() {
             const iceServers = await fetchIceServers();
-            
-            peerConnection = new RTCPeerConnection({
-                iceServers: iceServers,
-                iceTransportPolicy: 'relay',
-                iceCandidatePoolSize: 10
-            });
+            peerConnection = new RTCPeerConnection({ iceServers: iceServers, iceTransportPolicy: 'relay', iceCandidatePoolSize: 10 });
 
             peerConnection.oniceconnectionstatechange = () => {
-                if (peerConnection.iceConnectionState === 'failed') {
-                    peerConnection.restartIce();
-                }
+                if (peerConnection.iceConnectionState === 'failed') peerConnection.restartIce();
             };
 
             peerConnection.onicecandidate = (event) => {
@@ -1100,23 +1158,13 @@
             };
 
             peerConnection.ontrack = (event) => {
-                if (event.streams && event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
-                }
+                if (event.streams && event.streams[0]) remoteVideo.srcObject = event.streams[0];
             };
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }, 
-                    video: { 
-                        width: { ideal: 640 }, 
-                        height: { ideal: 480 }, 
-                        frameRate: { max: 24 } 
-                    } 
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { max: 24 } } 
                 });
                 localVideo.srcObject = localStream;
                 localStream.getTracks().forEach(track => {
@@ -1144,19 +1192,12 @@
             callOverlay.classList.add("active");
             playRingTone('dial');
 
-            await sendPushToUser(targetUsername, currentUser.name, "📹 Звонит вам (видеовызов)...", {
-                type: 'call',
-                callId: currentCallId
-            });
+            await sendPushToUser(targetUsername, currentUser.name, "📹 Звонит вам (видеовызов)...", { type: 'call', callId: currentCallId });
 
             await setupPeerConnection();
             const callDocRef = doc(db, "calls", currentCallId);
             let offer = await peerConnection.createOffer();
-            
-            offer = new RTCSessionDescription({
-                type: offer.type,
-                sdp: optimizeSDP(offer.sdp)
-            });
+            offer = new RTCSessionDescription({ type: offer.type, sdp: optimizeSDP(offer.sdp) });
 
             await peerConnection.setLocalDescription(offer);
             await setDoc(callDocRef, {
@@ -1230,17 +1271,10 @@
             await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
             
             let answer = await peerConnection.createAnswer();
-            
-            answer = new RTCSessionDescription({
-                type: answer.type,
-                sdp: optimizeSDP(answer.sdp)
-            });
+            answer = new RTCSessionDescription({ type: answer.type, sdp: optimizeSDP(answer.sdp) });
 
             await peerConnection.setLocalDescription(answer);
-            await updateDoc(callDocRef, {
-                status: "accepted",
-                answer: { type: answer.type, sdp: answer.sdp }
-            });
+            await updateDoc(callDocRef, { status: "accepted", answer: { type: answer.type, sdp: answer.sdp } });
             callStatusText.textContent = "Разговор...";
             callMuteBtn.style.display = "block";
             onSnapshot(collection(db, "calls", currentCallId, "callerCandidates"), (snapshot) => {
@@ -1256,7 +1290,6 @@
             if (currentCallId) {
                 const callDocRef = doc(db, "calls", currentCallId);
                 const isRinging = callStatusText.textContent.includes("Вызов") || callStatusText.textContent.includes("Входящий");
-                
                 const parts = currentCallId.split('_');
                 const targetCallee = parts[1];
 
@@ -1403,12 +1436,7 @@
                         fetch(`${RENDER_SERVER_URL}/send-push`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                subscription: userData.pushSubscription,
-                                title: `Семейка: ${senderName}`,
-                                body: messageText,
-                                payloadData: payloadData
-                            })
+                            body: JSON.stringify({ subscription: userData.pushSubscription, title: `Семейка: ${senderName}`, body: messageText, payloadData: payloadData })
                         }).catch(()=>{});
                     }
                 }
@@ -1424,12 +1452,7 @@
                         fetch(`${RENDER_SERVER_URL}/send-push`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                subscription: userData.pushSubscription,
-                                title: `Семейка: ${senderName}`,
-                                body: messageText,
-                                payloadData: payloadData
-                            })
+                            body: JSON.stringify({ subscription: userData.pushSubscription, title: `Семейка: ${senderName}`, body: messageText, payloadData: payloadData })
                         }).catch(()=>{});
                     }
                 });
