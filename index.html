@@ -153,37 +153,68 @@
         .call-btn-action:active { transform: scale(0.95); }
         @media (max-width: 480px) { .messages { padding: 5px 10px 75px 10px; gap: 12px; } .bubble { font-size: 15px; padding: 11px 16px; max-width: 85%; } .control-capsule { width: 50px; height: 100px; top: 12px; right: 12px; border-radius: 25px; } .side-panel { left: 16px; right: 16px; padding: 20px; } }
     
-        /* Анимация пульсации для плашки переезда */
-        @keyframes pulseRed {
+        /* ===== ФИЗИКА И АНИМАЦИЯ ЖИДКОГО СТЕКЛА ДЛЯ ПЛАШКИ ===== */
+        @keyframes liquidPulse {
             0% { 
                 background-color: #ff4b5c; 
-                box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4);
+                box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45), inset 0 0 0 1px rgba(255,255,255,0.3);
             }
             50% { 
-                background-color: #d93847; 
-                box-shadow: 0 8px 30px rgba(217, 56, 71, 0.7);
+                background-color: #e63946; 
+                box-shadow: 0 12px 45px rgba(230, 57, 70, 0.7), inset 0 0 0 1px rgba(255,255,255,0.5);
             }
             100% { 
                 background-color: #ff4b5c; 
-                box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4);
+                box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45), inset 0 0 0 1px rgba(255,255,255,0.3);
             }
+        }
+
+        #migrationBanner {
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%) scale(1); 
+            width: 92%; 
+            max-width: 640px; 
+            background: #ff4b5c; 
+            color: white; 
+            padding: 18px 24px; 
+            border-radius: 28px; 
+            box-sizing: border-box; 
+            z-index: 999999; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            font-family: 'Comfortaa', cursive, sans-serif; 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 12px 35px rgba(255, 75, 92, 0.45); 
+            animation: liquidPulse 2.5s infinite ease-in-out;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.25), box-shadow 0.3s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        #migrationBanner:active {
+            transform: translateX(-50%) scale(0.96) translateY(2px) !important;
+            box-shadow: 0 6px 18px rgba(255, 75, 92, 0.6) !important;
         }
     </style>
 </head>
 <body>
-    <!-- Скруглённая верхняя плашка миграции с виш-листом и кнопкой подтверждения (Comfortaa) -->
-    <div id="migrationBanner" style="position: fixed; top: 16px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 640px; background: #ff4b5c; color: white; padding: 16px 22px; border-radius: 20px; box-sizing: border-box; z-index: 999999; display: flex; flex-direction: column; gap: 12px; font-family: 'Comfortaa', cursive, sans-serif; box-shadow: 0 8px 24px rgba(255, 75, 92, 0.4); animation: pulseRed 2s infinite;">
+    <!-- Скруглённая верхняя плашка миграции с физикой жидкого стекла и виш-листом -->
+    <div id="migrationBanner">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
             <div style="font-size: 14px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; flex: 1; min-width: 220px;">
                 🚀 Мессенджер SEMEYKA переезжает на новый защищенный адрес!
             </div>
-            <button id="startMigrationBtn" onclick="executeMigration()" style="background: white; color: #ff4b5c; border: none; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Comfortaa', cursive, sans-serif; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <button id="startMigrationBtn" onclick="executeMigration()" style="background: white; color: #ff4b5c; border: none; padding: 10px 18px; border-radius: 14px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Comfortaa', cursive, sans-serif; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                 Подтвердить переход
             </button>
         </div>
         
         <!-- Виш-лист (Чек-лист того, что сделает мессенджер при подтверждении) -->
-        <div style="background: rgba(0, 0, 0, 0.15); padding: 10px 14px; border-radius: 12px; font-size: 12px; font-family: 'Comfortaa', cursive, sans-serif; display: flex; flex-direction: column; gap: 4px;">
+        <div style="background: rgba(0, 0, 0, 0.15); padding: 10px 14px; border-radius: 16px; font-size: 12px; font-family: 'Comfortaa', cursive, sans-serif; display: flex; flex-direction: column; gap: 4px;">
             <div style="font-weight: 700; margin-bottom: 2px; opacity: 0.9;">Что сделает мессенджер при подтверждении:</div>
             <div id="step1Text" style="opacity: 0.8; transition: opacity 0.3s;">🔹 1. Отключение старых уведомлений в базе данных</div>
             <div id="step2Text" style="opacity: 0.8; transition: opacity 0.3s;">🔹 2. Сброс старой памяти и настроек уведомлений</div>
@@ -394,22 +425,47 @@
         const db = getFirestore(app);
         const NEW_DOMAIN = 'https://semeyka-msgr.gitlab.io';
 
-        // Проверка: если пользователь уже переезжал раньше (метка сохранена в браузере), меняем плашку на информационную
-        if (localStorage.getItem('semejka_migrated') === 'true') {
-            window.addEventListener('DOMContentLoaded', () => {
-                const banner = document.getElementById('migrationBanner');
+        // ===== ФУНКЦИЯ ПОЛНОЙ БЛОКИРОВКИ СТАРОГО ПРИЛОЖЕНИЯ =====
+        function lockOldAppCompletely() {
+            // 1. Показываем зеленое уведомление об успешном переходе на плашке
+            const banner = document.getElementById('migrationBanner');
+            if (banner) {
                 banner.style.animation = 'none';
-                banner.style.backgroundColor = '#4CAF50'; // Зеленый цвет успешного переноса
+                banner.style.backgroundColor = '#4CAF50';
                 banner.innerHTML = `
                     <div style="font-size: 15px; font-weight: 700; font-family: 'Comfortaa', cursive, sans-serif; margin-bottom: 6px;">
                         ✅ Вы успешно перешли на новый домен!
                     </div>
                     <div style="font-size: 13px; font-family: 'Comfortaa', cursive, sans-serif; opacity: 0.95; line-height: 1.4;">
-                        Это старая версия приложения. Вы можете спокойно удалить этот значок с экрана вашего устройства. Пользуйтесь новым адресом!
+                        Это старая версия приложения. Весь функционал здесь заблокирован. Вы можете спокойно удалить этот значок с экрана вашего устройства.
                     </div>
                     <a href="${NEW_DOMAIN}" style="display: inline-block; margin-top: 8px; background: white; color: #4CAF50; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold; font-family: 'Comfortaa', cursive, sans-serif;">Перейти на новый сайт</a>
                 `;
-            });
+            }
+
+            // 2. Скрываем экраны приложения (авторизацию и чат)
+            const regScreen = document.getElementById('regScreen');
+            const chatScreen = document.getElementById('chatScreen');
+            if (regScreen) regScreen.classList.remove('active');
+            if (chatScreen) chatScreen.classList.remove('active');
+
+            // 3. Выводим блокирующий экран-заглушку вместо приложения
+            const body = document.body;
+            const blockScreen = document.createElement('div');
+            blockScreen.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%); z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:'Comfortaa', cursive, sans-serif;";
+            blockScreen.innerHTML = `
+                <div style="background:white; padding:40px 30px; border-radius:32px; max-width:420px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.1);">
+                    <h2 style="color:#2A2A3A; font-size:22px; margin-bottom:15px;">🔒 Приложение перенесено</h2>
+                    <p style="color:#6A6A7A; font-size:15px; line-height:1.6; margin-bottom:25px;">Этот старый адрес больше не поддерживается. Функции чата и звонков здесь отключены.</p>
+                    <a href="${NEW_DOMAIN}" style="display:block; width:100%; padding:16px; background:#6C63FF; color:white; border-radius:20px; text-decoration:none; font-size:18px; font-weight:bold; box-shadow:0 8px 20px rgba(108,99,255,0.3);">Перейти на новый сайт</a>
+                </div>
+            `;
+            body.appendChild(blockScreen);
+        }
+
+        // Если пользователь уже подтверждал переход ранее и вернулся на старый адрес — блокируем сразу
+        if (localStorage.getItem('semejka_migrated') === 'true') {
+            window.addEventListener('DOMContentLoaded', lockOldAppCompletely);
         }
 
         // ===== ФУНКЦИЯ ПОШАГОВОГО ВЫПОЛНЕНИЯ ПОСЛЕ ПОДТВЕРЖДЕНИЯ =====
@@ -468,7 +524,7 @@
             } catch (error) {
                 console.error("Ошибка при миграции:", error);
             } finally {
-                // Жесткий редирект через секунду для визуального подтверждения шагов пользователю
+                // Жесткий редирект через секунду
                 setTimeout(() => {
                     window.location.href = NEW_DOMAIN;
                 }, 900);
@@ -569,6 +625,7 @@
         if (savedName && savedUsername) { currentUser = { id: savedUsername, name: savedName }; }
 
         function checkSavedUser() {
+            if (localStorage.getItem('semejka_migrated') === 'true') return;
             if (currentUser) {
                 freshForm.style.display = 'none';
                 loginForm.style.display = 'none';
@@ -912,7 +969,7 @@
         function listenTypingStatus() {
             onSnapshot(collection(db, "status"), (snapshot) => {
                 let networkTypers = [];
-                snapshot.forEach(doc => {
+                snapshot.docs.forEach(doc => {
                     const data = doc.data();
                     const userId = doc.id;
                     const lastActive = data.last_active?.toDate() || new Date(0);
@@ -1136,7 +1193,7 @@
             const callsQuery = query(collection(db, "calls"), where("calleeId", "==", currentUser.id), where("status", "==", "ringing"));
             onSnapshot(callsQuery, (snapshot) => {
                 if (peerConnection || isCaller) return;
-                snapshot.forEach(async (changeDoc) => {
+                snapshot.docs.forEach(async (changeDoc) => {
                     const callData = changeDoc.data();
                     const serverTime = callData.created_at ? callData.created_at.toDate() : new Date();
                     const timeDiffSeconds = (new Date() - serverTime) / 1000;
@@ -1231,6 +1288,7 @@
         }
 
         async function startLiveChat() {
+            if (localStorage.getItem('semejka_migrated') === 'true') return;
             if (currentUser) {
                 await updateTypingStatus(false);
                 startHeartbeat();
